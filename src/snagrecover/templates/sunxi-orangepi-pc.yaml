@@ -1,0 +1,3 @@
+u-boot-with-spl:
+        path: u-boot-sunxi-with-spl.bin
+

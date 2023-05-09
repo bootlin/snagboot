@@ -1,0 +1,7 @@
+tiboot3:
+  path: tiboot3.bin
+tispl:
+  path: tispl.bin
+u-boot:
+  path: u-boot-play.img
+

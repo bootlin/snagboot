@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project] 
+name = "snagboot"
+version = "0.1"
+authors = [
+  { name="Romain Gantois", email="romain.gantois@bootlin.com" },
+]
+description = "Cross-vendor recovery and reflashing tool for embedded hardware"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: POSIX :: Linux"
+]
+dependencies = [
+	"pyyaml >= 6.0",
+	"pyusb >= 1.2.1",
+	"hid >= 1.0.5",
+	"pyserial >= 3.5",
+	"xmodem >= 0.4.6",
+	"tftpy >= 0.8.2",
+	"crccheck >= 1.3.0",
+	"pylibfdt >= 1.7.0.post1",
+	"six == 1.16.0"
+] 
+
+[project.urls]
+"Source Code" = "https://github.com/bootlin/snagboot"
+
+[project.scripts]
+snagrecover = "snagrecover.cli:cli"
+snagflash = "snagflash.cli:cli"

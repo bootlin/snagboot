@@ -1,0 +1,457 @@
+# This file is part of Snagboot
+# Copyright (C) 2023 Bootlin
+# 
+# Written by Romain Gantois <romain.gantois@bootlin.com> in 2023.
+# 
+# Based on sunxi-tools (https://github.com/linux-sunxi/sunxi-tools/soc_info.c)
+# Copyright (C) 2012  Henrik Nordstrom <henrik@henriknordstrom.net>
+# Copyright (C) 2015  Siarhei Siamashka <siarhei.siamashka@gmail.com>
+# Copyright (C) 2016  Bernhard Nortmann <bernhard.nortmann@web.de>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+#Data structures describing the layout of 
+#SPL, thunk, preserved BOOTROM regions and 
+#backup regions for the preserved regions 
+#in the SoC SRAM.
+#rom regions should not overlap, and they 
+#should be ordered by ascending start addresses!
+a10:
+  sram_size: 0xc000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  safe_addr: 0x1000
+a10s:
+  sram_size: 0xc000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  safe_addr: 0x1000
+a13:
+  sram_size: 0xc000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  safe_addr: 0x1000
+a20:
+  sram_size: 0xc000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  safe_addr: 0x1000
+a23:
+  sram_size: 0x10000
+  spl_start: 0x0
+  thunk:
+    start: 0x46e00
+    size: 0x200
+  rom:
+    - start: 0x1800
+      backup: 0x44000
+      size: 0x800
+    - start: 0x5c00
+      backup: 0x44800
+      size: 0x2400
+  safe_addr: 0x1000
+a31:
+  sram_size: 0x8000
+  spl_start: 0x0
+  thunk:
+    start: 0x22e00
+    size: 0x200
+  rom:
+    - start: 0x1800
+      backup: 0x20000
+      size: 0x800
+    - start: 0x5c00
+      backup: 0x20800
+      size: 0x2400
+  safe_addr: 0x1000
+a33:
+  sram_size: 0x8000
+  spl_start: 0x0
+  thunk:
+    start: 0x46e00
+    size: 0x200
+  rom:
+    - start: 0x1800
+      backup: 0x44000
+      size: 0x800
+    - start: 0x5c00
+      backup: 0x44800
+      size: 0x2400
+  safe_addr: 0x1000
+a63:
+  sram_size: 0x24000
+  spl_start: 0x20000
+  thunk:
+    start: 0x42200
+    size: 0x200
+  rom:
+    - start: 0x21c00
+      backup: 0x42400
+      size: 0x0400
+    - start: 0x25c00
+      backup: 0x42800
+      size: 0x1400
+    - start: 0x27c00
+      backup: 0x43c00
+      size: 0x0400
+  safe_addr: 0x21000
+  rvbar_addr: 0x9010040
+a64:
+  sram_size: 0x23000
+  spl_start: 0x10000
+  thunk:
+    start: 0x31200
+    size: 0x200
+  rom:
+    - start: 0x11c00
+      backup: 0x31400
+      size: 0x0400
+    - start: 0x15c00
+      backup: 0x31800
+      size: 0x1400
+    - start: 0x17c00
+      backup: 0x32c00
+      size: 0x0400
+  safe_addr: 0x11000
+  rvbar_addr: 0x17000a0
+a80:
+  sram_size: 0xa000
+  spl_start: 0x10000
+  thunk:
+    start: 0x23400
+    size: 0x200
+  rom:
+    - start: 0x11800
+      backup: 0x20000
+      size: 0x800
+    - start: 0x15400
+      backup: 0x20800
+      size: 0x2c00
+  safe_addr: 0x11000
+a83t:
+  sram_size: 0x8000
+  spl_start: 0x0
+  thunk:
+    start: 0x46e00
+    size: 0x200
+  rom:
+    - start: 0x1800
+      backup: 0x44000
+      size: 0x800
+    - start: 0x5c00
+      backup: 0x44800
+      size: 0x2400
+  tt_addr: 0x44000
+  safe_addr: 0x1000
+f1c100s:
+  sram_size: 0x8000
+  spl_start: 0x0
+  thunk:
+    start: 0xb400
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0x9000
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0x9400
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xa800
+      size: 0x0400
+  safe_addr: 0x1000
+h2+:
+  sram_size: 0x1b000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  tt_addr: 0x8000
+  safe_addr: 0x1000
+h3:
+  sram_size: 0x1b000
+  spl_start: 0x00
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  tt_addr: 0x8000
+  safe_addr: 0x1000
+h5:
+  sram_size: 0x23000
+  spl_start: 0x10000
+  thunk:
+    start: 0x31200
+    size: 0x200
+  rom:
+    - start: 0x11c00
+      backup: 0x31400
+      size: 0x0400
+    - start: 0x15c00
+      backup: 0x31800
+      size: 0x1400
+    - start: 0x17c00
+      backup: 0x32c00
+      size: 0x0400
+  safe_addr: 0x11000
+  rvbar_addr: 0x17000a0
+h6:
+  sram_size: 0x24000
+  spl_start: 0x20000
+  thunk:
+    start: 0x42200
+    size: 0x200
+  rom:
+    - start: 0x21c00
+      backup: 0x42400
+      size: 0x0400
+    - start: 0x25c00
+      backup: 0x42800
+      size: 0x1400
+    - start: 0x27c00
+      backup: 0x43c00
+      size: 0x0400
+  safe_addr: 0x21000
+  rvbar_addr: 0x9010040
+h616:
+  sram_size: 0x33c00
+  spl_start: 0x20000
+  thunk:
+    start: 0x53a00
+    size: 0x200
+  rom:
+    - start: 0x21000
+      backup: 0x52a00
+      size: 0x1000
+  safe_addr: 0x21000
+  rvbar_addr: 0x9010040
+r8:
+  sram_size: 0xc000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  safe_addr: 0x1000
+r16:
+  sram_size: 0x8000
+  spl_start: 0x0
+  thunk:
+    start: 0x46e00
+    size: 0x200
+  rom:
+    - start: 0x1800
+      backup: 0x44000
+      size: 0x800
+    - start: 0x5c00
+      backup: 0x44800
+      size: 0x2400
+  safe_addr: 0x1000
+r40:
+  sram_size: 0xc000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  safe_addr: 0x1000
+r329:
+  sram_size: 0x1d0000
+  spl_start: 0x100000
+  thunk:
+    start: 0x13ba00
+    size: 0x200
+  rom:
+    - start: 0x101000
+      backup: 0x13bc00
+      size: 0x0400
+  tt_addr: 0x130000
+  safe_addr: 0x101000
+  rvbar_addr: 0x8100040
+r528:
+  sram_size: 0x28000
+  spl_start: 0x20000
+  thunk:
+    start: 0x3a200
+    size: 0x200
+  rom:
+    - start: 0x21000
+      backup: 0x38000
+      size: 0x1000
+  safe_addr: 0x21000
+t113-s3:
+  sram_size: 0x28000
+  spl_start: 0x20000
+  thunk:
+    start: 0x3a200
+    size: 0x200
+  rom:
+    - start: 0x21000
+      backup: 0x38000
+      size: 0x1000
+  safe_addr: 0x21000
+v3s:
+  sram_size: 0xf000
+  spl_start: 0x0
+  thunk:
+    start: 0xa200
+    size: 0x200
+  rom:
+    - start: 0x1c00
+      backup: 0xa400
+      size: 0x0400
+    - start: 0x5c00
+      backup: 0xa800
+      size: 0x1400
+    - start: 0x7c00
+      backup: 0xbc00
+      size: 0x0400
+  tt_addr: 0x8000
+  safe_addr: 0x1000
+v5:
+  sram_size: 0x22000
+  spl_start: 0x20000
+  thunk:
+    start: 0x42200
+    size: 0x200
+  rom:
+    - start: 0x21c00
+      backup: 0x42400
+      size: 0x0400
+    - start: 0x25c00
+      backup: 0x42800
+      size: 0x1400
+    - start: 0x27c00
+      backup: 0x43c00
+      size: 0x0400
+  safe_addr: 0x21000
+v536:
+  sram_size: 0x39000
+  spl_start: 0x20000
+  thunk:
+    start: 0x2a200
+    size: 0x200
+  rom:
+    - start: 0x21000
+      backup: 0x38000
+      size: 0x1000
+  safe_addr: 0x21000
+v831:
+  sram_size: 0x39000
+  spl_start: 0x20000
+  thunk:
+    start: 0x2a200
+    size: 0x200
+  rom:
+    - start: 0x21000
+      backup: 0x38000
+      size: 0x1000
+  safe_addr: 0x21000
+v853:
+  sram_size: 0x21000
+  spl_start: 0x20000
+  thunk:
+    start: 0x3a200
+    size: 0x200
+  rom:
+    - start: 0x21000
+      backup: 0x38000
+      size: 0x1000
+  safe_addr: 0x21000

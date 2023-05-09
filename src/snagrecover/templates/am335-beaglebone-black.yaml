@@ -1,0 +1,5 @@
+spl:
+        path: spl-beagle.bin
+u-boot:
+        path: u-boot.img
+

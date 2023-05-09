@@ -1,0 +1,109 @@
+tested:
+  am625:
+        family: am62
+  stm32mp15:
+        family: stm32mp1
+  sama5d2:
+        family: sama5
+  sama5d3:
+        family: sama5
+  sama5d4:
+        family: sama5
+  imx8mm:
+        family: imx
+  imx6q:
+        family: imx
+  imx7d:
+        family: imx
+  imx6ull:
+        family: imx
+  am335:
+        family: am335
+  h3:
+        family: sunxi
+  r8:
+        family: sunxi
+  a64:
+        family: sunxi
+untested:
+  imx8qxp:
+        family: imx
+  imx8qm:
+        family: imx
+  imx8dxl:
+        family: imx
+  imx28:
+        family: imx
+  imx815:
+        family: imx
+  imx865:
+        family: imx
+  imx93:
+        family: imx
+  imx6d:
+        family: imx
+  imx6sl:
+        family: imx
+  imx6sx:
+        family: imx
+  imx6ul:
+        family: imx
+  imx6sll:
+        family: imx
+  imx7ulp:
+        family: imx
+  imxrt106x:
+        family: imx
+  imx8mq:
+        family: imx
+  a10:
+        family: sunxi
+  a10s:
+        family: sunxi
+  a13:
+        family: sunxi
+  a20:
+        family: sunxi
+  a23:
+        family: sunxi
+  a31:
+        family: sunxi
+  a33:
+        family: sunxi
+  a63:
+        family: sunxi
+  a80:
+        family: sunxi
+  a83t:
+        family: sunxi
+  af1c100s:
+        family: sunxi
+  h2+:
+        family: sunxi
+  h5:
+        family: sunxi
+  h6:
+        family: sunxi
+  h616:
+        family: sunxi
+  r16:
+        family: sunxi
+  r40:
+        family: sunxi
+  r329:
+        family: sunxi
+  r528:
+        family: sunxi
+  t113-s3:
+        family: sunxi
+  v3s:
+        family: sunxi
+  v5s:
+        family: sunxi
+  v536:
+        family: sunxi
+  v831:
+        family: sunxi
+  v853:
+        family: sunxi
+

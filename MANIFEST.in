@@ -1,0 +1,6 @@
+include src/snagrecover/supported_socs.yaml
+include src/snagrecover/firmware/sunxi_fw/soc_info.yaml
+include src/snagrecover/firmware/sunxi_fw/fel-to-spl-thunk.bin
+include src/snagrecover/firmware/sunxi_fw/fel-to-spl-thunk.S
+include src/snagrecover/templates/*
+

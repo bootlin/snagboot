@@ -1,0 +1,16 @@
+#The load addresses of the extram and lowlevel applets
+#are entirely determined by the soc model,
+#hence we don't have to specify them here
+extram:
+  path: applet-extram_sama5d4-generic_sram.bin
+  preset: "DDR2_MT47H128M16:Preset 2 (2 x MT47H128M16)"
+  console_instance: 6
+  console_ioset: 1
+lowlevel:
+  path: applet-lowlevel_sama5d4-generic_sram.bin
+  console_instance: 6
+  console_ioset: 1
+u-boot:
+  path: u-boot.sama5d4xplained
+  address: 0x26f00000
+

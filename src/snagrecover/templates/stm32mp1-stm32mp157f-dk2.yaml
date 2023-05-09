@@ -1,0 +1,4 @@
+tf-a:
+  path: ./tf-a-stm32mp157c-dk2.stm32
+u-boot:
+  path: ./fip.bin
