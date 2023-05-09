@@ -34,7 +34,7 @@ DRAM_BASE = 0x40000000
 DRAM_SIZE = 0x80000000
 DRAM_END = DRAM_BASE + DRAM_SIZE
 
-def restore(port: fel.FEL, soc_info: dict, tt: bytes, tt_addr: int) -> None:
+def restore(port: fel.FEL, soc_info: dict, tt: bytes, tt_addr: int):
 	"""
 	based on linux-sunxi sunxi-fel code
 	mov r0, #0
@@ -170,7 +170,7 @@ def check(port: fel.FEL, soc_info: dict) -> tuple:
 	tt = bytes(tt_barr)
 	return (tt, tt_addr)
 
-def disable(port: fel.FEL, soc_info: dict) -> None:
+def disable(port: fel.FEL, soc_info: dict):
 	"""
 	based on linux-sunxi sunxi-fel code
 	mrc 15, 0, r0, cr1, cr0, 0	read SCTLR

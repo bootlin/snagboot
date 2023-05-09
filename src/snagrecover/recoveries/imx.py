@@ -89,7 +89,7 @@ usb_ids = {
 
 ###################### main ##################################
 
-def main() -> None:
+def main():
 	soc_model = recovery_config["soc_model"]
 	protocol = usb_ids[soc_model][0]
 	vid = usb_ids[soc_model][1]

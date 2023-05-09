@@ -70,7 +70,7 @@ class IVT():
 		self.reserved2 = None
 		self.offset = None #offset in boot image, in bytes
 
-	def log(self) -> None:
+	def log(self):
 		for key,value in self.__dict__.items():
 			if key == "boot_data":
 				for bkey, bvalue in value.items():

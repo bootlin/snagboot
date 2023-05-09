@@ -29,7 +29,7 @@ for more information on fastboot support in U-Boot.
 """
 
 class Fastboot():
-	def __init__(self, dev: usb.core.Device, timeout = 10000):
+	def __init__(self, dev: usb.core.Device, timeout: int = 10000):
 		self.dev = dev
 		cfg = dev.get_active_configuration()
 		#select the first interface we find with a bulk in ep and a bulk out ep

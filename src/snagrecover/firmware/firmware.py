@@ -30,7 +30,7 @@ from snagrecover.config import recovery_config
 import time
 import usb
 
-def stm32mp1_install(port: usb.core.Device, fw_name: str, fw_blob: bytes) -> None:
+def stm32mp1_install(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle stm32mp1 firmware
 	so we can leave it in the common module for now
@@ -51,7 +51,7 @@ def stm32mp1_install(port: usb.core.Device, fw_name: str, fw_blob: bytes) -> Non
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	return None
 
-def am62_install(dev: usb.core.Device, fw_name: str, fw_blob: bytes) -> None:
+def am62_install(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle am62 firmware
 	so we can leave it in the common module for now
@@ -74,7 +74,7 @@ def am62_install(dev: usb.core.Device, fw_name: str, fw_blob: bytes) -> None:
 		#run tispl firmware
 		dfu_cmd.detach(partid)
 
-def install_firmware(port, fw_name: str) -> None:
+def install_firmware(port, fw_name: str):
 	soc_family = recovery_config["soc_family"]
 	fw_path = recovery_config["firmware"][fw_name]["path"]
 	with open(fw_path, "rb") as file:

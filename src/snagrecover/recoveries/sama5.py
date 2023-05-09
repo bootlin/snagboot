@@ -70,7 +70,7 @@ chipid_configs = {
     }
 }
 
-def check_id(memops) -> bool:
+def check_id(memops: memory_ops.MemoryOps) -> bool:
     soc_model = recovery_config["soc_model"]
     cfg = chipid_configs[soc_model]
     cidr = memops.read32(cfg["CIDR_REG"])
@@ -81,7 +81,7 @@ def check_id(memops) -> bool:
             check &= exid in cfg["EXID_VAL"]
     return check
 
-def main() -> None:
+def main():
 	#CONNECT TO SAM-BA MONITOR
 	print("Connecting to SAM-BA monitor...")
 	soc_model = recovery_config["soc_model"]

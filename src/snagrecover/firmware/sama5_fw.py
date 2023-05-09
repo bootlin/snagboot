@@ -27,7 +27,7 @@ from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
 from snagrecover.config import recovery_config
 
-def sama5_install(port, fw_name: str, fw_blob: bytes) -> None:
+def sama5_install(port, fw_name: str, fw_blob: bytes):
 	backend = sambamon.SambaMon(port)
 	memops = memory_ops.MemoryOps(backend)
 	if fw_name == "extram":

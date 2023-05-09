@@ -382,7 +382,7 @@ def sunxi_uboot(port: fel.FEL, fw_blob: bytes, dt_name: str):
 		memops = memory_ops.MemoryOps(port)
 		memops.jump(entry_addr)
 
-def sunxi_install(port, fw_name: str, fw_blob: bytes) -> None:
+def sunxi_install(port, fw_name: str, fw_blob: bytes):
 	if fw_name == "spl":
 		sunxi_spl(port, fw_blob)
 	elif fw_name == "u-boot":

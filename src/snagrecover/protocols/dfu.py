@@ -155,17 +155,17 @@ class DFU():
 		logger.info(f"Done manifesting firmware")
 		return True
 
-	def dfu_abort(self) -> None:
+	def dfu_abort(self):
 		status = self.dev.ctrl_transfer(0x21, 6, wValue=0, wIndex=0, data_or_wLength=None)
 
-	def detach(self, partid: int) -> None:
+	def detach(self, partid: int):
 		self.set_partition(partid)
 		status = self.get_status()
 		logger.info("Sending DFU_DETACH...")
 		status = self.dev.ctrl_transfer(0xa1, 0, wValue=0x7530, wIndex=0, data_or_wLength=0)
 		return None
 
-	def set_partition(self, partid: int) -> None:
+	def set_partition(self, partid: int):
 		self.dev.set_interface_altsetting(interface = 0, alternate_setting = partid)
 		return None
 

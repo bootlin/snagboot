@@ -24,7 +24,7 @@ fw_3:
 ```
 
 The firmwares needed for each SoC family are listed below. Some
-[templates](templates) are provided as references. Whatever SoC family you are
+[templates](../src/snagrecover/templates) are provided as references. Whatever SoC family you are
 using, you will probably want to configure your U-Boot build so that it can
 interact with snagflash correctly after recovery (e.g. use DFU, UMS or
 fastboot).
@@ -34,7 +34,7 @@ unless you're setting up a automated recovery+boot process.
 
 ## For STM32MP15 devices 
 
-[example](templates/stm32mp157f-dk2.yaml)
+[example](../src/snagrecover/templates/stm32mp157f-dk2.yaml)
 
 These instructions are for setting up a trusted boot using TF-A as a first
 stage and U-Boot as a second stage. Apparently using SPL as a first stage
@@ -76,7 +76,7 @@ and fip.bin which you can pass as u-boot.
 
 ## For SAMA5 devices
 
-[example](templates/sama5d2xplained.yaml)
+[example](../src/snagrecover/templates/sama5d2xplained.yaml)
 
 **lowlevel:** SAM-BA ISP applet used to initialize the clock tree. You can
 obtain SAM-BA ISP applets by downloading the source code for SAM-BA ISP from
@@ -113,7 +113,7 @@ configuration:
 
 ### Option1: Use dcd to initialize the external RAM
 
-[example](templates/colibri-imx7d.yaml)
+[example](../src/snagrecover/templates/colibri-imx7d.yaml)
 
 **u-boot-with-dcd:** For some boards, you can build the flash.bin target in
 U-Boot which contains an IVT header + a DCD + U-Boot proper. The DCD will be
@@ -125,7 +125,7 @@ configuration:
 
 ### Option 2: Use SPL to initialize the external RAM
 
-[example](templates/var-som-mx6.yaml)
+[example](../src/snagrecover/templates/var-som-mx6.yaml)
 
 **spl-with-ivt:** IVT header + U-BOOT SPL to be loaded in OCRAM. You can
 generate this by compiling the SPL target in U-Boot.
@@ -141,7 +141,7 @@ configuration:
 
 ## For i.MX8 devices
 
-[example](templates/dart-mx8m-mini.yaml)
+[example](../src/snagrecover/templates/dart-mx8m-mini.yaml)
 
 iMX8 boards require more complicated firmware binaries, since U-BOOT cannot
 boot them on its own. The process for generating the bootloader firmware is
@@ -187,7 +187,7 @@ configuration:
 
 ## For AM335 devices
 
-[example](templates/beaglebone_black.yaml)
+[example](../src/snagrecover/templates/beaglebone_black.yaml)
 
 **spl:** First stage bootloader. Build the spl/u-boot-spl.bin target for your
 board in U-Boot mainline. spl/u-boot-spl.bin is the required binary. If
@@ -209,7 +209,7 @@ binary file.
 ## For Allwinner devices
 
 ### Option 1: Single SPL+U-Boot binary
-[example](templates/orangepi_pc.yaml)
+[example](../src/snagrecover/templates/orangepi_pc.yaml)
 
 **u-boot-with-spl:** Described in sunxi-u-boot.dtsi. For arm64 SOCs, this
 contains: sunxi-spl.bin + nonfit or FIT container with u-boot-nodtb,bl31,
@@ -232,10 +232,10 @@ configuration:
 
 ## For AM62 devices
 
-[example](templates/beagle_play.yaml)
+[example](../src/snagrecover/templates/beagle_play.yaml)
 
-**Warning:** Please refer to (this
-documentation)[https://u-boot.readthedocs.io/en/latest/board/ti/am62x_sk.html]
+**Warning:** Please refer to 
+(this documentation)[https://u-boot.readthedocs.io/en/latest/board/ti/am62x_sk.html]
 for building the required images. When building the U-Boot SPL image for R5,
 please make sure that the resulting SPL supports Booting from DFU! The
 defconfig indicated by the linked documentation does not guarantee this!

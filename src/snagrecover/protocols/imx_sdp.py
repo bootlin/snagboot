@@ -96,7 +96,7 @@ class SDPCommand():
 		self.data = 0 
 		self.reserved = b"\x00"
 
-	def clear(self) -> None:
+	def clear(self):
 		self.cmd = None
 		self.addr = 0
 		self.format = b"\x00"
@@ -110,10 +110,10 @@ class SDPCommand():
 		+ self.format + self.data_count.to_bytes(4, "big") \
 		+ self.data.to_bytes(4, "big") + self.reserved
 
-	def end_cmd(self) -> None:
+	def end_cmd(self):
 		self.dev.read(1, timeout = 5000)
 
-	def check_hab(self) -> None:
+	def check_hab(self):
 		hab_status = self.dev.read(5, timeout=5000)[1:]
 		if hab_status != SDPCommand.hab_codes["HAB_OPEN"]:
 			raise ValueError("Error: status HAB_CLOSED or unknown found on address ")
@@ -151,7 +151,7 @@ class SDPCommand():
 	def write_dcd(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
 		return self.write_blob(blob, addr, offset, size, write_dcd=True)
 
-	def write_blob(self, blob: bytes, addr: int, offset: int, size: int, write_dcd=False) -> bool:
+	def write_blob(self, blob: bytes, addr: int, offset: int, size: int, write_dcd: bool = False) -> bool:
 		self.clear()
 		if write_dcd:
 			self.cmd = SDPCommand.command_codes["DCD_WRITE"]
@@ -173,7 +173,7 @@ class SDPCommand():
 		else:
 			return complete_status == b"\x88\x88\x88\x88"
 
-	def jump(self, addr: int) -> None:
+	def jump(self, addr: int):
 		self.clear()
 		self.cmd = SDPCommand.command_codes["JUMP_ADDRESS"]
 		self.addr = addr

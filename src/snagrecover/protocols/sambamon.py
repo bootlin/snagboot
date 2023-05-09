@@ -22,7 +22,7 @@ import logging
 logger = logging.getLogger("snagrecover")
 
 class SambaMon():
-	def __init__(self, port: serial.serialposix.Serial) -> None:
+	def __init__(self, port: serial.serialposix.Serial):
 		self.port = port
 		#set sam-ba monitor to binary mode
 		logger.debug("Sending sambamon command N#")

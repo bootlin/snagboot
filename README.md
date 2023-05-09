@@ -1,15 +1,19 @@
 # Snagboot
 
 Snagboot is a Python tool capable of recovering and reflashing a wide variety of
-boards used in embedded Linux systems. It is divided into two parts. The
-snagrecover tool uses vendor-specific ROM code mechanisms to initialize external
-RAM and install U-Boot to it, without modifying any non-volatile memories. The
-snagflash tool communicates with U-Boot to flash system images to non-volatile
-memories, using either DFU, UMS or fastboot.
+SoCs used in embedded Linux systems. It is divided into two parts: 
+
+- **snagrecover** uses vendor-specific ROM code mechanisms to initialize
+  external RAM and install U-Boot to it, without modifying any non-volatile
+  memories.
+- **snagflash** communicates with U-Boot to flash system images to non-volatile
+  memories, using either DFU, UMS or fastboot.
 
 ![demo](docs/tutorial_snagrecover.gif)
 
-[Currently supported SoCs](src/snagrecover/supported_socs.yaml)
+Currently supported SoC families: STM32MP1, SAMA5, i.MX6/7/8, AM335, SUNXI, 
+AM62x. Please check [supported_socs.yaml](src/snagrecover/supported_socs.yaml)
+for a more precise list of supported SoCs.
 
 ## Installation
 
@@ -68,7 +72,7 @@ asciinema play -s=2 docs/tutorial_snagrecover.cast
 
 Contributions are welcome! Since Snagboot concentrates many different recovery
 techniques and protocols, we try to keep the code base as structured as
-possible. Please consult the [contributer's guide](docs/contrib.md).
+possible. Please consult the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 

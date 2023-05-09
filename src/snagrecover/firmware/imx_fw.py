@@ -71,7 +71,7 @@ dcd_addr = {
 "imxrt106x": 0x1000
 }
 
-def imx_install(port, fw_name: str, fw_blob: bytes) -> None:
+def imx_install(port, fw_name: str, fw_blob: bytes):
 	MAX_DOWNLOAD_SIZE = 0x200000
 	soc_model = recovery_config["soc_model"]
 

@@ -32,7 +32,7 @@ USB_PID = 0xdf11
 
 ###################### main ##################################
 
-def main() -> None:
+def main():
 	#USB ENUMERATION
 	dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
 	if dev is None:

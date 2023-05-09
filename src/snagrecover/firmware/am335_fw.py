@@ -50,13 +50,13 @@ server_config = {
 	"tftp_complete_timeout": 180,
 }
 
-def tftp_proc(server: tftpy.TftpServer) -> None:
+def tftp_proc(server: tftpy.TftpServer):
 	logger.info("Starting TFTP server...")
 	tftp_port = server_config["tftp_port"]
 	server.listen(server_config["listen"], tftp_port, timeout=1)
 	logger.info("TFTP server finished")
 
-def bootp_proc(server: socketserver.UDPServer) -> None:
+def bootp_proc(server: socketserver.UDPServer):
 	logger.info("Starting BOOTP server...")
 	server.serve_forever()
 	logger.info("BOOTP server finished")
@@ -79,7 +79,7 @@ class UDPHandler(socketserver.BaseRequestHandler):
 		reply = bootp_req.build_reply(assigned_client_ip, server_ip, filename)
 		sock.sendto(reply, ("<broadcast>", self.client_address[1]))
 
-def am335_usb(port, fw_name: str) -> None:
+def am335_usb(port, fw_name: str):
 	tftp_start_timeout = server_config["tftp_start_timeout"]
 	tftp_complete_timeout = server_config["tftp_complete_timeout"]
 	#TFTP server thread
@@ -119,7 +119,7 @@ def am335_usb(port, fw_name: str) -> None:
 	logger.info("Waiting for BOOTP server to stop...")
 	bootp_thread.join()
 
-def am335_uart(port, fw_name: str) -> None:
+def am335_uart(port, fw_name: str):
 	TRANSFER_WAIT_TIMEOUT = 5
 	if fw_name == "u-boot":
 		print("Transfering U-Boot over a UART connection, this could take a while...")
@@ -144,7 +144,7 @@ def am335_uart(port, fw_name: str) -> None:
 		modem.send(file)
 	logger.info("xmodem transfer done")
 
-def am335_install(port, fw_name: str) -> None:
+def am335_install(port, fw_name: str):
 	if recovery_config["args"]["uart"]:
 		am335_uart(port, fw_name)
 	else:

@@ -30,7 +30,7 @@ def get_family(soc_model: str) -> str:
         family = (socs["tested"] | socs["untested"])[soc_model]["family"]
         return family
 
-def check_soc_model(soc_model: str) -> None:
+def check_soc_model(soc_model: str):
 	with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
 		socs = yaml.safe_load(file)
 	if soc_model not in socs["tested"] | socs["untested"]:
