@@ -109,7 +109,15 @@ configuration:
  * path
  * address: check the value of CONFIG\_TEXT\_BASE in your  u-boot configuration
 
-## For i.MX6/7 arm32 devices
+## For i.MX SoCs that use the SDPS protocol: imx28,imx93,imx8{qxp,qm,dxl,15,65}
+
+**u-boot-sdps:** Contains at least U-Boot and other SoC-specific components. For
+i.MX28, this can be generated with the u-boot.sb target in U-Boot.
+
+configuration:
+ * path
+
+## For i.MX6/7 SoCs
 
 ### Option1: Use dcd to initialize the external RAM
 
@@ -127,13 +135,13 @@ configuration:
 
 [example](../src/snagrecover/templates/var-som-mx6.yaml)
 
-**spl-with-ivt:** IVT header + U-BOOT SPL to be loaded in OCRAM. You can
+**SPL:** IVT header + U-BOOT SPL to be loaded in OCRAM. You can
 generate this by compiling the SPL target in U-Boot.
 
 configuration:
  * path
 
-**u-boot-with-ivt:** IVT header + U-BOOT proper to be loaded in external RAM.
+**u-boot:** IVT header + U-BOOT proper to be loaded in external RAM.
 You can generate this by compiling the u-boot.imx target in U-Boot.
 
 configuration:
@@ -147,40 +155,16 @@ iMX8 boards require more complicated firmware binaries, since U-BOOT cannot
 boot them on its own. The process for generating the bootloader firmware is
 highly vendor and board specific. We recommend that you follow your board
 vendor’s tutorial to generate a recovery sd card image , then dump the start of
-this sd card image (up to the start of the first partition) into a file and
-rename it to imx-boot.imx. spl-with-ivt and u-boot-after-spl are two named
-firmware that use the same binary file. This allows for flexible configuration
-of the first and second stage.
+this sd card image (up to the start of the first partition) into a flash.bin 
+file.
 
-**spl-with-ivt:** This should contain at least: IVT header + SPL + ddr firmware
+**flash-bin:** This should contain at least: IVT header + SPL + ddr firmware
 + ATF + u-boot. The precise image structure depends on the board and build
-process.
-
-configuration:
- * path
-
-**u-boot-after-spl** Here, you should supply the same binary file as for
-spl-with-ivt. The recovery tool will download the IVT header + SPL + ddr
+process. The recovery tool will download the IVT header + SPL + ddr
 firmware part of the image to OCRAM and run it, then download the ATF+u-boot
 part to external RAM. Normally, SPL should support the SDPV (instead of SDPU)
 protocol, which makes it capable of autofinding u-boot proper in the image we
 send.
-
-configuration:
- * path
-
-## For i.MX SoCs that use the SDPS protocol
-
-**Warning:** SDPS support has not been tested!
-
-**sdps-spl:** First stage firmware. Should contain at least SPL, maybe some other
-unidentified components.
-
-configuration:
- * path
-
-**u-boot-with-ivt:** U-Boot proper binary preceded by an NXP IVT header. You
-can usually generate this by compiling the u-boot.imx target in U-Boot.
 
 configuration:
  * path

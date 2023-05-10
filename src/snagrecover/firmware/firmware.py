@@ -22,15 +22,15 @@ import logging
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
 from snagrecover.protocols import memory_ops
-from snagrecover.firmware.imx_fw import imx_install
-from snagrecover.firmware.sama5_fw import sama5_install
-from snagrecover.firmware.am335_fw import am335_install
-from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_install
+from snagrecover.firmware.imx_fw import imx_run
+from snagrecover.firmware.sama5_fw import sama5_run
+from snagrecover.firmware.am335_fw import am335_run
+from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
 from snagrecover.config import recovery_config
 import time
 import usb
 
-def stm32mp1_install(port: usb.core.Device, fw_name: str, fw_blob: bytes):
+def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle stm32mp1 firmware
 	so we can leave it in the common module for now
@@ -51,7 +51,7 @@ def stm32mp1_install(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	return None
 
-def am62_install(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
+def am62_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle am62 firmware
 	so we can leave it in the common module for now
@@ -74,25 +74,33 @@ def am62_install(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 		#run tispl firmware
 		dfu_cmd.detach(partid)
 
-def install_firmware(port, fw_name: str):
+def run_firmware(port, fw_name: str, subfw_name: str = ""):
+	"""
+	The "subfw_name" option allows selecting firmware 
+	subimages inside the same image. This avoids 
+	having the user pass the same binary in two different 
+	configs.
+	"""
 	soc_family = recovery_config["soc_family"]
 	fw_path = recovery_config["firmware"][fw_name]["path"]
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
 
 	print(f"Installing firmware {fw_name}")
+	if subfw_name != "":
+		print(f"Subfirmware: {subfw_name}")
 	if soc_family == "sama5":
-		sama5_install(port, fw_name, fw_blob)
+		sama5_run(port, fw_name, fw_blob)
 	elif soc_family == "stm32mp1":
-		stm32mp1_install(port, fw_name, fw_blob)
+		stm32mp1_run(port, fw_name, fw_blob)
 	elif soc_family == "imx":
-		imx_install(port, fw_name, fw_blob)
+		imx_run(port, fw_name, fw_blob, subfw_name)
 	elif soc_family == "am335":
-		am335_install(port, fw_name)
+		am335_run(port, fw_name)
 	elif soc_family == "sunxi":
-		sunxi_install(port, fw_name, fw_blob)
+		sunxi_run(port, fw_name, fw_blob)
 	elif soc_family == "am62":
-		am62_install(port, fw_name, fw_blob)
+		am62_run(port, fw_name, fw_blob)
 	else:
 		raise ValueError(f"Unknown soc family {soc_family}")
 	print(f"Done installing firmware {fw_name}")

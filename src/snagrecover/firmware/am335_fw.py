@@ -144,7 +144,7 @@ def am335_uart(port, fw_name: str):
 		modem.send(file)
 	logger.info("xmodem transfer done")
 
-def am335_install(port, fw_name: str):
+def am335_run(port, fw_name: str):
 	if recovery_config["args"]["uart"]:
 		am335_uart(port, fw_name)
 	else:

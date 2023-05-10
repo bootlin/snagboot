@@ -71,14 +71,14 @@ dcd_addr = {
 "imxrt106x": 0x1000
 }
 
-def imx_install(port, fw_name: str, fw_blob: bytes):
+def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 	MAX_DOWNLOAD_SIZE = 0x200000
 	soc_model = recovery_config["soc_model"]
 
 	sdp_cmd = imx_sdp.SDPCommand(port)
 	memops = memory_ops.MemoryOps(sdp_cmd)
 
-	if fw_name == "sdps-spl":
+	if fw_name == "u-boot-sdps":
 		write_size = rom_container.get_container_size(fw_blob)
 		ret = sdp_cmd.sdps_write(fw_blob, write_size)
 		if not ret:
@@ -106,7 +106,7 @@ def imx_install(port, fw_name: str, fw_blob: bytes):
 		logger.info("Done writing DCD")
 
 	logger.info(f"Downloading firmware {fw_name}...")
-	if fw_name == "u-boot-after-spl":
+	if fw_name == "flash-bin" and subfw_name == "u-boot":
 		"""
 		#get uboot/atf offset and size by assuming that it is located immediately after the
 		#section of the boot image that we previously downloaded to the board
@@ -133,7 +133,7 @@ def imx_install(port, fw_name: str, fw_blob: bytes):
 			memops.write_blob(chunk, ivtable.addr + chunk_offset, chunk_offset, len(chunk))
 			chunk_offset += MAX_DOWNLOAD_SIZE
 
-	if fw_name in ["u-boot-with-dcd", "spl-with-ivt"]:
+	if fw_name in ["u-boot-with-dcd", "SPL"] or (fw_name == "flash-bin" and subfw_name == "spl"):
 		if soc_model in ["imx6q","imx6d","imx6sl"]:
 			#CLEAR DCD
 			logger.info("Clearing DCD...")

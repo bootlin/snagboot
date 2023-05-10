@@ -24,10 +24,18 @@
 - snagflash should be board and SoC-agnostic, only assuming that U-Boot is
   installed and configured properly
 - code in src/snagrecover/firmware should only be accessed using the
-  install_firmware interface
+  run_firmware interface
 - code in src/snagrecover/recoveries should not parse or otherwise handle
   firmware binaries
 - when adding a new protocol to src/snagrecover/protocols, please use the
   memory_ops interface when possible
 - snagrecover should not use non-volatile memories
+
+## Wishlist
+
+Here are a few things which would be nice to add to the recovery tool:
+- testing snagrecover on supported but untested SoCs (see
+  [supported_socs.yaml](src/snagrecover/supported_socs.yaml))
+- snagrecover support for BCM283 SoCs 
+- snagrecover support for SAMA9 SoCs 
 

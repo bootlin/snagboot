@@ -1,10 +1,11 @@
 # Snagboot
 
-Snagboot is a Python tool capable of recovering and reflashing a wide variety of
-SoCs used in embedded Linux systems. It is divided into two parts: 
+Snagboot intends to be an open-source and generic replacement to the
+vendor-specific, sometimes proprietary, tools used to recover and/or reflash
+embedded platforms It is divided into two parts: 
 
 - **snagrecover** uses vendor-specific ROM code mechanisms to initialize
-  external RAM and install U-Boot to it, without modifying any non-volatile
+  external RAM and run U-Boot, without modifying any non-volatile
   memories.
 - **snagflash** communicates with U-Boot to flash system images to non-volatile
   memories, using either DFU, UMS or fastboot.

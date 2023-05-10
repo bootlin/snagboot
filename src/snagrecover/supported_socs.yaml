@@ -25,14 +25,14 @@ tested:
         family: sunxi
   a64:
         family: sunxi
+  imx28:
+        family: imx
 untested:
   imx8qxp:
         family: imx
   imx8qm:
         family: imx
   imx8dxl:
-        family: imx
-  imx28:
         family: imx
   imx815:
         family: imx

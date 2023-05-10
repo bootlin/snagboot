@@ -52,7 +52,7 @@ import io
 import time
 import usb
 from snagrecover.protocols import memory_ops
-from snagrecover.firmware.firmware import install_firmware
+from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 import logging
 logger = logging.getLogger("snagrecover")
@@ -64,8 +64,6 @@ usb_ids = {
 "imx28": ["SDPS",0x15a2,0x004f,0x0000,0xffff],
 "imx815": ["SDPS",0x1fc9,0x013e,0x0000,0xffff],
 "imx865": ["SDPS",0x1fc9,0x0146,0x0000,0xffff],
-#"imx8ulp/1": ["SDPS",0x1fc9,0x014a,0x0000,0xffff],
-#"imx8ulp/2": ["SDPS",0x1fc9,0x014b,0x0000,0xffff],
 "imx93": ["SDPS",0x1fc9,0x014e,0x0000,0xffff],
 "imx7d": ["SDP",0x15a2,0x0076,0x0000,0xffff],
 "imx6q": ["SDP",0x15a2,0x0054,0x0000,0xffff],
@@ -97,12 +95,15 @@ def main():
 
 	with hid.Device(vid, pid) as dev:
 		if protocol == "SDPS":
-			install_firmware(dev, "sdps-spl")
-		elif "u-boot-with-dcd" in recovery_config["firmware"]:
-			install_firmware(dev, "u-boot-with-dcd")
+			run_firmware(dev, "u-boot-sdps")
 			return None
+		elif "u-boot-with-dcd" in recovery_config["firmware"]:
+			run_firmware(dev, "u-boot-with-dcd")
+			return None
+		elif "SPL" in recovery_config["firmware"]:
+			run_firmware(dev, "SPL")
 		else:
-			install_firmware(dev, "spl-with-ivt")
+			run_firmware(dev, "flash-bin", "spl")
 		logger.info("SDP command sequence done, closing hid device...")
 
 	#WAIT FOR SPL DEVICE
@@ -141,9 +142,9 @@ def main():
 		if "imx8" in soc_model:
 			if protocol != "SDPV":
 				raise Exception("Error: The installed SPL version does not support autofinding U-Boot")
-			install_firmware(dev, "u-boot-after-spl")
+			run_firmware(dev, "flash-bin", "u-boot")
 		else:
-			install_firmware(dev, "u-boot-with-ivt")
+			run_firmware(dev, "u-boot")
 
 		print("DONE")
 

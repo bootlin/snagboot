@@ -21,7 +21,7 @@ import usb
 import time
 from snagrecover.protocols import fel
 from snagrecover.protocols import memory_ops
-from snagrecover.firmware.firmware import install_firmware
+from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 
 USB_TIMEOUT = 5000
@@ -81,8 +81,8 @@ def main():
 		break
 	#user can supply images separately or in a single file
 	if "u-boot-with-spl" in recovery_config["firmware"]:
-		install_firmware(fel_dev, "u-boot-with-spl")
+		run_firmware(fel_dev, "u-boot-with-spl")
 	else:
-		install_firmware(fel_dev, "spl")
-		install_firmware(fel_dev, "u-boot")
+		run_firmware(fel_dev, "spl")
+		run_firmware(fel_dev, "u-boot")
 

@@ -48,6 +48,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from math import ceil
+from snagrecover.config import recovery_config
 
 CONTAINER_HDR_ALIGNMENT = 0x400
 CONTAINER_TAG = 0x87
@@ -61,10 +62,12 @@ def get_container_size(boot_blob: bytes) -> int:
 	This function is used to compute the size of the first stage firmware
 	container for boards socs using the SDPS protocol. It has not yet been tested.
 	"""
+	soc_model = recovery_config["soc_model"]
+	if soc_model == "imx815":
+		return len(boot_blob)
 	rom_container_tag = boot_blob[CONTAINER_HDR_ALIGNMENT + 3]
 	if rom_container_tag != b"\x87":
-		print("Error: Unknown image container format")
-		return -1
+		return len(boot_blob)
 
 	cont_index = 1
 	romimg_offset = CONTAINER_HDR_ALIGNMENT + ROM_BOOTIMG_STRUCT_SIZE
@@ -74,7 +77,7 @@ def get_container_size(boot_blob: bytes) -> int:
 		cont_index = 2
 		rom_container_tag = boot_blob[2 * CONTAINER_HDR_ALIGNMENT + 3]
 		if rom_container_tag != b"\x87":
-			raise ValueError("Error: Unknown image container format")
+			return len(boot_blob)
 	container_offset = cindex * CONTAINER_HDR_ALIGNMENT
 	num_images = int(boot_blob[container_offset + 11])
 	romimg_offset = rom_cont_offset + ROM_CONTAINER_STRUCT_SIZE + (num_images - 1) * ROM_BOOTIMG_STRUCT_SIZE

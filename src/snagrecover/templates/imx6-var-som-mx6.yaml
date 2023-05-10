@@ -1,6 +1,6 @@
 #Binaries with IVT headers have their load addresses indicated in the header,
 #hence we don't need to indicate these addresses in the following configs
-spl-with-ivt: 
+SPL: 
   path: spl.imx
-u-boot-with-ivt:
+u-boot:
   path: u-boot.imx

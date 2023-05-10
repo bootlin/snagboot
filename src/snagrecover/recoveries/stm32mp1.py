@@ -22,7 +22,7 @@ import usb.util
 import time
 from snagrecover.protocols import dfu
 from snagrecover.recoveries import stm32_flashlayout as flashlayout
-from snagrecover.firmware.firmware import install_firmware
+from snagrecover.firmware.firmware import run_firmware
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -44,7 +44,7 @@ def main():
 	logger.debug("End of USB config:")
 
 	#DOWNLOAD TF-A
-	install_firmware(dev, "tf-a")
+	run_firmware(dev, "tf-a")
 
 	#DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM 
 	dfu_cmd = dfu.DFU(dev)
@@ -58,7 +58,7 @@ def main():
 		dfu_cmd.download_and_run(layout_blob, FLASHLAYOUT_PARTID, offset=0, size=len(layout_blob))
 
 	#DOWNLOAD U-BOOT
-	install_firmware(dev, "u-boot")
+	run_firmware(dev, "u-boot")
 
 	#DETACH DFU DEVICE
 	print("Sending detach command to U-BOOT...")

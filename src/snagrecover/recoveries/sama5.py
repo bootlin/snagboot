@@ -25,7 +25,7 @@ import yaml
 
 from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
-from snagrecover.firmware.firmware import install_firmware
+from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 import logging
 
@@ -114,13 +114,13 @@ def main():
 
 		#INITIALIZE CLOCK TREE
 		print("Initializing clock tree...")
-		install_firmware(port, "lowlevel")
+		run_firmware(port, "lowlevel")
 		print("Done initializing clock tree")
 
 
 		#INITIALIZE EXTRAM
 		print("Initializing external RAM...")
-		install_firmware(port, "extram")
+		run_firmware(port, "extram")
 		print("Done initializing RAM")
 		
 		#REMAP ROM ADDRESSES
@@ -128,5 +128,5 @@ def main():
 
 		#DOWNLOAD U-BOOT
 		print("Installing U-Boot...")
-		install_firmware(port, "u-boot")
+		run_firmware(port, "u-boot")
 		print("Done!")

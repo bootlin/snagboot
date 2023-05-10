@@ -20,15 +20,15 @@
 import serial
 import time
 from snagrecover.config import recovery_config
-from snagrecover.firmware.firmware import install_firmware
+from snagrecover.firmware.firmware import run_firmware
 import subprocess
 import os
 
 def main():
 	if recovery_config["args"]["uart"]:
 		port = serial.Serial(recovery_config["args"]["uart"], baudrate=recovery_config["args"]["baudrate"])
-		install_firmware(port, "spl")
-		install_firmware(port, "u-boot")
+		run_firmware(port, "spl")
+		run_firmware(port, "u-boot")
 		port.close()
 	else:
 		#Check that we are running in the expected network namespace
@@ -40,7 +40,7 @@ def main():
 			raise Exception(f"This recovery needs to be run in the {netns_name} namespace!\nDid you run sudo scripts/am335_usb_setup.sh?")
 
 		#Install and run SPL
-		install_firmware(None, "spl")
+		run_firmware(None, "spl")
 		#Install and run U-Boot
-		install_firmware(None, "u-boot")
+		run_firmware(None, "u-boot")
 
