@@ -1,0 +1,4 @@
+tf-a:
+  path: ./tf-a-stm32mp135f-dk.stm32
+fip:
+  path: ./fip.bin

@@ -23,6 +23,7 @@ import time
 from snagrecover.protocols import dfu
 from snagrecover.recoveries import stm32_flashlayout as flashlayout
 from snagrecover.firmware.firmware import run_firmware
+from snagrecover.config import recovery_config
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -33,6 +34,7 @@ USB_PID = 0xdf11
 ###################### main ##################################
 
 def main():
+	soc_model = recovery_config["soc_model"]
 	#USB ENUMERATION
 	dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
 	if dev is None:
@@ -44,24 +46,35 @@ def main():
 	logger.debug("End of USB config:")
 
 	#DOWNLOAD TF-A
+	dfu_cmd = dfu.DFU(dev)
 	run_firmware(dev, "tf-a")
+	if soc_model == "stm32mp13":
+		print("Sending detach command to SPL...")
+		phase_id = dfu_cmd.stm32_get_phase()
+		dfu_cmd.detach(phase_id)
 
 	#DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM 
-	dfu_cmd = dfu.DFU(dev)
-	phase_id = dfu_cmd.stm32_get_phase()
-	part0 = dfu.search_partid(dev, "@Partition0", match_prefix=True)
-	if part0 is None:
-		raise Exception("No DFU altsetting found with iInterface='Partition0*'")
-	if phase_id == part0:
-		print("Downloading flash layout...")
-		layout_blob = flashlayout.build_image()
-		dfu_cmd.download_and_run(layout_blob, FLASHLAYOUT_PARTID, offset=0, size=len(layout_blob))
+	if soc_model == "stm32mp15":
+		phase_id = dfu_cmd.stm32_get_phase()
+		part0 = dfu.search_partid(dev, "@Partition0", match_prefix=True)
+		if part0 is None:
+			raise Exception("No DFU altsetting found with iInterface='Partition0*'")
+		if phase_id == part0:
+			print("Downloading flash layout...")
+			layout_blob = flashlayout.build_image()
+			dfu_cmd.download_and_run(layout_blob, FLASHLAYOUT_PARTID, offset=0, size=len(layout_blob))
 
 	#DOWNLOAD U-BOOT
-	run_firmware(dev, "u-boot")
+	if soc_model == "stm32mp13":
+		time.sleep(1.5)
+		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
+		if dev is None:
+			raise ValueError('STM32 USB device not found')
+		dfu_cmd = dfu.DFU(dev)
+	run_firmware(dev, "fip")
 
 	#DETACH DFU DEVICE
-	print("Sending detach command to U-BOOT...")
+	print("Sending detach command to SPL...")	
 	phase_id = dfu_cmd.stm32_get_phase()
 	dfu_cmd.detach(phase_id)
 

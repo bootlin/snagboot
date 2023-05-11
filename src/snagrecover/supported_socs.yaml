@@ -3,6 +3,8 @@ tested:
         family: am62
   stm32mp15:
         family: stm32mp1
+  stm32mp13:
+        family: stm32mp1
   sama5d2:
         family: sama5
   sama5d3:
@@ -27,6 +29,10 @@ tested:
         family: sunxi
   imx28:
         family: imx
+  a33:
+        family: sunxi
+  a20:
+        family: sunxi
 untested:
   imx8qxp:
         family: imx
@@ -62,13 +68,9 @@ untested:
         family: sunxi
   a13:
         family: sunxi
-  a20:
-        family: sunxi
   a23:
         family: sunxi
   a31:
-        family: sunxi
-  a33:
         family: sunxi
   a63:
         family: sunxi

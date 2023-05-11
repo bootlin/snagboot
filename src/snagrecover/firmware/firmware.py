@@ -37,17 +37,17 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	"""
 	if fw_name == "tf-a":
 		partprefix = "@FSBL"
-	elif fw_name == "u-boot":
+	elif fw_name == "fip":
 		partprefix = "@Partition3"
 	else:
 		raise Exception(f"Unsupported firmware {fw_name}")
 	partid = dfu.search_partid(port, partprefix, match_prefix=True)
+	if partid is None and partprefix == "@Partition3":
+		partprefix = "@SSBL"
+		partid = dfu.search_partid(port, partprefix, match_prefix=True)
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partprefix}*'")
 	dfu_cmd = dfu.DFU(port)
-	phase_id = dfu_cmd.stm32_get_phase()
-	if phase_id != partid:
-		raise ValueError(f"Error: Phase id for device is {phase_id}, expected {partid}")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	return None
 
@@ -82,7 +82,10 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	configs.
 	"""
 	soc_family = recovery_config["soc_family"]
-	fw_path = recovery_config["firmware"][fw_name]["path"]
+	try:
+		fw_path = recovery_config["firmware"][fw_name]["path"]
+	except KeyError:
+		raise Exception(f"Could not find firmware {fw_name}, please check your recovery config")
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
 

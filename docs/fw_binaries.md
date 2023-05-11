@@ -32,7 +32,7 @@ fastboot).
 **Note:** When configuring U-Boot, you'll probably want to disable autoboot,
 unless you're setting up a automated recovery+boot process.
 
-## For STM32MP15 devices 
+## For STM32MP1 devices 
 
 [example](../src/snagrecover/templates/stm32mp157f-dk2.yaml)
 
@@ -43,7 +43,7 @@ a STM32MP13 board, the build process seems to be slightly different for those
 so you might have to refer to external docs if you want to build binaries to
 try and use the tool with one of these boards.
 
-**u-boot:** Second stage bootloader, with an stm32 image header. Sometimes the
+**fip:** Contains at least U-Boot with an stm32 image header. Usually the
 raw U-Boot image needs to be generated first, then packaged by a
 trusted-arm-firmware build. If the autoboot feature is enabled, then U-Boot will
 enter DFU mode.
@@ -76,7 +76,7 @@ and fip.bin which you can pass as u-boot.
 
 ## For SAMA5 devices
 
-[example](../src/snagrecover/templates/sama5d2xplained.yaml)
+[example](../src/snagrecover/templates/sama5-sama5d2xplained.yaml)
 
 **lowlevel:** SAM-BA ISP applet used to initialize the clock tree. You can
 obtain SAM-BA ISP applets by downloading the source code for SAM-BA ISP from
@@ -111,6 +111,8 @@ configuration:
 
 ## For i.MX SoCs that use the SDPS protocol: imx28,imx93,imx8{qxp,qm,dxl,15,65}
 
+[example](../src/snagrecover/templates/imx28-evk.yaml)
+
 **u-boot-sdps:** Contains at least U-Boot and other SoC-specific components. For
 i.MX28, this can be generated with the u-boot.sb target in U-Boot.
 
@@ -121,7 +123,7 @@ configuration:
 
 ### Option1: Use dcd to initialize the external RAM
 
-[example](../src/snagrecover/templates/colibri-imx7d.yaml)
+[example](../src/snagrecover/templates/imx7-colibri-imx7d.yaml)
 
 **u-boot-with-dcd:** For some boards, you can build the flash.bin target in
 U-Boot which contains an IVT header + a DCD + U-Boot proper. The DCD will be
@@ -149,7 +151,7 @@ configuration:
 
 ## For i.MX8 devices
 
-[example](../src/snagrecover/templates/dart-mx8m-mini.yaml)
+[example](../src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
 
 iMX8 boards require more complicated firmware binaries, since U-BOOT cannot
 boot them on its own. The process for generating the bootloader firmware is
@@ -171,7 +173,7 @@ configuration:
 
 ## For AM335 devices
 
-[example](../src/snagrecover/templates/beaglebone_black.yaml)
+[example](../src/snagrecover/templates/am335-beaglebone-black.yaml)
 
 **spl:** First stage bootloader. Build the spl/u-boot-spl.bin target for your
 board in U-Boot mainline. spl/u-boot-spl.bin is the required binary. If
@@ -193,7 +195,7 @@ binary file.
 ## For Allwinner devices
 
 ### Option 1: Single SPL+U-Boot binary
-[example](../src/snagrecover/templates/orangepi_pc.yaml)
+[example](../src/snagrecover/templates/sunxi-orangepi-pc.yaml)
 
 **u-boot-with-spl:** Described in sunxi-u-boot.dtsi. For arm64 SOCs, this
 contains: sunxi-spl.bin + nonfit or FIT container with u-boot-nodtb,bl31,
@@ -216,7 +218,7 @@ configuration:
 
 ## For AM62 devices
 
-[example](../src/snagrecover/templates/beagle_play.yaml)
+[example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
 **Warning:** Please refer to 
 (this documentation)[https://u-boot.readthedocs.io/en/latest/board/ti/am62x_sk.html]
