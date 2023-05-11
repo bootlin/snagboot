@@ -21,11 +21,14 @@ for a more precise list of supported SoCs.
 Snagboot can be installed as a local Python wheel. An installation script is
 provided to automatically build and install the package.
 
-libhidapi development headers are required. On Debian, you can install the
-libhidapi-dev package.
+Requirements:
 
-ensurepip is required for the build to work. On Debian, you can install the
-python[your python version]-venv package.
+ * The libhidapi development headers. On Debian, you can install the
+   `libhidapi-dev` package
+ * The ensurepip Python package. On Debian, you can install the
+   python[your python version]-venv package
+
+Build steps:
 
 ```bash
 $ cd snagboot
