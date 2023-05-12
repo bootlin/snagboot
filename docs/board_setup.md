@@ -17,14 +17,14 @@ Once your board is in recovery mode, you should see a new USB device appear on
 your host system. This is the device that snagrecover will talk to. Below are
 some vendor specific hints for setting up your board for recovery.
 
-## STM32MP15
+## ST STM32MP15
 
 The recovery mode used here is DFU. Connect the USB DRP port to your host PC.
 Power your board, making sure that the boot fuses are configured to boot from
 DFU. The SoC can also fall back to DFU if all other boot options fail. At this
 point, you should see a USB DFU device appear on your host system.
 
-## SAMA5
+## Microchip SAMA5
 
 The recovery mode used here is a program called SAM-BA Monitor. Your sama5
 device should have a valid SAM-BA Monitor in its ROM code and the
@@ -34,7 +34,7 @@ should create a serial port on the host system. If not, you may have to close
 some boot control jumpers/switches to make sure the SoC is not booting from one
 of the board NVMs.
 
-## i.MX
+## NXP i.MX
 
 The SoC’s boot fuses should be set so that it falls back to serial downloader
 mode. This can be achieved by setting them to boot from an external memory and
@@ -42,14 +42,14 @@ removing any external boot media. You will see that the SoC entered serial
 downloader mode successfully when an NXP Semiconductors USB device appears on
 the host system.  Connect your host PC to the USB OTG port.
 
-## Allwinner
+## Allwinner SUNXI
 
 The secure boot fuse must **NOT** be burned! Snagrecover requires the SoC to be
 booting from FEL mode. On some models, this will happen automatically. On
 others, further setup is required. We recommend that you check your board's user
 guide.
 
-## AM62
+## TI AM62x
 The SoC should be put in DFU mode. This can sometimes take a few seconds after
 the board has been powered on. Connect the USB device port to your host PC.
 Power your board, making sure that the SoC is configured to boot from DFU. The
@@ -57,7 +57,7 @@ SoC can also fall back to DFU if all other boot options fail. A few seconds
 after powering the board, you should see a USB DFU device appear on your host
 system.
 
-## The special case of AM335 devices
+## The special case of TI AM335x devices
 
 The ROM code sets up a boot device list and for each device, will try to perform
 either a memory boot or a peripheral boot. If it fails, it will loop around and
@@ -67,7 +67,7 @@ possible peripheral boot modes, snagrecover supports UART mode, and USB mode.
 UART is much simpler to setup but is very slow and for this reason is only
 supported by snagrecover, not snagflash. 
 
-### AM335 UART recovery
+### TI AM335x UART recovery
 
 Connect a UART to the board, open a serial port and make sure that the ROM code
 boots in UART mode. If that’s the case, it should regularly ping the serial
@@ -82,7 +82,7 @@ As an example, here is the procedure for the Beaglebone black wireless board :
 4. open a serial port and press the reset button. You should get pings in your
 	console
 
-### AM335 USB recovery
+### TI AM335x USB recovery
 
 Connect a USB cable to the port corresponding to the USB0 interface of the SOC.
 Make sure that the ROM code is trying to boot from USB. Use your board’s boot

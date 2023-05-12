@@ -36,8 +36,8 @@ def cli():
 	template_path = os.path.dirname(__file__) + "/templates"
 	template_listing = "\n".join([filename[:-5] for filename in os.listdir(template_path)])
 	example = '''Examples:
-	python3 recovery -s stm32mp157 -f recovery/templates/stm32mp157f-dk2.yaml -p 0483:df11
-	python3 recovery -s stm32mp157 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'u-boot': {'path': 'binaries/u-boot.stm32'}}" -p 0483:df11
+	snagrecover -s stm32mp15 -f stm32mp15.yaml -p 0483:df11
+	snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}" -p 0483:df11
 
 Templates:
 ''' + template_listing

@@ -19,6 +19,13 @@ In DFU mode, snagflash takes two additional arguments :
    multiple times, to specify multiple files to download. The files will be
    downloaded in the order that the flags were passed in.
 
+Example:
+```bash
+# in U-Boot: setenv dfu_alt_info "mmc=uboot part 0 1"
+# in U-Boot: dfu 0 mmc 0
+snagflash -P dfu -p 0483:df11 -D 0:binaries/u-boot.stm32
+```
+
 For instructions on how to setup DFU in U-Boot, please refer to the [U-Boot
 documentation](https://u-boot.readthedocs.io/en/latest/usage/dfu.html).
 
@@ -26,15 +33,21 @@ documentation](https://u-boot.readthedocs.io/en/latest/usage/dfu.html).
 
 Snagflash can copy a file to either a raw block device or a mounted one. When
 copying to a raw block device, it uses bmap to speed up transfers.
-In UMS mode, snagflash takes two additional arguments:
+In UMS mode, snagflash takes two mandatory arguments:
 
- * -b –blockdev device 
-   A file to be written to a raw block device. This can only be passed once.
- * -D --dest
-   Sets the destination file name for transfers to mounted devices. 
  * -s --src filepath
    Source file to copy to destination
- * --size Optional. You can specify this to copy only a portion of the source
+   
+Then either one of:
+
+ * -d --dest
+   Sets the destination file name for transfers to mounted devices. 
+ * -b –blockdev device 
+   A file to be written to a raw block device.
+ 
+and optionally:
+
+ * --size You can specify this to copy only a portion of the source
  	file. Only works for raw transfers. Can be specified in decimal or
  	hexadecimal.
 
@@ -45,6 +58,13 @@ rules to make sure that device paths and mount points stay consistent across
 runs.
 
 **Note:** sizes can be specified in decimal or hexadecimal
+
+Example:
+```bash
+# in U-Boot: ums 0 mmc 0
+snagflash -P ums -s binaries/u-boot.stm32 -b /dev/sdb1
+snagflash -P ums -s binaries/u-boot.stm32 -d /mnt/u-boot.stm32
+```
 
 ## Fastboot mode
 
@@ -72,6 +92,12 @@ oem-format
 oem-partconf:<args>
 oem-bootbus:<args>
 ``` 
+
+Example:
+```bash
+# in U-Boot: fastboot usb 0
+snagflash -P fastboot -p 0483:0afb -f download:boot.img -f flash:0:1 -f boot
+```
 
 For more information on Fastboot commands, see the [fastboot
 specification](https://android.googlesource.com/platform/system/core/+/refs/heads/master/fastboot/README.md)

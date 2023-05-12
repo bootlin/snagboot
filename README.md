@@ -2,7 +2,8 @@
 
 Snagboot intends to be an open-source and generic replacement to the
 vendor-specific, sometimes proprietary, tools used to recover and/or reflash
-embedded platforms It is divided into two parts: 
+embedded platforms. Examples of such tools include STM32CubeProgrammer, SAM-BA
+ISP, UUU, and sunxi-fel It is divided into two parts: 
 
 - **snagrecover** uses vendor-specific ROM code mechanisms to initialize
   external RAM and run U-Boot, without modifying any non-volatile
@@ -12,9 +13,10 @@ embedded platforms It is divided into two parts:
 
 ![demo](docs/tutorial_snagrecover.gif)
 
-Currently supported SoC families: STM32MP1, SAMA5, i.MX6/7/8, AM335, SUNXI, 
-AM62x. Please check [supported_socs.yaml](src/snagrecover/supported_socs.yaml)
-for a more precise list of supported SoCs.
+Currently supported SoC families: ST STM32MP1, Microchip SAMA5, NXP i.MX6/7/8,
+TI AM335x, Allwinner SUNXI, TI AM62x. Please check
+[supported_socs.yaml](src/snagrecover/supported_socs.yaml) for a more precise
+list of supported SoCs.
 
 ## Installation
 
@@ -23,8 +25,8 @@ provided to automatically build and install the package.
 
 Requirements:
 
- * The libhidapi development headers. On Debian, you can install the
-   `libhidapi-dev` package
+ * One of the libhidapi backends. On Debian, you can install the
+   `libhidapi-hidraw0` package or the `libhidapi-libusb0` package
  * The ensurepip Python package. On Debian, you can install the
    python[your python version]-venv package
 
@@ -51,8 +53,8 @@ $ udevadm control --reload-rules
 $ udevadm trigger
 ```
 
-The affected devices will be accessible by the "users" group. You can modify the
-udev rules to pick a more restrictive group if you wish.
+The affected devices will be accessible by the "plugdev" group. You can modify
+the udev rules to pick a more restrictive group if you wish.
 
 ## Usage guide
 

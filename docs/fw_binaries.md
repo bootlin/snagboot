@@ -32,9 +32,9 @@ fastboot).
 **Note:** When configuring U-Boot, you'll probably want to disable autoboot,
 unless you're setting up a automated recovery+boot process.
 
-## For STM32MP1 devices 
+## For ST STM32MP1 devices 
 
-[example](../src/snagrecover/templates/stm32mp157f-dk2.yaml)
+[example](../src/snagrecover/templates/stm32mp1-stm32mp157f-dk2.yaml)
 
 These instructions are for setting up a trusted boot using TF-A as a first
 stage and U-Boot as a second stage. Apparently using SPL as a first stage
@@ -62,19 +62,20 @@ configuration:
 
 Download mainline TF-A and U-Boot. In U-Boot:
 
-```bash make stm32mp15_defconfig make DEVICE_TREE=<your device tree> ```
+```bash 
+make stm32mp15_defconfig make DEVICE_TREE=<your device tree> 
+```
 
 In TF-A, run make <params> all fip where params contains the following:
 
-``` ARCH=aarch32 ARM_ARCH_MAJOR=7 AARCH32_SP=sp_min PLAT=stm32mp1
-DTB_FILE_NAME=<your device tree>.dtb BL33_CFG=/path/to/u-boot.dtb (in your
-U-Boot build directory) BL33=/path/to/u-boot-nodtb.bin STM32MP_USB_PROGRAMMER=1
+```bash 
+ARCH=aarch32 ARM_ARCH_MAJOR=7 AARCH32_SP=sp_min PLAT=stm32mp1 DTB_FILE_NAME=<your device tree>.dtb BL33_CFG=/path/to/u-boot.dtb BL33=/path/to/u-boot-nodtb.bin STM32MP_USB_PROGRAMMER=1
 ```
 
 This will generate tf-a-<your device tree>.stm32 which you can pass as tf-a,
 and fip.bin which you can pass as u-boot.
 
-## For SAMA5 devices
+## For Microchip SAMA5 devices
 
 [example](../src/snagrecover/templates/sama5-sama5d2xplained.yaml)
 
@@ -109,7 +110,7 @@ configuration:
  * path
  * address: check the value of CONFIG\_TEXT\_BASE in your  u-boot configuration
 
-## For i.MX SoCs that use the SDPS protocol: imx28,imx93,imx8{qxp,qm,dxl,15,65}
+## For NXP i.MX SoCs that use the SDPS protocol: imx28,imx93,imx8{qxp,qm,dxl,15,65}
 
 [example](../src/snagrecover/templates/imx28-evk.yaml)
 
@@ -119,7 +120,7 @@ i.MX28, this can be generated with the u-boot.sb target in U-Boot.
 configuration:
  * path
 
-## For i.MX6/7 SoCs
+## For NXP i.MX6/7 SoCs
 
 ### Option1: Use dcd to initialize the external RAM
 
@@ -149,7 +150,7 @@ You can generate this by compiling the u-boot.imx target in U-Boot.
 configuration:
  * path
 
-## For i.MX8 devices
+## For NXP i.MX8 devices
 
 [example](../src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
 
@@ -171,7 +172,7 @@ send.
 configuration:
  * path
 
-## For AM335 devices
+## For TI AM335x devices
 
 [example](../src/snagrecover/templates/am335-beaglebone-black.yaml)
 
@@ -192,7 +193,7 @@ configuration:
 your spl configuration. it could impose constraints on how you name your u-boot
 binary file.
 
-## For Allwinner devices
+## For Allwinner SUNXI devices
 
 ### Option 1: Single SPL+U-Boot binary
 [example](../src/snagrecover/templates/sunxi-orangepi-pc.yaml)
@@ -216,12 +217,12 @@ SPL part, you can typically use u-boot.img for this
 configuration:
  * path
 
-## For AM62 devices
+## For TI AM62x devices
 
 [example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
 **Warning:** Please refer to 
-(this documentation)[https://u-boot.readthedocs.io/en/latest/board/ti/am62x_sk.html]
+[this documentation](https://u-boot.readthedocs.io/en/latest/board/ti/am62x_sk.html)
 for building the required images. When building the U-Boot SPL image for R5,
 please make sure that the resulting SPL supports Booting from DFU! The
 defconfig indicated by the linked documentation does not guarantee this!
