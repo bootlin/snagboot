@@ -88,8 +88,10 @@ Connect a USB cable to the port corresponding to the USB0 interface of the SOC.
 Make sure that the ROM code is trying to boot from USB. Use your board’s boot
 switches and/or other methods to prevent the board from booting from any
 non-volatile memories. The host system should detect a new RNDIS Ethernet gadget
-which will be registered as a new network interface. Please take care to check
-that the ROM code has not booted from any other source! 
+which will be registered as a new network interface, such as:
+	ID 0451:6141 Texas Instruments, Inc. AM335x USB
+Please take care to check that the ROM code has not booted from any other
+source!
 
 Once the USB device has appeared, note its device id and vendor id, we will
 refer to those as ROMUSB\_PID and ROMUSB\_VID respectively. You should also note
@@ -125,12 +127,14 @@ forget to log out of the new shell after recovery.
 
 Reset the board and run ip addr. Check that the board interface appears. Then,
 run the recovery tool as you would normally (see [running
-snagrecover](snagrecover)). 
+snagrecover](snagrecover.md)), eg for the Beagle Bone Black:
 
-e.g. snagrecover -s am335 -f recovery/templates/beaglebone_black.yaml 
+```bash
+snagrecover -s am335 -f src/snagrecover/templates/am335-beaglebone_black.yaml
+```
 
-Finally, exit the recovery shell. This will cleanup the network namespace and
-udev rules. You can also run:  
+Once the recovery done, exit the recovery shell. This will cleanup the
+network namespace and udev rules. You can also run:
 
 ```bash 
 sudo scripts/am335_usb_setup.sh -c 
