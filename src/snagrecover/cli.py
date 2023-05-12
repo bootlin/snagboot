@@ -134,5 +134,4 @@ Templates:
 	print(f"Done recovering {soc_model} board")
 	if args.loglevel != "silent":
 		print(f"Logs were appended to {args.logfile}")
-	logger.info("Done recovering {soc_model} board")
-
+	logger.info(f"Done recovering {soc_model} board")
