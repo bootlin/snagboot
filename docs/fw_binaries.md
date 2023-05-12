@@ -126,7 +126,7 @@ configuration:
 
 [example](../src/snagrecover/templates/imx7-colibri-imx7d.yaml)
 
-**u-boot-with-dcd:** For some boards, you can build the flash.bin target in
+**u-boot-with-dcd:** For some boards, you can build the `u-boot.imx` target in
 U-Boot which contains an IVT header + a DCD + U-Boot proper. The DCD will be
 used to initialize external RAM and U-Boot proper will be installed immediately
 after this.
