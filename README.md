@@ -56,9 +56,9 @@ udev rules to pick a more restrictive group if you wish.
 
 ## Usage guide
 
-To recover and reflash a board using snagboot : 
+To recover and reflash a board using snagboot:
 
-1. Check that your SoC is supported in snagrecover by running : `snagrecover --list-socs`
+1. Check that your SoC is supported in snagrecover by running: `snagrecover --list-socs`
 2. [Setup your board for recovery](docs/board_setup.md)
 3. [Build or download the firmware binaries necessary for recovering and reflashing the board.](docs/fw_binaries.md)
 4. [Run snagrecover](docs/snagrecover.md) and check that the recovery was a success i.e. that U-Boot is running properly.
