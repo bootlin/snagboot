@@ -21,15 +21,17 @@ for a more precise list of supported SoCs.
 Snagboot can be installed as a local Python wheel. An installation script is
 provided to automatically build and install the package.
 
-libhidapi development headers are required. On Debian, you can install the
-libhidapi-dev package.
+Requirements:
 
-ensurepip is required for the build to work. On Debian, you can install the
-python[your python version]-venv package.
+ * The libhidapi development headers. On Debian, you can install the
+   `libhidapi-dev` package
+ * The ensurepip Python package. On Debian, you can install the
+   python[your python version]-venv package
+
+Build steps:
 
 ```bash
 $ cd snagboot
-$ chmod u+x install.sh
 $ ./install.sh
 ```
 
@@ -54,9 +56,9 @@ udev rules to pick a more restrictive group if you wish.
 
 ## Usage guide
 
-To recover and reflash a board using snagboot : 
+To recover and reflash a board using snagboot:
 
-1. Check that your SoC is supported in snagrecover by running : snagrecover --list-socs
+1. Check that your SoC is supported in snagrecover by running: `snagrecover --list-socs`
 2. [Setup your board for recovery](docs/board_setup.md)
 3. [Build or download the firmware binaries necessary for recovering and reflashing the board.](docs/fw_binaries.md)
 4. [Run snagrecover](docs/snagrecover.md) and check that the recovery was a success i.e. that U-Boot is running properly.
