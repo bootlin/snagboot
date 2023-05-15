@@ -28,13 +28,13 @@ recovery_config = {} # Global immutable config to be initialized with CLI args
 def get_family(soc_model: str) -> str:
         with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
                 socs = yaml.safe_load(file)
-        family = (socs["tested"] | socs["untested"])[soc_model]["family"]
+        family = {**socs["tested"], **socs["untested"]}[soc_model]["family"]
         return family
 
 def check_soc_model(soc_model: str):
 	with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
 		socs = yaml.safe_load(file)
-	if soc_model not in socs["tested"] | socs["untested"]:
+	if soc_model not in {**socs["tested"], **socs["untested"]}:
 		cli_error(f"unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs))
 	return None
 
@@ -51,7 +51,7 @@ def init_config(args: list):
 		for fw in args.firmware:
 			if type(fw) != dict:
 				cli_error("firmware config to CLI did not evaluate to Python3 dict: {fw}")
-			fw_configs |= fw
+			fw_configs = {**fw_configs, **fw}
 		recovery_config["firmware"] = fw_configs
 		if args.firmware_file:
 			print("Warning: You passed firmware configuration via files AND direct CLI arguments.")
@@ -59,7 +59,7 @@ def init_config(args: list):
 		#get firmware configs
 		for path in args.firmware_file:
 			with open(path, "r") as file:
-				fw_configs |= yaml.safe_load(file)
+				fw_configs = {**fw_configs, **yaml.safe_load(file)}
 		if type(fw_configs) != dict:
 			cli_error(f"firmware config passed to CLI did not evaluate to dict: {fw_configs}")
 		recovery_config["firmware"] = fw_configs

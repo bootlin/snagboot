@@ -21,7 +21,7 @@ The rest of the command line arguments are optional.
 
 Examples:
 ```bash
-snagrecover -s stm32mp15 -f stm32mp15.yaml -p 0483:df11
-snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}" -p 0483:df11
+snagrecover -s stm32mp15 -f stm32mp15.yaml
+snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}"
 ```
 
