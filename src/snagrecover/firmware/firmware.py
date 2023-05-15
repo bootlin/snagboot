@@ -27,6 +27,7 @@ from snagrecover.firmware.sama5_fw import sama5_run
 from snagrecover.firmware.am335_fw import am335_run
 from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
 from snagrecover.config import recovery_config
+from snagrecover.utils import cli_error
 import time
 import usb
 
@@ -40,7 +41,8 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	elif fw_name == "fip":
 		partprefix = "@Partition3"
 	else:
-		raise Exception(f"Unsupported firmware {fw_name}")
+		cli_error(f"unsupported firmware {fw_name}")
+	print("Searching for partition id...")
 	partid = dfu.search_partid(port, partprefix, match_prefix=True)
 	if partid is None and partprefix == "@Partition3":
 		partprefix = "@SSBL"
@@ -48,7 +50,9 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partprefix}*'")
 	dfu_cmd = dfu.DFU(port)
+	print("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
+	print("Done")
 	return None
 
 def am62_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
@@ -64,14 +68,18 @@ def am62_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 	elif fw_name == "u-boot":
 		partname = "u-boot.img"
 	else:
-		raise Exception(f"Unsupported firmware {fw_name}")
+		cli_error(f"unsupported firmware {fw_name}")
+	print("Searching for partition id...")
 	partid = dfu.search_partid(dev, partname)
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partname}'")
 	dfu_cmd = dfu.DFU(dev, stm32=False)
+	print("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
+	print("Done")
 	if fw_name == "tispl":
 		#run tispl firmware
+		print("Sending detach command...")
 		dfu_cmd.detach(partid)
 
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
@@ -85,7 +93,7 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	try:
 		fw_path = recovery_config["firmware"][fw_name]["path"]
 	except KeyError:
-		raise Exception(f"Could not find firmware {fw_name}, please check your recovery config")
+		cli_error(f"Could not find firmware {fw_name}, please check your recovery config")
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
 
@@ -105,6 +113,6 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	elif soc_family == "am62":
 		am62_run(port, fw_name, fw_blob)
 	else:
-		raise ValueError(f"Unknown soc family {soc_family}")
+		raise Exception(f"Unsupported SoC family {soc_family}")
 	print(f"Done installing firmware {fw_name}")
 

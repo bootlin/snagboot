@@ -96,7 +96,9 @@ def am335_usb(port, fw_name: str):
 	bootp_thread = threading.Thread(name="Recovery BOOTP server for AM335", target=bootp_proc, args=[bootp_server])
 	bootp_thread.daemon = True
 
+	print("Starting TFTP server...")
 	tftp_thread.start()
+	print("Starting BOOTP server...")
 	bootp_thread.start()
 
 	t0 = time.time()
@@ -113,9 +115,11 @@ def am335_usb(port, fw_name: str):
 	#Note that this will not interrupt a tftp transfer in progress
 	tftp_server.stop()
 	logger.info("Waiting for TFTP server to stop...")
+	print("Waiting for TFTP shutdown...")
 	tftp_thread.join()
 	bootp_server.shutdown()
 	bootp_server.server_close()
+	print("Waiting for BOOTP shutdown...")
 	logger.info("Waiting for BOOTP server to stop...")
 	bootp_thread.join()
 

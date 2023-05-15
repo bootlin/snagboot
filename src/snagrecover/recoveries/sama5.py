@@ -27,6 +27,7 @@ from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
+from snagrecover.utils import access_error
 import logging
 
 logger = logging.getLogger("snagrecover")
@@ -87,14 +88,14 @@ def main():
 	soc_model = recovery_config["soc_model"]
 	dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
 	if dev is None:
-		raise Exception("Error: Could not find USB device")
+		access_error("USB", f"{USB_VID:04x}:{USB_PID:04x}")
 	dev.reset()#SAM-BA monitor needs a reset sometimes
 
 	port_path = f"/dev/serial/by-id/usb-{USB_VID:04x}_{USB_PID:04x}-if00"
 	t0 = time.time()
 	while not os.path.exists(port_path):
 		if time.time() - t0 > SERIAL_PORT_TIMEOUT:
-			raise Exception(f"Error: could not find serial port {port_path}")
+			access_error("serial port", f"{port_path}")
 
 	with serial.Serial(os.path.realpath(port_path), baudrate=115200, timeout=5, write_timeout=5) as port:
 		monitor = sambamon.SambaMon(port)
@@ -105,7 +106,7 @@ def main():
 		#CHECK BOARD ID
 		print("Checking chip id...")
 		if not check_id(memops):
-			raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized")
+			raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
 
 		print("Done checking")
 		if soc_model == "sama5d2":

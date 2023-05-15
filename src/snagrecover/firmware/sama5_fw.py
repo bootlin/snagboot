@@ -31,24 +31,29 @@ def sama5_run(port, fw_name: str, fw_blob: bytes):
 	backend = sambamon.SambaMon(port)
 	memops = memory_ops.MemoryOps(backend)
 	if fw_name == "extram":
+		print("Initializing external RAM...")
 		applet = samba_applet.ExtramApplet(memops, fw_blob)
 		if applet is None:
 			raise ValueError("Error: unsupported board model")
 		extram_status = applet.run()
 		if extram_status != "APPLET_SUCCESS":
 			raise ValueError("Error: extram applet returned error status: " + extram_status)
+		print("Done")
 	elif fw_name == "lowlevel":
+		print("Initializing clock tree...")
 		applet = samba_applet.LowlevelApplet(memops, fw_blob)
-		if applet is None:
-			raise ValueError("Error: unsupported board model")
 		lowlevel_status = applet.run()
 		if lowlevel_status != "APPLET_SUCCESS":
 			raise ValueError("Error: lowlevel applet returned error status: " + lowlevel_status)
+		print("Done")
 	elif fw_name == "u-boot":
 		addr = recovery_config["firmware"]["u-boot"]["address"]
+		print("Downloading file...")
 		memops.write_blob(fw_blob, addr, offset=0, size=len(fw_blob))
+		print("Done")
+		print("Jumping to U-Boot...")
 		memops.jump(addr)
 	else:
-		raise ValueError("Error: Unsupported firmware")
+		raise ValueError(f"Error: Unsupported firmware {fw_name}")
 	return None
 

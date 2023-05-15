@@ -23,6 +23,7 @@ from snagrecover.config import recovery_config
 from snagrecover.firmware.firmware import run_firmware
 import subprocess
 import os
+import sys
 
 def main():
 	if recovery_config["args"]["uart"]:
@@ -37,7 +38,8 @@ def main():
 		process = subprocess.Popen(bash_cmd.split(), stdout=subprocess.PIPE)
 		output, error = process.communicate()
 		if output.decode("ascii") != f"{netns_name}\n":
-			raise Exception(f"This recovery needs to be run in the {netns_name} namespace!\nDid you run sudo scripts/am335_usb_setup.sh?")
+			print(f"This recovery needs to be run in the {netns_name} namespace!\nDid you run sudo scripts/am335_usb_setup.sh?", file=sys.stderr)
+			sys.exit(-1)
 
 		#Install and run SPL
 		run_firmware(None, "spl")

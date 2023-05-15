@@ -91,6 +91,7 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 
 	if fw_name == "u-boot-with-dcd":
 		#WRITE DEVICE CONFIGURATION DATA
+		print("Writing Device Configuration Data...")
 		if ivtable.dcd == 0:
 			raise ValueError("Error: No DCD data in boot image")
 		logger.info("Writing DCD...")
@@ -103,6 +104,7 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		dcd_size = int.from_bytes(fw_blob[dcd_offset + 1:dcd_offset + 3], "big")
 		sdp_cmd.write_dcd(fw_blob[dcd_offset:dcd_offset + dcd_size], write_addr, 0, dcd_size)
 		dcd_offset = ivtable.offset + ivtable.dcd - ivtable.addr
+		print("Done")
 		logger.info("Done writing DCD")
 
 	logger.info(f"Downloading firmware {fw_name}...")
@@ -117,7 +119,9 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			raise ValueError("Error: Invalid offset found for U-BOOT proper in boot image")
 		#We ask for a write at 0 but SPL should determine u-boot proper's 
 		#write address on its own
+		print("Downloading file...")
 		memops.write_blob(fw_blob, 0, write_offset, write_size)
+		print("Done\nJumping to firmware...")
 		memops.jump(0)
 		return None
 	else:
@@ -129,13 +133,16 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		#protocols other than SPLV/U have a maximum download size
 		#split download into chunks < MAX_DOWNLOAD_SIZE
 		chunk_offset = 0
+		print("Downloading file...")
 		for chunk in utils.dnload_iter(fw_blob[ivtable.offset:ivtable.offset + write_size], 0x200000):
 			memops.write_blob(chunk, ivtable.addr + chunk_offset, chunk_offset, len(chunk))
 			chunk_offset += MAX_DOWNLOAD_SIZE
+		print("Done")
 
 	if fw_name in ["u-boot-with-dcd", "SPL"] or (fw_name == "flash-bin" and subfw_name == "spl"):
 		if soc_model in ["imx6q","imx6d","imx6sl"]:
 			#CLEAR DCD
+			print("Clearing Device Configuration Data...")
 			logger.info("Clearing DCD...")
 			"""
 			Re-copy the IVT with dcd address set to 0.
@@ -150,14 +157,18 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 				new_ivt[12:16] = bytearray(b"\x00\x00\x00\x00")
 				memops.write_blob(new_ivt, ivtable.addr, 0, 1024)
 			logger.info("Done clearing DCD")
+			print("Done")
 		else:
 			#SEND SKIP_DCD_HEADER
+			print("Skipping DCD header...")
 			logger.info("Skipping DCD...")
 			sdp_cmd.skip_dcd_header()
 			logger.info("Done skipping DCD")
+			print("Done")
 
 	#JUMP TO FIRMWARE
 	logger.info(f"Jumping to firmware {fw_name}")
+	print(f"Jumping to {fw_name}...")
 	memops.jump(ivtable.addr)
 	return None
 

@@ -23,6 +23,7 @@ from snagrecover.protocols import fel
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
+from snagrecover.utils import access_error
 
 USB_TIMEOUT = 5000
 USB_RETRY = 10
@@ -35,7 +36,7 @@ def main():
 		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
 		if dev is None:
 			if i == USB_RETRY - 1:
-				raise Exception("Maximum retry count exceeded")
+				access_error("USB FEL", f"{USB_VID:04x}:{USB_PID:04x}")
 			print("Failed to find device, retrying...")
 			continue
 		try:
@@ -50,10 +51,10 @@ def main():
 
 	#Try to set device configuration
 	for i in range(USB_RETRY):
-		dev = usb.core.find(idVendor=0x1f3a, idProduct=0xefe8)
+		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
 		if dev is None:
 			if i == usb_retry - 1:
-				raise Exception("Maximum retry count exceeded")
+				access_error("USB FEL", f"{USB_VID:04x}:{USB_PID:04x}")
 			print("Failed to find device, retrying...")
 			continue
 		try:

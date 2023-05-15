@@ -24,6 +24,7 @@ from snagrecover.protocols import dfu
 from snagrecover.recoveries import stm32_flashlayout as flashlayout
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
+from snagrecover.utils import access_error
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -38,7 +39,7 @@ def main():
 	#USB ENUMERATION
 	dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
 	if dev is None:
-		raise ValueError('STM32 USB device not found')
+		access_error("USB DFU", f"{USB_VID:04x}:{USB_PID:04x}")
 	cfg = dev.get_active_configuration()
 	logger.debug("USB config:")
 	for line in str(cfg).splitlines():
@@ -69,7 +70,7 @@ def main():
 		time.sleep(1.5)
 		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
 		if dev is None:
-			raise ValueError('STM32 USB device not found')
+			access_error("USB DFU", f"{USB_VID:04x}:{USB_PID:04x}")
 		dfu_cmd = dfu.DFU(dev)
 	run_firmware(dev, "fip")
 

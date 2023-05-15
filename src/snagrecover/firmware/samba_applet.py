@@ -46,6 +46,7 @@ import logging
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import memory_ops
 from snagrecover.config import recovery_config
+from snagrecover.utils import cli_error
 
 class Applet():
 	#constants defined in atmel-software-package/samba_applets
@@ -172,5 +173,5 @@ class ExtramApplet(Applet):
 		self.mailbox["console_ioset"] = recovery_config["firmware"]["extram"]["console_ioset"]
 		self.mailbox["applet_params"]["preset"] = ExtramApplet.ram_presets.get(recovery_config["firmware"]["extram"]["preset"], None)
 		if self.mailbox["applet_params"]["preset"] is None:
-			raise ValueError("Unsupported preset for extram applet")
+			cli_error("Unsupported preset for extram applet")
 

@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
+from snagrecover.utils import cli_error
 import logging
 logger = logging.getLogger("snagrecover")
 import os
@@ -34,7 +35,7 @@ def check_soc_model(soc_model: str):
 	with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
 		socs = yaml.safe_load(file)
 	if soc_model not in socs["tested"] | socs["untested"]:
-		raise ValueError(f"Error: Unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs))
+		cli_error(f"unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs))
 	return None
 
 def init_config(args: list):
@@ -49,7 +50,7 @@ def init_config(args: list):
 	if args.firmware:
 		for fw in args.firmware:
 			if type(fw) != dict:
-				raise TypeError("Firmware config passed to CLI did not evaluate to dict")
+				cli_error("firmware config to CLI did not evaluate to Python3 dict: {fw}")
 			fw_configs |= fw
 		recovery_config["firmware"] = fw_configs
 		if args.firmware_file:
@@ -60,7 +61,7 @@ def init_config(args: list):
 			with open(path, "r") as file:
 				fw_configs |= yaml.safe_load(file)
 		if type(fw_configs) != dict:
-				raise TypeError("Firmware config passed to CLI did not evaluate to dict")
+			cli_error(f"firmware config passed to CLI did not evaluate to dict: {fw_configs}")
 		recovery_config["firmware"] = fw_configs
 
 	#store input arguments in config

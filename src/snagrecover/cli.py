@@ -19,12 +19,7 @@
 
 import sys
 import argparse
-from snagrecover.recoveries.stm32mp1 import main as stm32_recovery
-from snagrecover.recoveries.sama5 import main as sama5_recovery
-from snagrecover.recoveries.imx import main as imx_recovery
-from snagrecover.recoveries.am335 import main as am335_recovery
-from snagrecover.recoveries.sunxi import main as sunxi_recovery
-from snagrecover.recoveries.am62 import main as am62_recovery
+from snagrecover.utils import cli_error
 import snagrecover.config as config
 import pkg_resources
 import yaml
@@ -85,8 +80,7 @@ Templates:
 	if args.template:
 		path = template_path + "/" + args.template + ".yaml"
 		if not os.path.exists(path):
-			print(f"Error: no template named {args.template}, please run snagrecover -h for a list of valid templates")
-			sys.exit(-1)
+			cli_error(f"no template named {args.template}, please run snagrecover -h for a list of valid templates")
 		with open(path, "r") as file:
 			print(file.read(-1))
 		sys.exit(0)
@@ -102,12 +96,10 @@ Templates:
 		sys.exit(0)
 
 	if args.soc is None:
-		print("Error: Missing command line argument --soc")
-		sys.exit(-1)
+		cli_error("missing command line argument --soc")
 
 	if args.firmware is None and (args.firmware_file is None):
-		print("Missing command line argument: --firmware or --firmware-file")
-		sys.exit(-1)
+		cli_error("missing command line argument: --firmware or --firmware-file")
 
 	#initialize global config
 	config.init_config(args)
@@ -118,19 +110,25 @@ Templates:
 	print(f"Starting recovery of {soc_model} board")
 	logger.info(f"Starting recovery of {soc_model} board")
 	if soc_family == "stm32mp1":
+		from snagrecover.recoveries.stm32mp1 import main as stm32_recovery
 		stm32_recovery()
 	elif soc_family == "sama5":
+		from snagrecover.recoveries.sama5 import main as sama5_recovery
 		sama5_recovery()
 	elif soc_family == "imx":
+		from snagrecover.recoveries.imx import main as imx_recovery
 		imx_recovery()
 	elif soc_family == "am335":
+		from snagrecover.recoveries.am335 import main as am335_recovery
 		am335_recovery()
 	elif soc_family == "sunxi":
+		from snagrecover.recoveries.sunxi import main as sunxi_recovery
 		sunxi_recovery()
 	elif soc_family == "am62":
+		from snagrecover.recoveries.am62 import main as am62_recovery
 		am62_recovery()
 	else:
-		raise ValueError(f"Unsupported board family {family}")
+		cli_error(f"unsupported board family {family}")
 	print(f"Done recovering {soc_model} board")
 	if args.loglevel != "silent":
 		print(f"Logs were appended to {args.logfile}")

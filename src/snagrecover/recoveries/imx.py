@@ -54,6 +54,7 @@ import usb
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
+from snagrecover.utils import access_error
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -93,18 +94,22 @@ def main():
 	vid = usb_ids[soc_model][1]
 	pid = usb_ids[soc_model][2]
 
-	with hid.Device(vid, pid) as dev:
-		if protocol == "SDPS":
-			run_firmware(dev, "u-boot-sdps")
-			return None
-		elif "u-boot-with-dcd" in recovery_config["firmware"]:
-			run_firmware(dev, "u-boot-with-dcd")
-			return None
-		elif "SPL" in recovery_config["firmware"]:
-			run_firmware(dev, "SPL")
-		else:
-			run_firmware(dev, "flash-bin", "spl")
-		logger.info("SDP command sequence done, closing hid device...")
+	try:
+		dev = hid.Device(vid, pid)
+	except hid.HIDException:
+		access_error("USB HID", f"{vid:04x}:{pid:04x}")
+	if protocol == "SDPS":
+		run_firmware(dev, "u-boot-sdps")
+		return None
+	elif "u-boot-with-dcd" in recovery_config["firmware"]:
+		run_firmware(dev, "u-boot-with-dcd")
+		return None
+	elif "SPL" in recovery_config["firmware"]:
+		run_firmware(dev, "SPL")
+	else:
+		run_firmware(dev, "flash-bin", "spl")
+	logger.info("SDP command sequence done, closing hid device...")
+	dev.close()
 
 	#WAIT FOR SPL DEVICE
 	print("Waiting for SPL device...")
@@ -133,7 +138,7 @@ def main():
 		time.sleep(1)
 
 	if valid_dev is None:
-		raise Exception("Error: No valid SPL HID device found")
+		access_error("SPL USB HID", "")
 
 	protocol = valid_dev[0]
 	with hid.Device(valid_dev[1], valid_dev[2]) as dev:
