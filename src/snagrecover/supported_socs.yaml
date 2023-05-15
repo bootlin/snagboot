@@ -1,67 +1,39 @@
 tested:
+  a20:
+        family: sunxi
+  a33:
+        family: sunxi
+  a64:
+        family: sunxi
+  am335:
+        family: am335
   am625:
         family: am62
-  stm32mp15:
-        family: stm32mp1
-  stm32mp13:
-        family: stm32mp1
+  h3:
+        family: sunxi
+  imx28:
+        family: imx
+  imx6q:
+        family: imx
+  imx6ull:
+        family: imx
+  imx7d:
+        family: imx
+  imx8mm:
+        family: imx
+  r8:
+        family: sunxi
   sama5d2:
         family: sama5
   sama5d3:
         family: sama5
   sama5d4:
         family: sama5
-  imx8mm:
-        family: imx
-  imx6q:
-        family: imx
-  imx7d:
-        family: imx
-  imx6ull:
-        family: imx
-  am335:
-        family: am335
-  h3:
-        family: sunxi
-  r8:
-        family: sunxi
-  a64:
-        family: sunxi
-  imx28:
-        family: imx
-  a33:
-        family: sunxi
-  a20:
-        family: sunxi
+  stm32mp13:
+        family: stm32mp1
+  stm32mp15:
+        family: stm32mp1
 untested:
-  imx8qxp:
-        family: imx
-  imx8qm:
-        family: imx
-  imx8dxl:
-        family: imx
-  imx815:
-        family: imx
-  imx865:
-        family: imx
-  imx93:
-        family: imx
-  imx6d:
-        family: imx
-  imx6sl:
-        family: imx
-  imx6sx:
-        family: imx
-  imx6ul:
-        family: imx
-  imx6sll:
-        family: imx
-  imx7ulp:
-        family: imx
-  imxrt106x:
-        family: imx
-  imx8mq:
-        family: imx
   a10:
         family: sunxi
   a10s:
@@ -88,11 +60,39 @@ untested:
         family: sunxi
   h616:
         family: sunxi
+  imx6d:
+        family: imx
+  imx6sl:
+        family: imx
+  imx6sll:
+        family: imx
+  imx6sx:
+        family: imx
+  imx6ul:
+        family: imx
+  imx7ulp:
+        family: imx
+  imx815:
+        family: imx
+  imx865:
+        family: imx
+  imx8dxl:
+        family: imx
+  imx8mq:
+        family: imx
+  imx8qm:
+        family: imx
+  imx8qxp:
+        family: imx
+  imx93:
+        family: imx
+  imxrt106x:
+        family: imx
   r16:
         family: sunxi
-  r40:
-        family: sunxi
   r329:
+        family: sunxi
+  r40:
         family: sunxi
   r528:
         family: sunxi
@@ -100,9 +100,9 @@ untested:
         family: sunxi
   v3s:
         family: sunxi
-  v5s:
-        family: sunxi
   v536:
+        family: sunxi
+  v5s:
         family: sunxi
   v831:
         family: sunxi

@@ -19,6 +19,7 @@
 
 import usb
 from snagrecover.protocols import fastboot as fb
+from snagflash.utils import get_usb
 
 
 def fastboot(args):
@@ -26,11 +27,9 @@ def fastboot(args):
 		print("Error: Missing command line argument --port [vid:pid]")
 		sys.exit(-1)
 	dev_addr = args.port.split(":")
-	vendor_id  = int(dev_addr[0], 16)
-	product_id = int(dev_addr[1], 16)
-	dev = usb.core.find(idVendor=vendor_id, idProduct=product_id)
-	if dev is None:
-		raise ValueError('USB device not found')
+	vid  = int(dev_addr[0], 16)
+	pid = int(dev_addr[1], 16)
+	dev = get_usb(vid, pid)
 	dev.default_timeout = int(args.timeout)
 	fast = fb.Fastboot(dev)
 	for cmd in args.fastboot_cmd:

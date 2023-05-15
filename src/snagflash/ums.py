@@ -26,8 +26,18 @@ from snagflash.bmaptools import BmapCopy
 import sys
 import logging
 logger = logging.getLogger("snagflash")
+import time
 
-BIG_FILE_THRESHOLD = 0x1000000
+FILEPATH_RETRIES = 5
+
+def wait_filepath(path: str):
+	retries = 0
+	while not os.path.exists(path):
+		if retries >= FILEPATH_RETRIES:
+			raise ValueError(f"Timeout: file {path} does not exist")
+		time.sleep(2)
+		print(f"Retrying: find {path}")
+		retries += 1
 
 def bmap_copy(filepath: str, dev, src_size: int):
 	mappath = os.path.splitext(filepath)[0] + ".bmap"
@@ -68,8 +78,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 def write_raw(args):
 	devpath = args.blockdev
 	filepath = args.src
-	if not os.path.exists(devpath):
-		raise ValueError(f"Device {devpath} does not exist")
+	wait_filepath(devpath)
 	if not os.path.exists(filepath):
 		raise ValueError(f"File {filepath} does not exist")
 	with open(filepath, "rb") as file:
@@ -83,6 +92,7 @@ def write_raw(args):
 
 def ums(args):
 	if args.dest:
+		wait_filepath(args.dest)
 		shutil.copy(args.src, args.dest)
 	if args.blockdev:
 		write_raw(args)

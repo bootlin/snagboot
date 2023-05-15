@@ -7,6 +7,12 @@ In all flashing modes, snagflash takes the protocol argument, which specifies ei
 
  * -P, --protocol {dfu,ums,fastboot} Protocol to use for flashing
 
+If running snagflash right after snagrecover e.g. in an automated setting,
+make sure that U-Boot will expose the DFU/Fastboot/UMS device by the time
+snagflash runs. You might want to configure your recovery U-Boot so that it
+autoruns the relevant command. In case snagflash doesn't find the USB port/UMS
+device it is looking for, it will retry a few times then fail.
+
 ## DFU mode
 
 In DFU mode, snagflash takes two additional arguments :

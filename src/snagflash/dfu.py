@@ -20,7 +20,7 @@
 from snagrecover.protocols import dfu
 import logging
 logger = logging.getLogger("snagflash")
-from snagflash.utils import int_arg
+from snagflash.utils import int_arg,get_usb
 import usb
 
 def dfu_cli(args):
@@ -30,11 +30,9 @@ def dfu_cli(args):
 		print("Error: Missing command line argument --port [vid:pid]")
 		sys.exit(-1)
 	dev_addr = args.port.split(":")
-	vendor_id  = int(dev_addr[0], 16)
-	product_id = int(dev_addr[1], 16)
-	dev = usb.core.find(idVendor=vendor_id, idProduct=product_id)
-	if dev is None:
-		raise ValueError('USB device not found')
+	vid  = int(dev_addr[0], 16)
+	pid = int(dev_addr[1], 16)
+	dev = get_usb(vid, pid)
 	dev.default_timeout = int(args.timeout)
 	for dfu_config in args.dfu_config:
 		(altsetting,sep,path) = dfu_config.partition(":")

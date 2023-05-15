@@ -53,8 +53,9 @@ $ sudo udevadm control --reload-rules
 $ sudo udevadm trigger
 ```
 
-The affected devices will be accessible by the "plugdev" group. You can modify
-the udev rules to pick a more restrictive group if you wish.
+The affected devices will be accessible by the "plugdev" group, so please check
+that you are part of this group. You can also modify the udev rules to pick a
+more restrictive group if you wish.
 
 ## Usage guide
 
@@ -65,6 +66,9 @@ To recover and reflash a board using snagboot:
 3. [Build or download the firmware binaries necessary for recovering and reflashing the board.](docs/fw_binaries.md)
 4. [Run snagrecover](docs/snagrecover.md) and check that the recovery was a success i.e. that U-Boot is running properly.
 5. [Run snagflash](docs/snagflash.md) to reflash the board
+
+If you encounter issues, please take a look at the 
+[troubleshooting](docs/troubleshooting.md) section.
 
 You can play the snagrecover tutorial in your terminal!
 
