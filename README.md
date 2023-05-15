@@ -48,9 +48,9 @@ You also need to install udev rules so that snagrecover has read and write
 access to the USB devices exposed by the SoCs.
 
 ```bash
-$ cp 80-snagboot.rules /etc/udev/rules.d/
-$ udevadm control --reload-rules
-$ udevadm trigger
+$ sudo cp 80-snagboot.rules /etc/udev/rules.d/
+$ sudo udevadm control --reload-rules
+$ sudo udevadm trigger
 ```
 
 The affected devices will be accessible by the "plugdev" group. You can modify
