@@ -34,7 +34,8 @@ def wait_filepath(path: str):
 	retries = 0
 	while not os.path.exists(path):
 		if retries >= FILEPATH_RETRIES:
-			raise ValueError(f"Timeout: file {path} does not exist")
+			print(f"Timeout: file {path} does not exist", file=sys.stderr)
+			sys.exit(-1)
 		time.sleep(2)
 		print(f"Retrying: find {path}")
 		retries += 1
@@ -80,7 +81,8 @@ def write_raw(args):
 	filepath = args.src
 	wait_filepath(devpath)
 	if not os.path.exists(filepath):
-		raise ValueError(f"File {filepath} does not exist")
+		print(f"File {filepath} does not exist", file=sys.stderr)
+		sys.exit(-1)
 	with open(filepath, "rb") as file:
 		blob = file.read(-1)
 	if not args.size is None:

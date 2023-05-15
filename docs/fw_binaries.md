@@ -29,8 +29,24 @@ using, you will probably want to configure your U-Boot build so that it can
 interact with snagflash correctly after recovery (e.g. use DFU, UMS or
 fastboot).
 
-**Note:** When configuring U-Boot, you'll probably want to disable autoboot,
-unless you're setting up a automated recovery+boot process.
+## General tips on configuring U-Boot
+
+In many cases, in can be necessary to build the recovery U-Boot yourself
+e.g. when existing images do not work or SoC-specific configuration options are
+required. Here are a few SoC-independent tips that can be helpful when
+configuring U-Boot.
+
+- Set `CONFIG_AUTOBOOT=y` if you don't want U-Boot to try and boot automatically
+  after recovery e.g. if you want to get a U-Boot command line.
+- Sometimes U-Boot will try to load an environment from some memory device,
+  which can cause issues. Setting `CONFIG_ENV_IS_NOWHERE=y` can help avoid this.
+- Do not change USB gadget VID:PID values `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM`
+  if they are already defined as these are sometimes hardcoded in snagrecover.
+- If you want to use snagflash after recovery, make sure to write down the
+  aformentioned `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM` values so that you can
+  pass them to snagflash and setup proper udev rules so that you have rw access
+  rights to the corresponding USB device. See [snagflash docs](snagflash.md) for more
+  details.
 
 ## For ST STM32MP1 devices 
 

@@ -48,6 +48,7 @@ You also need to install udev rules so that snagrecover has read and write
 access to the USB devices exposed by the SoCs.
 
 ```bash
+$ snagrecover --udev > 80-snagboot.rules
 $ sudo cp 80-snagboot.rules /etc/udev/rules.d/
 $ sudo udevadm control --reload-rules
 $ sudo udevadm trigger
@@ -58,6 +59,9 @@ that you are part of this group. You can also modify the udev rules to pick a
 more restrictive group if you wish.
 
 ## Usage guide
+
+**Note:** Running snagboot as root is not recommended and will typically not
+work, since it is installed for the current user only
 
 To recover and reflash a board using snagboot:
 

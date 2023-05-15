@@ -13,6 +13,14 @@ snagflash runs. You might want to configure your recovery U-Boot so that it
 autoruns the relevant command. In case snagflash doesn't find the USB port/UMS
 device it is looking for, it will retry a few times then fail.
 
+**Warning:** Since these vid:pid pairs can be wildly different from one U-Boot
+to another, they are not hardcoded in snagflash. Therefore, you will not
+necessary have access rights to these devices. Assuming that your U-Boot config
+has CONFIG_USB_GADGET_VENDOR_NUM=vid and CONFIG_USB_GADGET_PRODUCT_NUM=pid, you
+can add the following udev rule to get access:
+
+`SUBSYSTEM=="usb", ATTRS{idVendor}=="vid", ATTRS{idProduct}=="pid", MODE="0660", GROUP="plugdev"`
+
 ## DFU mode
 
 In DFU mode, snagflash takes two additional arguments :

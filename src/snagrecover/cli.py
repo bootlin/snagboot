@@ -28,6 +28,7 @@ import logging
 import ast
 
 def cli():
+	udev_path = os.path.dirname(__file__) + "/80-snagboot.rules"
 	template_path = os.path.dirname(__file__) + "/templates"
 	template_listing = "\n".join([filename[:-5] for filename in os.listdir(template_path)])
 	example = '''Examples:
@@ -52,6 +53,7 @@ Templates:
 	utilargs.add_argument("--list-socs", help="list supported socs", action="store_true")
 	utilargs.add_argument("--version", help="show version", action="store_true")
 	utilargs.add_argument("-t", "--template", help="get an example firmware configuration file", metavar="name")
+	utilargs.add_argument("--udev", help="get required udev rules for snagrecover", action="store_true")
 
 	args = parser.parse_args()
 
@@ -82,6 +84,12 @@ Templates:
 		if not os.path.exists(path):
 			cli_error(f"no template named {args.template}, please run snagrecover -h for a list of valid templates")
 		with open(path, "r") as file:
+			print(file.read(-1))
+		sys.exit(0)
+
+	#print udev rules
+	if args.udev:
+		with open(udev_path, "r") as file:
 			print(file.read(-1))
 		sys.exit(0)
 

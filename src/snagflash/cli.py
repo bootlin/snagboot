@@ -21,6 +21,7 @@ import argparse
 from snagflash.dfu import dfu_cli
 from snagflash.ums import ums
 from snagflash.fastboot import fastboot
+from snagflash.utils import cli_error
 import logging
 import pkg_resources
 import sys
@@ -81,16 +82,16 @@ def cli():
 
 	if args.protocol == "dfu":
 		if args.dfu_config is None:
-			raise Exception("Missing at least one DFU config!")
+			cli_error("missing at least one DFU config!")
 		dfu_cli(args)
 	elif args.protocol == "ums":
 		if args.src is None or (args.blockdev is None and args.dest is None):
-			raise Exception("Missing a UMS config!")
+			cli_error("missing an UMS config!")
 		ums(args)
 	elif args.protocol == "fastboot":
 		if args.fastboot_cmd is None:
-			raise Exception("Missing at least one fastboot command!")
+			cli_error("missing at least one fastboot command!")
 		fastboot(args)
 	else:
-		raise Exception(f"Unrecognized protocol {args.protocol}")
+		cli_error(f"unrecognized protocol {args.protocol}")
 

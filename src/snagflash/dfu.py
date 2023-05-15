@@ -20,15 +20,14 @@
 from snagrecover.protocols import dfu
 import logging
 logger = logging.getLogger("snagflash")
-from snagflash.utils import int_arg,get_usb
+from snagflash.utils import int_arg,get_usb,cli_error
 import usb
 
 def dfu_cli(args):
 	if args.dfu_config is None:
-		raise Exception("Missing command line argument --dfu-config")
+		cli_error("missing command line argument --dfu-config")
 	if (args.port is None) or (":" not in args.port):
-		print("Error: Missing command line argument --port [vid:pid]")
-		sys.exit(-1)
+		cli_error("missing command line argument --port [vid:pid]")
 	dev_addr = args.port.split(":")
 	vid  = int(dev_addr[0], 16)
 	pid = int(dev_addr[1], 16)
