@@ -24,22 +24,20 @@ from snagrecover.protocols import dfu
 from snagrecover.recoveries import stm32_flashlayout as flashlayout
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error
+from snagrecover.utils import access_error,parse_usb,get_usb
 import logging
 logger = logging.getLogger("snagrecover")
 
 USB_TIMEOUT = 10
-USB_VID = 0x0483
-USB_PID = 0xdf11
 
 ###################### main ##################################
 
 def main():
 	soc_model = recovery_config["soc_model"]
 	#USB ENUMERATION
-	dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
-	if dev is None:
-		access_error("USB DFU", f"{USB_VID:04x}:{USB_PID:04x}")
+	usb_vid = recovery_config["rom_usb"][0]
+	usb_pid = recovery_config["rom_usb"][1]
+	dev = get_usb(usb_vid, usb_pid)
 	cfg = dev.get_active_configuration()
 	logger.debug("USB config:")
 	for line in str(cfg).splitlines():
@@ -68,10 +66,19 @@ def main():
 	#DOWNLOAD U-BOOT
 	if soc_model == "stm32mp13":
 		time.sleep(1.5)
-		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
-		if dev is None:
-			access_error("USB DFU", f"{USB_VID:04x}:{USB_PID:04x}")
-		dfu_cmd = dfu.DFU(dev)
+	#We need to reset here, in the case where TF-A uses a different USB ID
+	if "usb" in recovery_config["firmware"]["tf-a"]:
+		(usb_vid,usb_pid) = parse_usb(recovery_config["firmware"]["tf-a"]["usb"])
+		try:
+			dev.reset()
+		except usb.core.USBError:
+			#this should actually fail
+			pass
+		time.sleep(0.5)
+	usb.util.dispose_resources(dev)
+	dev = get_usb(usb_vid, usb_pid)
+	cfg = dev.get_active_configuration()
+	dfu_cmd = dfu.DFU(dev)
 	run_firmware(dev, "fip")
 
 	#DETACH DFU DEVICE

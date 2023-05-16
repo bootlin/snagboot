@@ -26,17 +26,18 @@ from snagrecover.config import recovery_config
 from snagrecover.utils import access_error
 
 USB_TIMEOUT = 5000
-USB_RETRY = 10
-USB_VID = 0x1f3a
-USB_PID = 0xefe8
+USB_RETRY = 5 
 
 def main():
 	#Try to reset device
+	usb_vid = recovery_config["rom_usb"][0]
+	usb_pid = recovery_config["rom_usb"][1]
+	#FEL devices seem to require a slightly special retry procedure
 	for i in range(USB_RETRY):
-		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
+		dev = usb.core.find(idVendor=usb_vid, idProduct=usb_pid)
 		if dev is None:
 			if i == USB_RETRY - 1:
-				access_error("USB FEL", f"{USB_VID:04x}:{USB_PID:04x}")
+				access_error("USB FEL", f"{usb_vid:04x}:{usb_pid:04x}")
 			print("Failed to find device, retrying...")
 			continue
 		try:
@@ -51,10 +52,10 @@ def main():
 
 	#Try to set device configuration
 	for i in range(USB_RETRY):
-		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
+		dev = usb.core.find(idVendor=usb_vid, idProduct=usb_pid)
 		if dev is None:
 			if i == usb_retry - 1:
-				access_error("USB FEL", f"{USB_VID:04x}:{USB_PID:04x}")
+				access_error("USB FEL", f"{usb_vid:04x}:{usb_pid:04x}")
 			print("Failed to find device, retrying...")
 			continue
 		try:

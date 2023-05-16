@@ -27,7 +27,7 @@ from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error
+from snagrecover.utils import access_error,get_usb
 import logging
 
 logger = logging.getLogger("snagrecover")
@@ -40,9 +40,6 @@ aximx_remap = {
 SFR_L2CC_HRAMC = 0xf8030058
 
 SERIAL_PORT_TIMEOUT = 5
-
-USB_VID = 0x03eb
-USB_PID = 0x6124
 
 #chipid config values are from Microchip SAM-BA v3.7 for Linux
 chipid_configs = {
@@ -86,12 +83,12 @@ def main():
 	#CONNECT TO SAM-BA MONITOR
 	print("Connecting to SAM-BA monitor...")
 	soc_model = recovery_config["soc_model"]
-	dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
-	if dev is None:
-		access_error("USB", f"{USB_VID:04x}:{USB_PID:04x}")
+	usb_vid = recovery_config["rom_usb"][0]
+	usb_pid = recovery_config["rom_usb"][1]
+	dev = get_usb(usb_vid, usb_pid)
 	dev.reset()#SAM-BA monitor needs a reset sometimes
 
-	port_path = f"/dev/serial/by-id/usb-{USB_VID:04x}_{USB_PID:04x}-if00"
+	port_path = f"/dev/serial/by-id/usb-{usb_vid:04x}_{usb_pid:04x}-if00"
 	t0 = time.time()
 	while not os.path.exists(port_path):
 		if time.time() - t0 > SERIAL_PORT_TIMEOUT:

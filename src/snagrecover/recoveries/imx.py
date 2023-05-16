@@ -58,26 +58,8 @@ from snagrecover.utils import access_error
 import logging
 logger = logging.getLogger("snagrecover")
 
-usb_ids = {
-"imx8qxp": ["SDPS",0x1fc9,0x012f,0x0002,0xffff],
-"imx8qm": ["SDPS",0x1fc9,0x0129,0x0002,0xffff],
-"imx8dxl": ["SDPS",0x1fc9,0x0147,0x0000,0xffff],
-"imx28": ["SDPS",0x15a2,0x004f,0x0000,0xffff],
-"imx815": ["SDPS",0x1fc9,0x013e,0x0000,0xffff],
-"imx865": ["SDPS",0x1fc9,0x0146,0x0000,0xffff],
-"imx93": ["SDPS",0x1fc9,0x014e,0x0000,0xffff],
-"imx7d": ["SDP",0x15a2,0x0076,0x0000,0xffff],
-"imx6q": ["SDP",0x15a2,0x0054,0x0000,0xffff],
-"imx6d": ["SDP",0x15a2,0x0061,0x0000,0xffff],
-"imx6sl": ["SDP",0x15a2,0x0063,0x0000,0xffff],
-"imx6sx": ["SDP",0x15a2,0x0071,0x0000,0xffff],
-"imx6ul": ["SDP",0x15a2,0x007d,0x0000,0xffff],
-"imx6ull": ["SDP",0x15a2,0x0080,0x0000,0xffff],
-"imx6sll": ["SDP",0x1fc9,0x0128,0x0000,0xffff],
-"imx7ulp": ["SDP",0x1fc9,0x0126,0x0000,0xffff],
-"imxrt106x": ["SDP",0x1fc9,0x0135,0x0000,0xffff],
-"imx8mm": ["SDP",0x1fc9,0x0134,0x0000,0xffff],
-"imx8mq": ["SDP",0x1fc9,0x012b,0x0000,0xffff],
+#USB IDs used by SPL
+spl_usb_ids = {
 "SPL/1": ["SDPU",0x0525,0xb4a4,0x0000,0x04ff],
 "SPL/2": ["SDPU",0x0525,0xb4a4,0x9999,0x9999],
 "SPL/3": ["SDPU",0x3016,0x1001,0x0000,0x04ff],
@@ -86,19 +68,29 @@ usb_ids = {
 "SPL1/3": ["SDPV",0x3016,0x100,0x0500,0x9998]
 }
 
+#SoCs that use the SDPS protocol instead of SDP
+sdps_socs = [
+"imx8qxp",
+"imx8qm",
+"imx8dxl",
+"imx28",
+"imx815",
+"imx865",
+"imx93"
+]
+
 ###################### main ##################################
 
 def main():
 	soc_model = recovery_config["soc_model"]
-	protocol = usb_ids[soc_model][0]
-	vid = usb_ids[soc_model][1]
-	pid = usb_ids[soc_model][2]
+	vid = recovery_config["rom_usb"][0]
+	pid = recovery_config["rom_usb"][1]
 
 	try:
 		dev = hid.Device(vid, pid)
 	except hid.HIDException:
 		access_error("USB HID", f"{vid:04x}:{pid:04x}")
-	if protocol == "SDPS":
+	if soc_model in sdps_socs:
 		run_firmware(dev, "u-boot-sdps")
 		return None
 	elif "u-boot-with-dcd" in recovery_config["firmware"]:
@@ -117,15 +109,15 @@ def main():
 	valid_dev = None
 	while time.time() - t0 < 5 and (valid_dev is None):
 		#Try every possible SPL1 USB config
-		for splid in ["SPL1/1","SPL1/2","SPL1/3","SPL/1","SPL/2","SPL/3"]:
+		for splid in spl_usb_ids.keys():
 			print(f"Trying usb config {splid}")
-			protocol = usb_ids[splid][0]
-			vid = usb_ids[splid][1]
-			pid = usb_ids[splid][2]
+			protocol = spl_usb_ids[splid][0]
+			vid = spl_usb_ids[splid][1]
+			pid = spl_usb_ids[splid][2]
 			try:
 				with hid.Device(vid, pid) as dev:
 					bcdVersion = usb.core.find(idVendor=vid, idProduct=pid).bcdDevice
-					spl1_cfg = usb_ids[splid]
+					spl1_cfg = spl_usb_ids[splid]
 					if spl1_cfg[3] > bcdVersion or spl1_cfg[4] < bcdVersion:
 						raise hid.HIDException("Invalid bcd version")
 					valid_dev = [protocol, vid, pid]

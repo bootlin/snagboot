@@ -9,3 +9,10 @@ python3 -m pip uninstall hid
 python3 -m pip install hid==1.0.4
 ```
 
+## HID exceptions on NXP i.MX
+
+When recovering i.MX boards, it's possible to encounter some fairly vague
+`HIDException` errors. Sometimes, this is dues to a weird USB hardware setup
+e.g. daisy chaining certain hubs. We recommend you try plugging the board
+directly to your computer or using only one USB hub.
+

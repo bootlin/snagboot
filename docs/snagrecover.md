@@ -3,15 +3,18 @@
 You can run “snagrecover -h” for a detailed overview of the available options.
 The following command line arguments are always required: 
 
- * -s: SoC model, this must be one of the SoCs supported by snagrecover, run
+ * `-s soc_model`
+   This must be one of the SoCs supported by snagrecover, run
  	snagrecover --list-socs for a list of supported SoCs
- * -f or -F: Firmware configurations. See
+ * `-f file` or `-F dict`
+    Firmware configurations. See
     [firmware binaries](fw_binaries.md) for more information on this.
 
-For SAMA5 and SUNXI SoCs, the USB port address must be passed via the
-command line:
+If you have changed your ROM code's USB VID/PID, you must specify it using the --rom-usb parameter: 
 
- * --port: USB device address vid:pid
+ * `--rom-usb vid:pid`
+   USB device address vid:pid
+   e.g. --rom-usb 1111:ffff
 
 When recovering an AM335 SOC via UART using the snagrecover, you have to pass
 the --uart flag to the CLI. You can also pass the --baudrate flag in case the

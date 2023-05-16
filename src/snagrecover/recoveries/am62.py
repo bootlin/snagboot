@@ -2,27 +2,22 @@ import usb
 import logging
 logger = logging.getLogger("snagrecover")
 from snagrecover.firmware.firmware import run_firmware
-from snagrecover.utils import access_error
+from snagrecover.utils import get_usb,parse_usb
+from snagrecover.config import recovery_config
 import time
 
-USB_VID = 0x0451
-USB_PID = 0x6165
-USB_MAX_RETRY = 3
-
 def main():
-	dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
-	if dev is None:
-		access_error("USB DFU", f"{USB_VID:x}:{USB_PID:x}")
+	usb_vid = recovery_config["rom_usb"][0]
+	usb_pid = recovery_config["rom_usb"][1]
+	dev = get_usb(usb_vid, usb_pid)
 	run_firmware(dev, "tiboot3")
 	#USB device should re-enumerate at this point
-	retries = 0
-	dev = None
-	while dev is None:
-		if retries >= USB_MAX_RETRY:
-			access_error("USB DFU", f"{USB_VID:x}:{USB_PID:x}")
-		time.sleep(2)
-		dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID)
-		retries += 1
+	usb.util.dispose_resources(dev)
+	#without this delay, USB device will be present but not ready
+	time.sleep(1)
+	if "usb" in recovery_config["firmware"]["tiboot3"]:
+		(usb_vid,usb_pid) = parse_usb(recovery_config["firmware"]["tiboot3"]["usb"])
+	dev = get_usb(usb_vid, usb_pid)
 	run_firmware(dev, "u-boot")
 	run_firmware(dev, "tispl")
 

@@ -40,8 +40,11 @@ configuring U-Boot.
   after recovery e.g. if you want to get a U-Boot command line.
 - Sometimes U-Boot will try to load an environment from some memory device,
   which can cause issues. Setting `CONFIG_ENV_IS_NOWHERE=y` can help avoid this.
-- Do not change USB gadget VID:PID values `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM`
-  if they are already defined as these are sometimes hardcoded in snagrecover.
+- If you change USB gadget VID:PID values
+  `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM`, this will also change SPL's gadget id,
+  so make sure to pass the "usb" firmware parameter when relevant. Note that you
+  should not do this with i.MX SoCs! This is due to USB IDs being used by
+  snagrecover to match protocols.
 - If you want to use snagflash after recovery, make sure to write down the
   aformentioned `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM` values so that you can
   pass them to snagflash and setup proper udev rules so that you have rw access
@@ -68,18 +71,22 @@ configuration:
  * path
 
 **tf-a:** Arm-trusted firmware BL2, with an stm32 image header. This should be
-built for trusted boot, i.e. using SP_MIN as the trusted firmware. In some
-build strategies, you have to pass your U-Boot binary to the tf-a build process
+built for trusted boot, i.e. using SP_MIN as the trusted firmware. In typical
+build strategies, you have to pass your U-Boot binary to the tf-a build process.
+If you change the USB VID/PID values used by tf-a, make sure to pass the "usb"
+firmware parameter.
 
 configuration:
  * path
+ * usb vid:pid (only if you have configured custom USB IDs in TF-A)
 
 ### Example build process:
 
 Download mainline TF-A and U-Boot. In U-Boot:
 
 ```bash 
-make stm32mp15_defconfig make DEVICE_TREE=<your device tree> 
+make stm32mp15_defconfig
+make DEVICE_TREE=<your device tree>
 ```
 
 In TF-A, run make <params> all fip where params contains the following:
@@ -246,10 +253,12 @@ defconfig indicated by the linked documentation does not guarantee this!
 AM62 SoCs require multiple complex firmware images to boot. 
 
 **tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
-container with device tree blobs.
+container with device tree blobs. If you change U-Boot's USB VID/PID, you should
+pass them using the usb firmware parameter.
 
 configuration:
  * path
+ * usb vid:pid (only if you changed the default vid/pid in U-Boot's config)
 
 **u-boot:** FIT container with U-Boot proper for A53 and device tree blobs
 

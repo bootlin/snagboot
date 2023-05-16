@@ -93,12 +93,6 @@ which will be registered as a new network interface, such as:
 Please take care to check that the ROM code has not booted from any other
 source!
 
-Once the USB device has appeared, note its device id and vendor id, we will
-refer to those as ROMUSB\_PID and ROMUSB\_VID respectively. You should also note
-the usb product and vendor ids of the USB ethernet gadget in SPL, which you can
-find in your SPL’s configuration. We will refer to those as SPLUSB\_PID and
-SPLUSB\_VID.
-
 After registering a network interface with the host system, the board will
 periodically send BOOTP boot request  broadcasts. Once the BOOTP exchange is
 completed, the board will request a boot file from the TFTP server indicated by
@@ -117,10 +111,11 @@ polling subprocess.
 ```bash 
 $ cd snagboot 
 $ chmod a+x scripts/am335_usb_setup.sh 
-
-$ sudo scripts/am335_usb_setup.sh -r ROMUSB_VID:ROMUSB_PID \
--s SPLUSB_VID:SPLUSB_PID
+$ sudo scripts/am335_usb_setup.sh
 ```
+
+**Note:** If you have changed the ROM code's or SPL's USB VID/PID, you have to
+pass the new values to the script using the -s and -r args.
 
 At this point, we recommend that you change your shell prompt, so you do not 
 forget to log out of the new shell after recovery.

@@ -18,10 +18,39 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
-from snagrecover.utils import cli_error
+from snagrecover.utils import cli_error,parse_usb
 import logging
 logger = logging.getLogger("snagrecover")
 import os
+
+default_usb_ids =  {
+	#default ROM code USB IDs
+	"stm32mp1": (0x0483,0xdf11),
+	"sama5":    (0x03eb,0x6124),
+	"sunxi":    (0x1f3a,0xefe8),
+	"am62":     (0x0451,0x6165),
+	"imx": {
+		"imx8qxp": (0x1fc9,0x012f),
+		"imx8qm": (0x1fc9,0x0129),
+		"imx8dxl": (0x1fc9,0x0147),
+		"imx28": (0x15a2,0x004f),
+		"imx815": (0x1fc9,0x013e),
+		"imx865": ("SDPS",0x1fc9),
+		"imx93": (0x1fc9,0x014e),
+		"imx7d": (0x15a2,0x0076),
+		"imx6q": (0x15a2,0x0054),
+		"imx6d": (0x15a2,0x0061),
+		"imx6sl": (0x15a2,0x0063),
+		"imx6sx": (0x15a2,0x0071),
+		"imx6ul": (0x15a2,0x007d),
+		"imx6ull": (0x15a2,0x0080),
+		"imx6sll": (0x1fc9,0x0128),
+		"imx7ulp": (0x1fc9,0x0126),
+		"imxrt106x": (0x1fc9,0x0135),
+		"imx8mm": (0x1fc9,0x0134),
+		"imx8mq": (0x1fc9,0x012b),
+	}
+}
 
 recovery_config = {} # Global immutable config to be initialized with CLI args
 
@@ -44,7 +73,18 @@ def init_config(args: list):
 	soc_model = args.soc 
 	check_soc_model(soc_model)
 	recovery_config.update({"soc_model": soc_model})
-	recovery_config.update({"soc_family": get_family(soc_model)})
+	soc_family = get_family(soc_model)
+	recovery_config.update({"soc_family": soc_family})
+	if soc_family != "am335":
+		if args.rom_usb is None:
+			if soc_family == "imx":
+				recovery_config["rom_usb"] = default_usb_ids["imx"][soc_model]
+			else:
+				recovery_config["rom_usb"] = default_usb_ids[soc_family]
+		elif soc_family == "imx":
+			cli_error(f"you cannot pass the --rom-usb arg for i.MX SoCs")
+		else:
+			recovery_config["rom_usb"] = parse_usb(args.rom_usb)
 
 	fw_configs = {}
 	if args.firmware:

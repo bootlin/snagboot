@@ -57,14 +57,18 @@ fail_on_error () {
 	exit -1
 }
 
-ROMUSB=""
-SPLUSB=""
+DEFAULT_ROMUSB="0451:6141"
+DEFAULT_SPLUSB="0451:d022"
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 NETNS_NAME="snagbootnet"
 SUDOER="$(logname)"
+poller_id=""
 
 #delete the new network namespace and udev rules
 cleanup () {
+	if [ ! "$poller_id" == "" ]; then
+		kill -KILL $poller_id
+	fi
 	echo "Deleting namespace $NETNS_NAME..."
 	ip netns delete $NETNS_NAME
 }
@@ -127,12 +131,12 @@ fi
 #check usb args
 usb_regex="^[[:xdigit:]]{4}:[[:xdigit:]]{4}$"
 if [[ ! "$ROMUSB" =~ $usb_regex ]]; then
-	print_usage
-	fail_on_error "Missing -r flag or invalid format for ROM USB gadget address vid:pid"
+	echo "Missing -r flag or invalid format for ROM USB gadget address vid:pid, using default value"
+	ROMUSB=$DEFAULT_ROMUSB
 fi
 if [[ ! "$SPLUSB" =~ $usb_regex ]]; then
-	print_usage
-	fail_on_error "Missing -s flag or invalid format for SPL USB gadget address vid:pid"
+	echo "Missing -s flag or invalid format for SPL USB gadget address vid:pid, using default value"
+	SPLUSB=$DEFAULT_SPLUSB
 fi
 #strip leading zeroes and replace colons with slashes
 ROMUSB=$(echo -n "$ROMUSB/" | sed -e 's/^0*//' -e 's/:0*/:/' -e 's/:/\//')
@@ -155,7 +159,7 @@ while true; do
 	poll_interface
 	sleep 0.5
 done
-} &
+} & poller_id=$!
 
 #network namespace
 if test -f "/run/netns/$NETNS_NAME"; then

@@ -5,7 +5,8 @@ U-Boot start up before connecting to it.
 
 In all flashing modes, snagflash takes the protocol argument, which specifies either DFU, UMS or fastboot.
 
- * -P, --protocol {dfu,ums,fastboot} Protocol to use for flashing
+ * `-P, --protocol {dfu,ums,fastboot}`
+   The protocol to use for flashing
 
 If running snagflash right after snagrecover e.g. in an automated setting,
 make sure that U-Boot will expose the DFU/Fastboot/UMS device by the time
@@ -16,7 +17,7 @@ device it is looking for, it will retry a few times then fail.
 **Warning:** Since these vid:pid pairs can be wildly different from one U-Boot
 to another, they are not hardcoded in snagflash. Therefore, you will not
 necessary have access rights to these devices. Assuming that your U-Boot config
-has CONFIG_USB_GADGET_VENDOR_NUM=vid and CONFIG_USB_GADGET_PRODUCT_NUM=pid, you
+has `CONFIG_USB_GADGET_VENDOR_NUM=vid` and `CONFIG_USB_GADGET_PRODUCT_NUM=pid`, you
 can add the following udev rule to get access:
 
 `SUBSYSTEM=="usb", ATTRS{idVendor}=="vid", ATTRS{idProduct}=="pid", MODE="0660", GROUP="plugdev"`
@@ -25,9 +26,9 @@ can add the following udev rule to get access:
 
 In DFU mode, snagflash takes two additional arguments :
 
- * -p --port vid:pid 
+ * `-p --port vid:pid`
    The USB address of the DFU device exposed by U-Boot 
- * -D --dfu-config  altsetting[,size]:path 
+ * `-D --dfu-config  altsetting[,size]:path`
    The altsetting and path of a file to download to the board. This should match
    the value specified in dfu\_alt\_info in U-Boot. This flag can be passed
    multiple times, to specify multiple files to download. The files will be
@@ -49,19 +50,20 @@ Snagflash can copy a file to either a raw block device or a mounted one. When
 copying to a raw block device, it uses bmap to speed up transfers.
 In UMS mode, snagflash takes two mandatory arguments:
 
- * -s --src filepath
+ * `-s --src filepath`
    Source file to copy to destination
    
 Then either one of:
 
- * -d --dest
+ * `-d --dest path`
    Sets the destination file name for transfers to mounted devices. 
- * -b –blockdev device 
+ * `-b –blockdev device` 
    A file to be written to a raw block device.
  
 and optionally:
 
- * --size You can specify this to copy only a portion of the source
+ * `--size`
+   You can specify this to copy only a portion of the source
  	file. Only works for raw transfers. Can be specified in decimal or
  	hexadecimal.
 
@@ -84,8 +86,10 @@ snagflash -P ums -s binaries/u-boot.stm32 -d /mnt/u-boot.stm32
 
 In fastboot mode, snagflash takes two additional arguments: 
 
- * -p --port vid:pid The USB address of the Fastboot device exposed by U-Boot 
- * -f --fastboot_cmd  cmd:args A fastboot command to be sent to U-Boot. The
+ * `-p --port vid:pid`
+   The USB address of the Fastboot device exposed by U-Boot 
+ * `-f --fastboot_cmd  cmd:args`
+   A fastboot command to be sent to U-Boot. The
  	following commands are supported by snagflash (which does not mean that they
  	are supported by your U-Boot!) :
 
