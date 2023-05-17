@@ -20,7 +20,7 @@
 import usb
 from snagrecover.protocols import fastboot as fb
 from snagflash.utils import get_usb
-
+import sys
 
 def fastboot(args):
 	if (args.port is None) or (":" not in args.port):

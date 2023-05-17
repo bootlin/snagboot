@@ -71,16 +71,16 @@ def get_container_size(boot_blob: bytes) -> int:
 
 	cont_index = 1
 	romimg_offset = CONTAINER_HDR_ALIGNMENT + ROM_BOOTIMG_STRUCT_SIZE
-	romimg_flags = int.from_bytes(boot_blob[romimg_offset + 24:romimg_flags_offset + 28], "little")
-	if romimg.flags & 0x0F == V2X_BOOTIMG_FLAG:
+	romimg_flags = int.from_bytes(boot_blob[romimg_offset + 24:romimg_offset + 28], "little")
+	if romimg_flags & 0x0F == V2X_BOOTIMG_FLAG:
 		#skip V2X container
 		cont_index = 2
 		rom_container_tag = boot_blob[2 * CONTAINER_HDR_ALIGNMENT + 3]
 		if rom_container_tag != b"\x87":
 			return len(boot_blob)
-	container_offset = cindex * CONTAINER_HDR_ALIGNMENT
+	container_offset = cont_index * CONTAINER_HDR_ALIGNMENT
 	num_images = int(boot_blob[container_offset + 11])
-	romimg_offset = rom_cont_offset + ROM_CONTAINER_STRUCT_SIZE + (num_images - 1) * ROM_BOOTIMG_STRUCT_SIZE
+	romimg_offset = container_offset + ROM_CONTAINER_STRUCT_SIZE + (num_images - 1) * ROM_BOOTIMG_STRUCT_SIZE
 	romimg_offset = int.from_bytes(boot_blob[romimg_offset: romimg_offset], "little")
 	romimg_size = int.from_bytes(boot_blob[romimg_offset + 4: romimg_offset + 8], "little")
 	container_size = romimg_offset + romimg_size + cont_index * CONTAINER_HDR_ALIGNMENT

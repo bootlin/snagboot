@@ -16,3 +16,20 @@ When recovering i.MX boards, it's possible to encounter some fairly vague
 e.g. daisy chaining certain hubs. We recommend you try plugging the board
 directly to your computer or using only one USB hub.
 
+## SPL fails to find a boot device
+
+Make sure that your SPL supports whatever USB gadget is needed to recover your
+specific type of SoC.
+
+- i.MX: SPL should have SDP USB gadget support
+- AM62x: SPL should have DFU USB gadget support
+- AM335: SPL should support booting from USB Ethernet, which implies the
+  following options: 
+```bash
+CONFIG\_SPL\_NET\_SUPPORT=y
+CONFIG\_SPL\_NET\_VCI\_STRING="AM335x U-Boot SPL"
+CONFIG\_SPL\_USB\_GADGET\_SUPPORT=y
+CONFIG\_SPL\_USB\_ETHER=y
+# CONFIG\_SPL\_USB\_SDP\_SUPPORT is not set
+```
+

@@ -56,7 +56,7 @@ import logging
 logger = logging.getLogger("snagrecover")
 import time
 from snagrecover import utils
-import snagrecover.protocols.hab_constants
+from snagrecover.protocols import hab_constants
 from snagrecover.config import recovery_config
 
 

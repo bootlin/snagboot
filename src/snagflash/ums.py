@@ -38,7 +38,7 @@ def wait_filepath(path: str):
 			print(f"Timeout: file {path} does not exist", file=sys.stderr)
 			sys.exit(-1)
 		time.sleep(2)
-		print(f"Retrying: find {path} {retries}/{FILEPATH_RETIRES}")
+		print(f"Retrying: find {path} {retries}/{FILEPATH_RETRIES}")
 		retries += 1
 	print(f"Done")
 

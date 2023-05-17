@@ -147,7 +147,7 @@ Templates:
 		from snagrecover.recoveries.am62 import main as am62_recovery
 		am62_recovery()
 	else:
-		cli_error(f"unsupported board family {family}")
+		cli_error(f"unsupported board family {soc_family}")
 	print(f"Done recovering {soc_model} board")
 	if args.loglevel != "silent":
 		print(f"Logs were appended to {args.logfile}")
