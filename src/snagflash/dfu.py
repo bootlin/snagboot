@@ -35,9 +35,8 @@ def dfu_cli(args):
 	dev.default_timeout = int(args.timeout)
 	for dfu_config in args.dfu_config:
 		(altsetting,sep,path) = dfu_config.partition(":")
-		if "," in altsetting:
-			(altsetting,sep,size) = altsetting.partition(",")
-			size = int_arg(size)
+		if args.size:
+			size = int_arg(args.size)
 		else:
 			size = None
 		altsetting = int(altsetting)
@@ -45,12 +44,16 @@ def dfu_cli(args):
 			blob = file.read(-1)
 		if size is None:
 			size = len(blob)
+		print(f"Downloading {path} to altsetting {altsetting}...")
 		logger.debug(f"DFU config altsetting:{altsetting} size:0x{size:x} path:{path}")
 		dfu_cmd = dfu.DFU(dev, stm32=False) 
 		dfu_cmd.get_status()
 		dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
 		dfu_cmd.get_status()
+		print(f"Done")
+	print(f"Sending DFU detach command...")
 	dfu_cmd.detach(altsetting)
+	print(f"Done")
 
 
 

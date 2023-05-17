@@ -38,8 +38,10 @@ def fastboot(args):
 		else:
 			args = None 
 		cmd = cmd.translate({ord("-"): ord("_")})
+		print(f"Sending command {cmd} with args {args}")
 		if args is None:  
 			eval(f"fast.{cmd}()")
 		else:
 			eval(f"fast.{cmd}(args)")
+	print("Done")
 

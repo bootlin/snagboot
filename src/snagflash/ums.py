@@ -31,14 +31,16 @@ import time
 FILEPATH_RETRIES = 5
 
 def wait_filepath(path: str):
+	print(f"Waiting for {path}...")
 	retries = 0
 	while not os.path.exists(path):
 		if retries >= FILEPATH_RETRIES:
 			print(f"Timeout: file {path} does not exist", file=sys.stderr)
 			sys.exit(-1)
 		time.sleep(2)
-		print(f"Retrying: find {path}")
+		print(f"Retrying: find {path} {retries}/{FILEPATH_RETIRES}")
 		retries += 1
+	print(f"Done")
 
 def bmap_copy(filepath: str, dev, src_size: int):
 	mappath = os.path.splitext(filepath)[0] + ".bmap"
@@ -83,18 +85,22 @@ def write_raw(args):
 	if not os.path.exists(filepath):
 		print(f"File {filepath} does not exist", file=sys.stderr)
 		sys.exit(-1)
+	print(f"Reading {filepath}...")
 	with open(filepath, "rb") as file:
 		blob = file.read(-1)
 	if not args.size is None:
 		size = int_arg(args.size)
 	else:
 		size = len(blob)
+	print(f"Copying {size} bytes of {filepath} to {devpath}...")
 	with open(devpath, "rb+") as dev:
 		bmap_copy(filepath, dev, size)
+	print("Done")
 
 def ums(args):
 	if args.dest:
 		wait_filepath(args.dest)
+		print(f"Copy {args.src} to {args.dest}...")
 		shutil.copy(args.src, args.dest)
 	if args.blockdev:
 		write_raw(args)

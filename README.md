@@ -11,7 +11,9 @@ ISP, UUU, and sunxi-fel It is divided into two parts:
 - **snagflash** communicates with U-Boot to flash system images to non-volatile
   memories, using either DFU, UMS or fastboot.
 
-![demo](docs/tutorial_snagrecover.gif)
+<p align="center">
+  <img src="docs/tutorial_snagrecover.gif" alt="animated" />
+</p>
 
 Currently supported SoC families: ST STM32MP1, Microchip SAMA5, NXP i.MX6/7/8,
 TI AM335x, Allwinner SUNXI, TI AM62x. Please check

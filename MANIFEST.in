@@ -4,4 +4,5 @@ include src/snagrecover/firmware/sunxi_fw/fel-to-spl-thunk.bin
 include src/snagrecover/firmware/sunxi_fw/fel-to-spl-thunk.S
 include src/snagrecover/templates/*
 include src/snagrecover/80-snagboot.rules
+include src/snagrecover/am335_usb_setup.sh
 

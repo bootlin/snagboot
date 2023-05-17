@@ -28,11 +28,16 @@ In DFU mode, snagflash takes two additional arguments :
 
  * `-p --port vid:pid`
    The USB address of the DFU device exposed by U-Boot 
- * `-D --dfu-config  altsetting[,size]:path`
+ * `-D --dfu-config  altsetting:path`
    The altsetting and path of a file to download to the board. This should match
    the value specified in dfu\_alt\_info in U-Boot. This flag can be passed
    multiple times, to specify multiple files to download. The files will be
    downloaded in the order that the flags were passed in.
+
+and optionally:
+
+ * `--size`
+   You can specify this to download only a portion of the source file.
 
 Example:
 ```bash

@@ -109,9 +109,9 @@ Run the provided bash script to setup the network namespace and start the
 polling subprocess.
 
 ```bash 
-$ cd snagboot 
-$ chmod a+x scripts/am335_usb_setup.sh 
-$ sudo scripts/am335_usb_setup.sh
+$ snagrecover --am335-setup > am335_usb_setup.sh
+$ chmod a+x am335_usb_setup.sh 
+$ sudo ./am335_usb_setup.sh
 ```
 
 **Note:** If you have changed the ROM code's or SPL's USB VID/PID, you have to

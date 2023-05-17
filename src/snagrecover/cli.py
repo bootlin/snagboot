@@ -29,8 +29,11 @@ import ast
 
 def cli():
 	udev_path = os.path.dirname(__file__) + "/80-snagboot.rules"
+	am335_script_path = os.path.dirname(__file__) + "/am335_usb_setup.sh"
 	template_path = os.path.dirname(__file__) + "/templates"
-	template_listing = "\n".join([filename[:-5] for filename in os.listdir(template_path)])
+	templates = [filename[:-5] for filename in os.listdir(template_path)]
+	templates.sort()
+	template_listing = "\n".join(templates)
 	example = '''Examples:
 	snagrecover -s stm32mp15 -f stm32mp15.yaml
 	snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}"
@@ -55,6 +58,7 @@ Templates:
 	utilargs.add_argument("--version", help="show version", action="store_true")
 	utilargs.add_argument("-t", "--template", help="get an example firmware configuration file", metavar="name")
 	utilargs.add_argument("--udev", help="get required udev rules for snagrecover", action="store_true")
+	utilargs.add_argument("--am335-setup", help="get setup script for am335 USB recovery", action="store_true")
 
 	args = parser.parse_args()
 
@@ -91,6 +95,12 @@ Templates:
 	#print udev rules
 	if args.udev:
 		with open(udev_path, "r") as file:
+			print(file.read(-1))
+		sys.exit(0)
+
+	#print am335 setup script
+	if args.am335_setup:
+		with open(am335_script_path, "r") as file:
 			print(file.read(-1))
 		sys.exit(0)
 
