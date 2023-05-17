@@ -61,7 +61,7 @@ def main():
 		if phase_id == part0:
 			print("Downloading flash layout...")
 			layout_blob = flashlayout.build_image()
-			dfu_cmd.download_and_run(layout_blob, FLASHLAYOUT_PARTID, offset=0, size=len(layout_blob))
+			dfu_cmd.download_and_run(layout_blob, part0, offset=0, size=len(layout_blob))
 
 	#DOWNLOAD U-BOOT
 	if soc_model == "stm32mp13":

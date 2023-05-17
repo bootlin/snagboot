@@ -54,7 +54,7 @@ def main():
 	for i in range(USB_RETRY):
 		dev = usb.core.find(idVendor=usb_vid, idProduct=usb_pid)
 		if dev is None:
-			if i == usb_retry - 1:
+			if i == USB_RETRY - 1:
 				access_error("USB FEL", f"{usb_vid:04x}:{usb_pid:04x}")
 			print("Failed to find device, retrying...")
 			continue
