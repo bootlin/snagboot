@@ -9,7 +9,7 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[project] 
+[project]
 name = "snagboot"
 version = "0.1"
 authors = [
@@ -32,8 +32,9 @@ dependencies = [
 	"tftpy >= 0.8.2",
 	"crccheck >= 1.3.0",
 	"pylibfdt >= 1.7.0.post1",
-	"six == 1.16.0"
-] 
+	"six == 1.16.0",
+	"swig == 4.1.1"
+]
 
 [project.urls]
 "Source Code" = "https://github.com/bootlin/snagboot"
