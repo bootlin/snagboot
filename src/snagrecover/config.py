@@ -24,7 +24,7 @@ logger = logging.getLogger("snagrecover")
 import os
 
 default_usb_ids =  {
-	#default ROM code USB IDs
+	# default ROM code USB IDs
 	"stm32mp1": (0x0483,0xdf11),
 	"sama5":    (0x03eb,0x6124),
 	"sunxi":    (0x1f3a,0xefe8),
@@ -68,8 +68,8 @@ def check_soc_model(soc_model: str):
 	return None
 
 def init_config(args: list):
-	#this is the only time that config.recovery_config should be modified!
-	#get soc model
+	# this is the only time that config.recovery_config should be modified!
+	# get soc model
 	soc_model = args.soc 
 	check_soc_model(soc_model)
 	recovery_config.update({"soc_model": soc_model})
@@ -94,7 +94,7 @@ def init_config(args: list):
 		if args.firmware_file:
 			print("Warning: You passed firmware configuration via files AND direct CLI arguments.")
 	if args.firmware_file:
-		#get firmware configs
+		# get firmware configs
 		for path in args.firmware_file:
 			with open(path, "r") as file:
 				fw_configs = {**fw_configs, **yaml.safe_load(file)}
@@ -102,7 +102,7 @@ def init_config(args: list):
 			cli_error(f"firmware config passed to CLI did not evaluate to dict: {fw_configs}")
 		recovery_config["firmware"] = fw_configs
 
-	#store input arguments in config
+	# store input arguments in config
 	recovery_config["args"] = vars(args)
 	logger.debug(f"recovery_config:{str(recovery_config)}")
 

@@ -34,7 +34,7 @@ USB_TIMEOUT = 10
 
 def main():
 	soc_model = recovery_config["soc_model"]
-	#USB ENUMERATION
+	# USB ENUMERATION
 	usb_vid = recovery_config["rom_usb"][0]
 	usb_pid = recovery_config["rom_usb"][1]
 	dev = get_usb(usb_vid, usb_pid)
@@ -44,7 +44,7 @@ def main():
 		logger.debug(line)
 	logger.debug("End of USB config:")
 
-	#DOWNLOAD TF-A
+	# DOWNLOAD TF-A
 	dfu_cmd = dfu.DFU(dev)
 	run_firmware(dev, "tf-a")
 	if soc_model == "stm32mp13":
@@ -52,7 +52,7 @@ def main():
 		phase_id = dfu_cmd.stm32_get_phase()
 		dfu_cmd.detach(phase_id)
 
-	#DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM 
+	# DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM 
 	if soc_model == "stm32mp15":
 		phase_id = dfu_cmd.stm32_get_phase()
 		part0 = dfu.search_partid(dev, "@Partition0", match_prefix=True)
@@ -63,16 +63,16 @@ def main():
 			layout_blob = flashlayout.build_image()
 			dfu_cmd.download_and_run(layout_blob, part0, offset=0, size=len(layout_blob))
 
-	#DOWNLOAD U-BOOT
+	# DOWNLOAD U-BOOT
 	if soc_model == "stm32mp13":
 		time.sleep(1.5)
-	#We need to reset here, in the case where TF-A uses a different USB ID
+	# We need to reset here, in the case where TF-A uses a different USB ID
 	if "usb" in recovery_config["firmware"]["tf-a"]:
 		(usb_vid,usb_pid) = parse_usb(recovery_config["firmware"]["tf-a"]["usb"])
 		try:
 			dev.reset()
 		except usb.core.USBError:
-			#this should actually fail
+			# this should actually fail
 			pass
 		time.sleep(0.5)
 	usb.util.dispose_resources(dev)
@@ -81,7 +81,7 @@ def main():
 	dfu_cmd = dfu.DFU(dev)
 	run_firmware(dev, "fip")
 
-	#DETACH DFU DEVICE
+	# DETACH DFU DEVICE
 	print("Sending detach command to SPL...")	
 	phase_id = dfu_cmd.stm32_get_phase()
 	dfu_cmd.detach(phase_id)

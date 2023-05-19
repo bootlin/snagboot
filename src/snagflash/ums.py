@@ -50,9 +50,9 @@ def bmap_copy(filepath: str, dev, src_size: int):
 	if os.path.exists(mappath):
 		gen_bmap = False
 		mapfileb = open(mappath, "rb")
-		#check if the bmap file is clearsigned
-		#if it is, we shouldn't handle it, since
-		#I'd prefer to avoid depending on the gpg package
+		# check if the bmap file is clearsigned
+		# if it is, we shouldn't handle it, since
+		# I'd prefer to avoid depending on the gpg package
 		hdr = mapfileb.read(34)
 		if hdr == b"-----BEGIN PGP SIGNED MESSAGE-----":
 			logger.warning("Bmap file found is clearsigned, skipping...")

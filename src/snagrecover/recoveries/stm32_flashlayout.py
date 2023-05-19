@@ -21,7 +21,7 @@ import logging
 logger = logging.getLogger("snagrecover")
 
 STM32IMG_HEADER_MAGIC = b"\x53\x54\x4d\x32"
-HEADER_DEFAULT_OPTION = 0x01 #bit 0: no signature
+HEADER_DEFAULT_OPTION = 0x01 # bit 0: no signature
 HEADER_TYPE_UBOOT = 0x00
 STM32_HEADER_SIZE = 256
 

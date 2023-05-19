@@ -73,7 +73,7 @@ def get_container_size(boot_blob: bytes) -> int:
 	romimg_offset = CONTAINER_HDR_ALIGNMENT + ROM_BOOTIMG_STRUCT_SIZE
 	romimg_flags = int.from_bytes(boot_blob[romimg_offset + 24:romimg_offset + 28], "little")
 	if romimg_flags & 0x0F == V2X_BOOTIMG_FLAG:
-		#skip V2X container
+		# skip V2X container
 		cont_index = 2
 		rom_container_tag = boot_blob[2 * CONTAINER_HDR_ALIGNMENT + 3]
 		if rom_container_tag != b"\x87":
@@ -84,7 +84,7 @@ def get_container_size(boot_blob: bytes) -> int:
 	romimg_offset = int.from_bytes(boot_blob[romimg_offset: romimg_offset], "little")
 	romimg_size = int.from_bytes(boot_blob[romimg_offset + 4: romimg_offset + 8], "little")
 	container_size = romimg_offset + romimg_size + cont_index * CONTAINER_HDR_ALIGNMENT
-	#round container size up
+	# round container size up
 	container_size = ceil(container_size / (1.0 * CONTAINER_HDR_ALIGNMENT)) * CONTAINER_HDR_ALIGNMENT
 	if container_size >= len(boot_blob):
 		raise ValueError("Error: unsupported image format or image does not contain u-boot proper")

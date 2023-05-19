@@ -48,24 +48,24 @@ class BootpRequest():
 		"""
 		self.packet = packet
 		self.op = BootpRequest.op_field[packet[0]]
-		#packet[1]: htype, should be 1
-		#packet[2]: hlen, should be 6
-		#packet[3]: hops, should be 0
-		self.xid = packet[4:8] #transaction id
-		self.secs = int.from_bytes(packet[8:10], "big") #seconds since boot
-		#packet[10:12]: unused
-		self.ciaddr = parse_ipv4(packet[12:16]) #client ip, written by client
+		# packet[1]: htype, should be 1
+		# packet[2]: hlen, should be 6
+		# packet[3]: hops, should be 0
+		self.xid = packet[4:8] # transaction id
+		self.secs = int.from_bytes(packet[8:10], "big") # seconds since boot
+		# packet[10:12]: unused
+		self.ciaddr = parse_ipv4(packet[12:16]) # client ip, written by client
 		self.yiaddr = parse_ipv4(packet[16:20]) #'your' (client) ip, written by server
-		self.siaddr = parse_ipv4(packet[20:24]) #server ip
-		#packet[24:28]: giaddr, gateway ip
-		self.chaddr = parse_mac(packet[28:44]) #client mac address w/o padding
-		#sname[44:108] optional server name
-		self.file = packet[108:236] #boot file name
-		#the rest of the packet contains vendor data and padding
+		self.siaddr = parse_ipv4(packet[20:24]) # server ip
+		# packet[24:28]: giaddr, gateway ip
+		self.chaddr = parse_mac(packet[28:44]) # client mac address w/o padding
+		# sname[44:108] optional server name
+		self.file = packet[108:236] # boot file name
+		# the rest of the packet contains vendor data and padding
 
 	def build_reply(self, client_ip: str, server_ip:str, filename: str) -> bytes:
 		reply = bytearray(self.packet)
-		reply[0] = 2 #BOOTP_REPLY
+		reply[0] = 2 # BOOTP_REPLY
 		reply[16:20] = encode_ipv4(client_ip)
 		reply[20:24] = encode_ipv4(server_ip)
 		reply[108:236] = encode_filename(filename).lower()
@@ -77,13 +77,13 @@ class BootpRequest():
 		to find a DHCP ACK in the BOOTP packets it receives. Thus, 
 		we include this in every BOOTP response we send.
 		"""
-		#initialize vendor area to 0
+		# initialize vendor area to 0
 		reply[240:300] = b"\x00" * 60
-		#write DHCP ACK expected by SPL
+		# write DHCP ACK expected by SPL
 		reply[240] = BootpRequest.DHCP_MSG_TYPE_TAG
-		reply[241] = 1 #length of the field
-		reply[242] = BootpRequest.DHCPACK #len
-		#write stop tag
+		reply[241] = 1 # length of the field
+		reply[242] = BootpRequest.DHCPACK # len
+		# write stop tag
 		reply[243] = BootpRequest.STOP_TAG
 		return bytes(reply)
 

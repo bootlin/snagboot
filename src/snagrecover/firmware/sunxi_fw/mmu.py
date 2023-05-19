@@ -72,7 +72,8 @@ def restore(port: fel.FEL, soc_info: dict, tt: bytes, tt_addr: int):
 		tt_words[i] |= 1 << 12
 	tt_words[0xfff] &= ~((7 << 12) | (1 << 3) | (1 << 2))
 	tt_words[0xfff] |= (1 << 12) | (1 << 3)	 | (1 << 2)
-	#write MMU TT
+
+	# write MMU TT
 	memops = memory_ops.MemoryOps(port)
 	c = 0
 	for addr in range(tt_addr, tt_addr + MMU_SIZE, 4):
@@ -82,7 +83,7 @@ def restore(port: fel.FEL, soc_info: dict, tt: bytes, tt_addr: int):
 	memops.jump(soc_info["safe_addr"])
 
 def check(port: fel.FEL, soc_info: dict) -> tuple:
-	#if MMU was enabled by BROM, back it up
+	# if MMU was enabled by BROM, back it up
 	"""
 	mrc		15, 0, r0, cr1, cr0, 0 read SCTLR
 	ands	r0, r0, #1			   test MMU enable bit
@@ -111,6 +112,8 @@ def check(port: fel.FEL, soc_info: dict) -> tuple:
 	memops = memory_ops.MemoryOps(port)
 	memops.write_blob(check_mmu, soc_info["safe_addr"], 0, len(check_mmu))
 	memops.jump(soc_info["safe_addr"])
+
+	#get MMU TT or generate new one
 	tt_addr_mask = (2 ** (14 - memops.read32(soc_info["safe_addr"] + len(check_mmu) - 4))) - 1
 	tt_addr = memops.read32(soc_info["safe_addr"] + len(check_mmu) - 8)
 	if tt_addr == 0xcafedeca:
@@ -163,7 +166,7 @@ def check(port: fel.FEL, soc_info: dict) -> tuple:
 	tt_barr = bytearray()
 	for addr in range(tt_addr, tt_addr + MMU_SIZE, 4):
 		entry = memops.read32(addr)
-		#check MMU entry
+		# check MMU entry
 		if (entry >> 1) & 1 != 1 or (entry >> 18) & 1 != 0 or (entry >> 20) != (addr - tt_addr) // 4:
 			raise ValueError(f"Not a valid MMU TT entry 0x{entry:x}")
 		tt_barr += entry.to_bytes(4, "little")

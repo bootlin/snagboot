@@ -40,7 +40,7 @@ def parse_usb(usb_id: str) -> tuple:
 	return (vid,pid)
 
 def dnload_iter(blob: bytes, chunk_size: int):
-	#parse binary blob by chunks of chunk_size bytes
+	# parse binary blob by chunks of chunk_size bytes
 	L = len(blob)
 	N = L // chunk_size
 	R = L % chunk_size

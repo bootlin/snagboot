@@ -39,7 +39,7 @@ SFR_L2CC_HRAMC = 0xf8030058
 
 SERIAL_PORT_TIMEOUT = 5
 
-#chipid config values are from Microchip SAM-BA v3.7 for Linux
+# chipid config values are from Microchip SAM-BA v3.7 for Linux
 chipid_configs = {
     "sama5d2": {
             "CIDR_REG":      0xfc069000,
@@ -78,13 +78,13 @@ def check_id(memops: memory_ops.MemoryOps) -> bool:
     return check
 
 def main():
-	#CONNECT TO SAM-BA MONITOR
+	# CONNECT TO SAM-BA MONITOR
 	print("Connecting to SAM-BA monitor...")
 	soc_model = recovery_config["soc_model"]
 	usb_vid = recovery_config["rom_usb"][0]
 	usb_pid = recovery_config["rom_usb"][1]
 	dev = get_usb(usb_vid, usb_pid)
-	dev.reset()#SAM-BA monitor needs a reset sometimes
+	dev.reset()# SAM-BA monitor needs a reset sometimes
 
 	port_path = f"/dev/serial/by-id/usb-{usb_vid:04x}_{usb_pid:04x}-if00"
 	t0 = time.time()
@@ -98,31 +98,31 @@ def main():
 		logger.info("SAM-BA Monitor version string: " + monitor.get_version())
 		print("Done connecting")
 
-		#CHECK BOARD ID
+		# CHECK BOARD ID
 		print("Checking chip id...")
 		if not check_id(memops):
 			raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
 
 		print("Done checking")
 		if soc_model == "sama5d2":
-			#reconfigure L2 cache as SRAM
+			# reconfigure L2 cache as SRAM
 			memops.write32(SFR_L2CC_HRAMC, 0x00)
 
-		#INITIALIZE CLOCK TREE
+		# INITIALIZE CLOCK TREE
 		print("Initializing clock tree...")
 		run_firmware(port, "lowlevel")
 		print("Done initializing clock tree")
 
 
-		#INITIALIZE EXTRAM
+		# INITIALIZE EXTRAM
 		print("Initializing external RAM...")
 		run_firmware(port, "extram")
 		print("Done initializing RAM")
 		
-		#REMAP ROM ADDRESSES
-		memops.write32(aximx_remap[soc_model], 0x01)#remap ROM addresses to SRAM0
+		# REMAP ROM ADDRESSES
+		memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
 
-		#DOWNLOAD U-BOOT
+		# DOWNLOAD U-BOOT
 		print("Installing U-Boot...")
 		run_firmware(port, "u-boot")
 		print("Done!")

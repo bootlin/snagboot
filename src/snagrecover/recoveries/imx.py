@@ -56,7 +56,7 @@ from snagrecover.utils import access_error
 import logging
 logger = logging.getLogger("snagrecover")
 
-#USB IDs used by SPL
+# USB IDs used by SPL
 spl_usb_ids = {
 "SPL/1": ["SDPU",0x0525,0xb4a4,0x0000,0x04ff],
 "SPL/2": ["SDPU",0x0525,0xb4a4,0x9999,0x9999],
@@ -66,7 +66,7 @@ spl_usb_ids = {
 "SPL1/3": ["SDPV",0x3016,0x100,0x0500,0x9998]
 }
 
-#SoCs that use the SDPS protocol instead of SDP
+# SoCs that use the SDPS protocol instead of SDP
 sdps_socs = [
 "imx8qxp",
 "imx8qm",
@@ -101,12 +101,12 @@ def main():
 	logger.info("SDP command sequence done, closing hid device...")
 	dev.close()
 
-	#WAIT FOR SPL DEVICE
+	# WAIT FOR SPL DEVICE
 	print("Waiting for SPL device...")
 	t0 = time.time()
 	valid_dev = None
 	while time.time() - t0 < 5 and (valid_dev is None):
-		#Try every possible SPL1 USB config
+		# Try every possible SPL1 USB config
 		for splid in spl_usb_ids.keys():
 			print(f"Trying usb config {splid}")
 			protocol = spl_usb_ids[splid][0]
@@ -121,7 +121,7 @@ def main():
 					valid_dev = [protocol, vid, pid]
 			except hid.HIDException:
 				continue
-			#check protocol using bcdDevice
+			# check protocol using bcdDevice
 			if valid_dev is not None:
 				print(f"Found HID device with config {splid}")
 				break
@@ -132,8 +132,8 @@ def main():
 
 	protocol = valid_dev[0]
 	with hid.Device(valid_dev[1], valid_dev[2]) as dev:
-		#MX8 boot images are more complicated to generate so we allow everything to be
-		#packaged in a single blob
+		# MX8 boot images are more complicated to generate so we allow everything to be
+		# packaged in a single blob
 		if "imx8" in soc_model:
 			if protocol != "SDPV":
 				raise Exception("Error: The installed SPL version does not support autofinding U-Boot")

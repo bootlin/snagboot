@@ -24,14 +24,14 @@ logger = logging.getLogger("snagrecover")
 class SambaMon():
 	def __init__(self, port: serial.serialposix.Serial):
 		self.port = port
-		#set sam-ba monitor to binary mode
+		# set sam-ba monitor to binary mode
 		logger.debug("Sending sambamon command N#")
 		port.write(b"N#")
 		port.read_until(b"\r")
 		return None
 
 	def get_version(self) -> str:
-		#get SAM-BA monitor version
+		# get SAM-BA monitor version
 		logger.debug("Sending sambamon command V#")
 		self.port.write(b"V#")
 		ret = self.port.read_until(b"\r")
@@ -48,8 +48,8 @@ class SambaMon():
 		return nbytes == 4
 
 	def write_blob(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
-		#write binary blob to address
-		PAYLOAD_SIZE = 0x4000 #got this value from packet dumps
+		# write binary blob to address
+		PAYLOAD_SIZE = 0x4000 # got this value from packet dumps
 		N = size // PAYLOAD_SIZE
 		R = size % PAYLOAD_SIZE
 		nbytes = 0
@@ -66,7 +66,7 @@ class SambaMon():
 		return nbytes == size
 
 	def jump(self, addr: int) -> bool:
-		#tell SAM-BA monitor to execute code at address
+		# tell SAM-BA monitor to execute code at address
 		packet = bytes(f"G{addr:x}#", "ascii")
 		nbytes = self.port.write(packet)
 		return nbytes == len(packet)

@@ -32,7 +32,7 @@ class Fastboot():
 	def __init__(self, dev: usb.core.Device, timeout: int = 10000):
 		self.dev = dev
 		cfg = dev.get_active_configuration()
-		#select the first interface we find with a bulk in ep and a bulk out ep
+		# select the first interface we find with a bulk in ep and a bulk out ep
 		eps_found = False
 		for intf in cfg.interfaces():
 				ep_in, ep_out = None, None
@@ -54,7 +54,7 @@ class Fastboot():
 		self.ep_in = ep_in
 		self.ep_out = ep_out
 		self.timeout = timeout
-		#choose max packet size as specified by fastboot spec
+		# choose max packet size as specified by fastboot spec
 		self.max_size = 64
 		if dev.speed == usb.util.SPEED_HIGH:
 			self.max_size = 512

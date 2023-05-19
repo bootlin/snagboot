@@ -16,6 +16,7 @@
 - function definitions should have type hints when possible
 - operators are surrounded by spaces e.g. a = 3 + 2 not a=3+2
 - function arguments are separated by spaces e.g. foo(a, b, c)
+- please lint your code with ruff: `cd snagboot && ruff .`
 
 ## Code architecture
 

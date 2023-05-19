@@ -57,7 +57,7 @@ def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 	There isn't a lot of complicated logic to handle am62x firmware
 	so we can leave it in the common module for now
 	"""
-	#find firmware altsetting (i.e. partition id)
+	# find firmware altsetting (i.e. partition id)
 	if fw_name == "tiboot3":
 		partname = "bootloader"
 	elif fw_name == "tispl":
@@ -75,7 +75,7 @@ def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	print("Done")
 	if fw_name == "tispl":
-		#run tispl firmware
+		# run tispl firmware
 		print("Sending detach command...")
 		dfu_cmd.detach(partid)
 

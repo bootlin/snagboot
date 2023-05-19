@@ -62,7 +62,7 @@ Templates:
 
 	args = parser.parse_args()
 
-	#setup logging
+	# setup logging
 	logger = logging.getLogger("snagrecover")
 	if args.loglevel == "silent":
 		logger.addHandler(logging.NullHandler())
@@ -77,13 +77,13 @@ Templates:
 			logger.addHandler(log_handler)
 			logger.setLevel(logging.INFO)
 
-	#show version
+	# show version
 	if args.version:
 		version = pkg_resources.require("snagboot")[0].version
 		print(f"Snagboot v{version}")
 		sys.exit(0)
 
-	#print template
+	# print template
 	if args.template:
 		path = template_path + "/" + args.template + ".yaml"
 		if not os.path.exists(path):
@@ -92,19 +92,19 @@ Templates:
 			print(file.read(-1))
 		sys.exit(0)
 
-	#print udev rules
+	# print udev rules
 	if args.udev:
 		with open(udev_path, "r") as file:
 			print(file.read(-1))
 		sys.exit(0)
 
-	#print am335x setup script
+	# print am335x setup script
 	if args.am335x_setup:
 		with open(am335x_script_path, "r") as file:
 			print(file.read(-1))
 		sys.exit(0)
 
-	#show supported socs
+	# show supported socs
 	if args.list_socs:
 		with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
 			socs = yaml.safe_load(file)
@@ -120,10 +120,10 @@ Templates:
 	if args.firmware is None and (args.firmware_file is None):
 		cli_error("missing command line argument: --firmware or --firmware-file")
 
-	#initialize global config
+	# initialize global config
 	config.init_config(args)
 
-	#call recovery flow
+	# call recovery flow
 	soc_model = config.recovery_config["soc_model"]
 	soc_family = config.recovery_config["soc_family"]
 	print(f"Starting recovery of {soc_model} board")

@@ -56,13 +56,13 @@ def cli():
 	umsargs.add_argument("--size", help="raw transfer: transfer size")
 	args = parser.parse_args()
 
-	#show version
+	# show version
 	if args.version:
 		version = pkg_resources.require("snagboot")[0].version
 		print(f"Snagboot v{version}")
 		sys.exit(0)
 
-	#setup logging
+	# setup logging
 	logger = logging.getLogger('snagflash')
 	if args.loglevel == "silent":
 		logger.addHandler(logging.NullHandler())
@@ -76,7 +76,7 @@ def cli():
 		elif args.loglevel == "info":
 			logger.addHandler(log_handler)
 			logger.setLevel(logging.INFO)
-	#make sure we don't log into the recovery log when importing its modules
+	# make sure we don't log into the recovery log when importing its modules
 	recovery_logger = logging.getLogger('snagrecover')
 	recovery_logger.parent = logger
 

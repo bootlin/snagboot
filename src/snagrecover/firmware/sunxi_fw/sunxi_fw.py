@@ -90,10 +90,10 @@ def write_node_img(port: fel.FEL, dt: libfdt.Fdt, fw_blob: bytes, node: int, dtb
 	else:
 		addr = dtb_addr
 	if data_size != -1 and data_offset != -1:
-		#image is stored outside of the FIT data
+		# image is stored outside of the FIT data
 		logger.debug("Image is outside FIT")
 		fit_size = dt.totalsize()
-		#make sure fit size is word-aligned 
+		# make sure fit size is word-aligned 
 		if fit_size % 4 != 0:
 			fit_size = 4 * floor(fit_size / 4.0) + 4
 		offset = fit_size + data_offset.as_uint32()
@@ -113,7 +113,7 @@ def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
 	dt = libfdt.Fdt(fw_blob)
 	cfgs = dt.path_offset("/configurations")
 	config = None
-	#search for configuration matching dt_name or default one
+	# search for configuration matching dt_name or default one
 	if dt_name is not None:
 		node = dt.first_subnode(cfgs)
 		if test_node_strprop(dt, node, "description", dt_name):
@@ -129,14 +129,14 @@ def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
 			config = path
 		else:
 			raise Exception("No valid configuration node found in FIT")
-	#write "firmware" and loadables
+	# write "firmware" and loadables
 	img_paths = (dt.getprop(config, "loadables").as_stringlist()) + [dt.getprop(config, "firmware").as_str()]
 	img_nodes = [dt.path_offset("/images/" + path) for path in img_paths]
 	entry_addr = None
 	arm64_entry = False
 	dtb_addr = None
 	for node in img_nodes:
-		#write image
+		# write image
 		(addr, img_size) = write_node_img(port, dt, fw_blob, node)
 		if entry_addr is None and (entry := dt.getprop(node, "entry", [libfdt.FDT_ERR_NOTFOUND])) != -1:
 			entry_addr = entry.as_uint32()
@@ -148,7 +148,7 @@ def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
 	if dtb_addr is None:
 		logger.warning("No DTB address found")
 	else:
-		#write DTB after U-Boot
+		# write DTB after U-Boot
 		dtb_node = dt.path_offset("/images/" + dt.getprop(config, "fdt").as_str())
 		write_node_img(port, dt, fw_blob, dtb_node, dtb_addr = dtb_addr)
 	return (entry_addr, arm64_entry)
@@ -159,18 +159,18 @@ def write_legacy(port: fel.FEL, fw_blob: bytes):
 	in U-Boot/include/image.h
 	"""
 	print("Checking checksums...")
-	#check header checksum
+	# check header checksum
 	hdr_size = 64
 	hdr_hchecksum = int.from_bytes(fw_blob[4:8], "big")
 	hchecksum = crc.Crc32.calc(fw_blob[0:4] + b"\x00\x00\x00\x00" + fw_blob[8:hdr_size])
 	if hdr_hchecksum != hchecksum:
 		raise ValueError("Invalid header checksum in U-Boot image")
-	#check data checksum
+	# check data checksum
 	hdr_dchecksum = int.from_bytes(fw_blob[24:28], "big")
 	dchecksum = crc.Crc32.calc(fw_blob[hdr_size:])
 	if hdr_dchecksum != dchecksum:
 		raise ValueError("Invalid data checksum in U-Boot image")
-	#write image
+	# write image
 	size = int.from_bytes(fw_blob[12:16], "big")
 	load = int.from_bytes(fw_blob[16:20], "big")
 	memops = memory_ops.MemoryOps(port)
@@ -203,8 +203,8 @@ def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: d
 	spl_start = soc_info["spl_start"]
 	spl_end = spl_start + spl_len
 	spl_chunk_list = []
-	#this is what we're going to write into the thunk binary so that it knows
-	#what SRAM regions to swap
+	# this is what we're going to write into the thunk binary so that it knows
+	# what SRAM regions to swap
 	overrun_regions = b""
 	last_chunk = {
 		"img_start": 0,
@@ -216,24 +216,24 @@ def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: d
 				+ rom_region["backup"].to_bytes(4,"little")\
 				+ rom_region["size"].to_bytes(4, "little")
 		if not region_intersects(spl_start, spl_len, rom_region["start"], rom_region["size"]):
-			#rom region is outside SPL so we don't have take it into account when writing SPL
+			# rom region is outside SPL so we don't have take it into account when writing SPL
 			continue
 		if rom_region["start"] < spl_start:
 			rom_region["backup"] += spl_start - rom_region["start"]
 			rom_region["start"] = spl_start
 		if rom_region["start"] + rom_region["size"] > spl_end:
 			rom_region["size"] =  spl_end - rom_region["start"]
-		#check if backup region is clear
+		# check if backup region is clear
 		if region_intersects(spl_start, spl_len, rom_region["backup"], rom_region["size"]):
 			raise ValueError("Backup area for region {region} intersects with SPL's area")
-		#compute SPL chunk between last ROM region and this one
+		# compute SPL chunk between last ROM region and this one
 		notrom_chunk = {
 			"img_start": last_chunk["img_start"] + last_chunk["size"],
 			"sram_start": last_chunk["sram_start"] + last_chunk["size"],
 			"size": rom_region["start"] - (last_chunk["sram_start"] + last_chunk["size"])
 		}
 		spl_chunk_list.append(notrom_chunk)
-		#compute SPL chunk corresponding to this ROM region
+		# compute SPL chunk corresponding to this ROM region
 		rom_chunk = {
 			"img_start": notrom_chunk["img_start"] + notrom_chunk["size"],
 			"sram_start": notrom_chunk["sram_start"] + notrom_chunk["size"],
@@ -243,7 +243,7 @@ def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: d
 		spl_chunk_list.append(rom_chunk)
 		last_chunk = rom_chunk
 	overrun_regions += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-	#add rest of spl image to chunk list
+	# add rest of spl image to chunk list
 	if spl_chunk_list == []:
 			spl_chunk_list =  [{
 				"img_start": 0,
@@ -258,14 +258,14 @@ def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: d
 		})
 	logger.debug(f"SPL chunk list: {spl_chunk_list}")
 
-	#slice and download SPL according to chunk list
+	# slice and download SPL according to chunk list
 	memops = memory_ops.MemoryOps(port)
 	for chunk in spl_chunk_list:
 		if chunk["size"] == 0:
 			continue
 		if "backup_start" in chunk:
-			#this chunk corresponds to a preserved ROM region, 
-			#so we write it to its backup region in SRAM
+			# this chunk corresponds to a preserved ROM region, 
+			# so we write it to its backup region in SRAM
 			memops.write_blob(fw_blob, chunk["backup_start"], chunk["img_start"], chunk["size"])
 		else:
 			memops.write_blob(fw_blob, chunk["sram_start"], chunk["img_start"], chunk["size"])
@@ -288,7 +288,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	print("Reading SoC info...")
 	with open(os.path.dirname(__file__) + "/soc_info.yaml", "r") as file:
 		soc_info = yaml.safe_load(file)[recovery_config["soc_model"]]
-	#check SPL header magic and checksum
+	# check SPL header magic and checksum
 	print("Checking header and checksum...")
 	if fw_blob[4:12] != b"eGON.BT0":
 		raise ValueError("eGON header not found at beginning of SPL image")
@@ -299,7 +299,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 		checksum = (checksum - word) % (2 ** 32)
 	if checksum != 0:
 		raise ValueError("Invalid checksum in SPL image")
-	#try to get dt name
+	# try to get dt name
 	dt_name = None
 	if fw_blob[20:23] == [b"S", b"P", b"L"] and fw_blob[24] >= 2:
 		dt_name_offset = int.from_bytes(fw_blob[32:36], "little")
@@ -313,7 +313,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 		else:
 			dt_name = str.decode(dt_name, "ascii")
 
-	#for A10, A10s, A13, R8: enable L2 cache
+	# for A10, A10s, A13, R8: enable L2 cache
 	memops = memory_ops.MemoryOps(port)
 	if recovery_config["soc_model"] in ["a10", "a10s", "a13", "r8"]:
 		print("Enabling L2 cache")
@@ -334,7 +334,8 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 				+b"\x1e\xff\x2f\xe1"
 		memops.write_blob(l2_enable_prog, soc_info["safe_addr"] , 0, len(l2_enable_prog))
 		memops.jump(soc_info["safe_addr"])
-	#configure MMU
+
+	# configure MMU
 	print("Disabling MMU...")
 	ret = mmu.check(port, soc_info)
 	mmu.disable(port, soc_info)
@@ -342,35 +343,41 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	if ret is not None:
 		(tt, tt_addr) = ret
 		must_restore_mmu = True
-	#generate memory map for thunk, SPL, and bootrom sections
+
+	# generate memory map for thunk, SPL, and bootrom sections
 	if spl_len > soc_info["sram_size"]:
 		raise Exception("This SPL image is too large for this SoC's SRAM")
+
+	# check that thunk is outside SPL
 	spl_start = soc_info["spl_start"]
-	#check that thunk is outside SPL
 	if region_intersects(spl_start, spl_len, soc_info["thunk"]["start"], soc_info["thunk"]["size"]):
 		raise ValueError("SRAM area for thunk overlaps with SRAM area for SPL")
 
 	print("Writing SPL fragments...")
 	overrun_regions = write_spl_fragments(port, fw_blob, spl_len, soc_info)
 
-	#copy spl load address and ROM region info into thunk binary
+	# copy spl load address and ROM region info into thunk binary
 	with open(os.path.dirname(__file__) + "/fel-to-spl-thunk.bin", "rb") as file:
 		thunk_blob = file.read(-1)
-	#assemble and write thunk
+
+	# assemble and write thunk
 	logger.debug(f"overrun regions: {overrun_regions}")
 	full_thunk = thunk_blob + spl_start.to_bytes(4, "little") + overrun_regions
 	print("Writing Thunk...")
 	memops.write_blob(full_thunk, soc_info["thunk"]["start"], 0, len(full_thunk))
-	#execute thunk
+
+	# execute thunk
 	print("Jumping to Thunk...")
 	memops.jump(soc_info["thunk"]["start"])
-	#apparently this delay is sometimes necessary
+
+	# apparently this delay is sometimes necessary
 	time.sleep(0.5)
-	#restore MMU if necessary
+	# restore MMU if necessary
 	if must_restore_mmu:
 		print("Restoring MMU...")
 		mmu.restore(port, soc_info, tt, tt_addr)
-	#check return code
+
+	# check return code
 	h1 = memops.read32(soc_info["spl_start"] + 4).to_bytes(4, "little")
 	h2 = memops.read32(soc_info["spl_start"] + 8).to_bytes(4, "little")
 	if h1 + h2 != b"eGON.FEL":
@@ -378,7 +385,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	return (spl_len, dt_name)
 
 def sunxi_uboot(port: fel.FEL, fw_blob: bytes, dt_name: str):
-	#determine image type
+	# determine image type
 	magic = int.from_bytes(fw_blob[0:4], "big")
 	arm64_entry = False
 	if magic == 0xd00dfeed:
@@ -387,6 +394,7 @@ def sunxi_uboot(port: fel.FEL, fw_blob: bytes, dt_name: str):
 		entry_addr = write_legacy(port, fw_blob)
 	else:
 		raise ValueError("Invalid U-Boot image format")
+
 	print("Jumping to U-Boot...")
 	if arm64_entry:
 		with open(os.path.dirname(__file__) + "/soc_info.yaml", "r") as file:

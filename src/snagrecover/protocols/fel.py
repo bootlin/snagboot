@@ -46,7 +46,7 @@ class FEL():
 	def __init__(self, dev: usb.core.Device, timeout: int):
 		self.dev = dev
 		cfg = dev.get_active_configuration()
-		#select the first interface we find with a bulk in ep and a bulk out ep
+		# select the first interface we find with a bulk in ep and a bulk out ep
 		eps_found = False
 		for intf in cfg.interfaces():
 			ep_in, ep_out = None, None
@@ -70,7 +70,7 @@ class FEL():
 		self.timeout = timeout
 
 	def aw_exchange(self, length: int, out: bool, packet: bytes = b"") -> bytes:
-		#USB request
+		# USB request
 		if out:
 			cmd = b"\x12"
 		else:
@@ -94,14 +94,14 @@ class FEL():
 				+ length.to_bytes(4, "little")\
 				+ (10 * b"\x00")
 		self.dev.write(self.ep_out, packet0, timeout=self.timeout)
-		#main action
+		# main action
 		if out:
 			ret = (self.dev.write(self.ep_out, packet, timeout=self.timeout)).to_bytes(4, "little")
 		else:
 			ret = self.dev.read(self.ep_in, length, timeout=self.timeout)
-		#USB response
+		# USB response
 		usb_ret = self.dev.read(self.ep_in, 13, timeout = self.timeout)
-		#check magic
+		# check magic
 		if bytes(usb_ret[:4]) != b"AWUS":
 			raise Exception("Malformed packet received")
 		csw_status = usb_ret[12]
@@ -110,15 +110,15 @@ class FEL():
 		return ret
 
 	def request(self, request: str, response_len: int) -> bytes:
-		#send request
+		# send request
 		request = (FEL.standard_request_codes[request]).to_bytes(2, "little") \
-				+ (14 * b"\x00") #tag + reserved
+				+ (14 * b"\x00") # tag + reserved
 		self.aw_exchange(len(request), out=True, packet=request)
-		#get response
+		# get response
 		response = self.aw_exchange(length=response_len, out=False)
-		#get state
+		# get state
 		ret = self.aw_exchange(length=8, out=False)
-		#check mark and state
+		# check mark and state
 		if bytes(ret[:2]) != b"\xff\xff":
 			raise Exception("Malformed packet received")
 		state = ret[4]
@@ -131,24 +131,24 @@ class FEL():
 			raise Exception("Data is too long for FEL message")
 		if request == "FEL_DOWNLOAD" and len(data) != length:
 			raise Exception("Data does not match length parameter")
-		#send message
+		# send message
 		message = (FEL.standard_request_codes[request]).to_bytes(2, "little") \
 				+ b"\x00\x00"\
 				+ addr.to_bytes(4, "little")\
 				+ length.to_bytes(4, "little")\
 				+ b"\x00\x00\x00\x00"
 		self.aw_exchange(len(message), out=True, packet=message)
-		#get/send data
+		# get/send data
 		if request == "FEL_UPLOAD":
 			data = self.aw_exchange(length=length, out=False)
 		elif request == "FEL_DOWNLOAD":
 			data = self.aw_exchange(length=length, out=True, packet=data)
 		else:
-			#FEL_RUN
+			# FEL_RUN
 			data = None
-		#get state
+		# get state
 		ret = self.aw_exchange(length=8, out=False)
-		#check mark and state
+		# check mark and state
 		if bytes(ret[:2]) != b"\xff\xff":
 			raise Exception("Malformed packet received")
 		state = ret[4]
@@ -158,7 +158,7 @@ class FEL():
 
 	def verify_device(self):
 		response = self.request("FEL_VERIFY_DEVICE", 32)
-		#check magic
+		# check magic
 		if bytes(response[:8]) != b"AWUSBFEX":
 			raise Exception("Malformed FEL_VERIFY_DEVICE response received")
 		ret = {
@@ -181,7 +181,7 @@ class FEL():
 		return int.from_bytes(nbytes, "little") == 4
 		
 	def write_blob(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
-		#chop up download in muliple chunks if necessary
+		# chop up download in muliple chunks if necessary
 		ret = True
 		chunk_addr = addr
 		for chunk in utils.dnload_iter(blob[offset:offset + size], FEL.MAX_MSG_LEN):

@@ -33,7 +33,7 @@ def fastboot(args):
 	dev = get_usb(vid, pid)
 	dev.default_timeout = int(args.timeout)
 	fast = fb.Fastboot(dev)
-	#this is mostly there to dodge a linter error
+	# this is mostly there to dodge a linter error
 	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out} packet size {fast.max_size}")
 	for cmd in args.fastboot_cmd:
 		if ":" in cmd:

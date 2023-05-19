@@ -11,9 +11,9 @@ def main():
 	usb_pid = recovery_config["rom_usb"][1]
 	dev = get_usb(usb_vid, usb_pid)
 	run_firmware(dev, "tiboot3")
-	#USB device should re-enumerate at this point
+	# USB device should re-enumerate at this point
 	usb.util.dispose_resources(dev)
-	#without this delay, USB device will be present but not ready
+	# without this delay, USB device will be present but not ready
 	time.sleep(1)
 	if "usb" in recovery_config["firmware"]["tiboot3"]:
 		(usb_vid,usb_pid) = parse_usb(recovery_config["firmware"]["tiboot3"]["usb"])

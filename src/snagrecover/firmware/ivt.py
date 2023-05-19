@@ -68,7 +68,7 @@ class IVT():
 		self.addr = None
 		self.csf = None
 		self.reserved2 = None
-		self.offset = None #offset in boot image, in bytes
+		self.offset = None # offset in boot image, in bytes
 
 	def log(self):
 		for key,value in self.__dict__.items():
@@ -95,12 +95,12 @@ class IVT():
 			self.addr =		 int.from_bytes(blob[offset + 20:offset + 24], "little")
 			self.csf =		 int.from_bytes(blob[offset + 24:offset + 28], "little")
 			self.reserved2 = int.from_bytes(blob[offset + 28:offset + 32], "little")
-			#get boot data
+			# get boot data
 			bootd_offset = self.offset + boot_datap - self.addr
 			self.boot_data["start"] = int.from_bytes(blob[bootd_offset:bootd_offset + 4], "little")
 			self.boot_data["length"] = int.from_bytes(blob[bootd_offset + 4:bootd_offset + 8], "little")
 			self.boot_data["plugin_flag"] = int.from_bytes(blob[bootd_offset + 8:bootd_offset + 12], "little")
-			#ignore HDMI firmware for MX8MQ*
+			# ignore HDMI firmware for MX8MQ*
 			if word == IVT_HEADER_2 and (self.boot_data["plugin_flag"] & 0xfffffffe > 0):
 				continue
 			self.log()

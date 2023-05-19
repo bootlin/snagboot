@@ -25,10 +25,10 @@ logger = logging.getLogger("snagrecover")
 from snagrecover import utils
 
 def search_partid(dev: usb.core.Device, partname: str, match_prefix=False) -> int:
-	#search for an altsetting associated with a partition name
+	# search for an altsetting associated with a partition name
 	cfg = dev.get_active_configuration()
-	#note that we're really iterating over multiple altsettings of 
-	#the same interface here
+	# note that we're really iterating over multiple altsettings of 
+	# the same interface here
 	partid = None
 	intfs = cfg.interfaces()
 	for intf in intfs:
@@ -76,8 +76,8 @@ class DFU():
 
 	def __init__(self, dev: usb.core.Device, stm32: bool = True):
 		self.dev = dev
-		self.stm32 = stm32 #set when dfu is used to recover stm32mp1 boards
-		#try to find wTransferSize
+		self.stm32 = stm32 # set when dfu is used to recover stm32mp1 boards
+		# try to find wTransferSize
 		self.transfer_size = 1024
 		cfg = dev.get_active_configuration()
 		intfs = cfg.interfaces()
@@ -99,7 +99,7 @@ class DFU():
 
 	def get_status(self) -> tuple:
 		# status = status polltimeout state iString
-		status = self.dev.ctrl_transfer(0xa1, 3, wValue=0, wIndex=0, data_or_wLength=6)#DFU_GETSTATUS
+		status = self.dev.ctrl_transfer(0xa1, 3, wValue=0, wIndex=0, data_or_wLength=6)# DFU_GETSTATUS
 		state = status[4]
 		timeout = int.from_bytes(bytes(status[1:3]), "little")
 		logger.debug(f"DFU state: {state} DFU status: {DFU.status_codes[status[0]]}")
@@ -113,26 +113,26 @@ class DFU():
 			raise ValueError(f"Incompatible state {state} detected")
 	
 		if self.stm32:
-			block_index = 2 #wValue 0 and 1 seem to be reserved
+			block_index = 2 # wValue 0 and 1 seem to be reserved
 		else:
 			block_index = 0
-		#for other commands (erase, set exec address, etc.)
+		# for other commands (erase, set exec address, etc.)
 		bytes_written = 0
 		for chunk in utils.dnload_iter(blob[offset:offset + size], self.transfer_size):
 			bytes_written += self.dev.ctrl_transfer(0x21, 1, wValue=block_index, wIndex=0, data_or_wLength=chunk)
 			progress = int(100 * bytes_written / size)
 			if show_progress:
 				print(f"\rprogress:{progress}%", end="")
-			#make sure to wait enough before sending next get_status
+			# make sure to wait enough before sending next get_status
 			t0 = DFU.check_timeout(timeout, t0)
 			(state,timeout) = self.get_status()
 			while state != DFU.state_codes["dfuDNLOAD-IDLE"]:
-				#make sure to wait enough before sending next get_status
+				# make sure to wait enough before sending next get_status
 				t0 = DFU.check_timeout(timeout, t0)
 				(state,timeout) = self.get_status()
 			block_index += 1
-		#send zero-length download command to leave DFU mode and manifest
-		#firmware
+		# send zero-length download command to leave DFU mode and manifest
+		# firmware
 		bytes_written += self.dev.ctrl_transfer(0x21, 1, wValue=block_index, wIndex=0, data_or_wLength=None)
 		t0 = DFU.check_timeout(timeout, t0)
 		(state,timeout) = self.get_status()
@@ -142,7 +142,7 @@ class DFU():
 				(state,timeout) = self.get_status()
 			elif state == DFU.state_codes["dfuMANIFEST-SYNC"]:
 				try:
-					#this fails on AM625, but is still necessary
+					# this fails on AM625, but is still necessary
 					(state,timeout) = self.get_status()
 				except usb.core.USBError:
 					print("Could not read status after end of manifest phase")
@@ -180,8 +180,8 @@ class DFU():
 				raise Exception("No DFU altsetting found with iInterface='@virtual*'")
 		self.set_partition(partid)
 		self.get_status()
-		#phase = phase_id dnload_addr offset additional_info
-		phase = self.dev.ctrl_transfer(0xa1, 2, wValue=0, wIndex=0, data_or_wLength=512)#DFU_UPLOAD
+		# phase = phase_id dnload_addr offset additional_info
+		phase = self.dev.ctrl_transfer(0xa1, 2, wValue=0, wIndex=0, data_or_wLength=512)# DFU_UPLOAD
 		phase_id = phase[0]
 		logger.info(f"Phase id: {phase_id}")
 		self.get_status()

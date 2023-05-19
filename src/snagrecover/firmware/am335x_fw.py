@@ -25,9 +25,9 @@ import time
 import logging
 logger = logging.getLogger("snagrecover")
 from xmodem import XMODEM
-#setting this logger to the same format as the main 
-#logger since it sometimes prints out messages that seem
-#like fatal errors but are apparently benign
+# setting this logger to the same format as the main 
+# logger since it sometimes prints out messages that seem
+# like fatal errors but are apparently benign
 xmodem_logger = logging.getLogger("xmodem.XMODEM")
 xmodem_logger.parent = logger
 import tftpy
@@ -36,11 +36,11 @@ import os.path
 
 server_config = {
 	"listen": "0.0.0.0",
-	#The values chosen for the client and server ips
-	#basically do not matter, as we run the recovery 
-	#inside an isolated network namespace.
-	#However, they must match with the values 
-	#used in the am335x helper scripts
+	# The values chosen for the client and server ips
+	# basically do not matter, as we run the recovery 
+	# inside an isolated network namespace.
+	# However, they must match with the values 
+	# used in the am335x helper scripts
 	"server_ip": "192.168.0.100",
 	"client_ip": "192.168.0.101",
 	"bootp_port": 9067,
@@ -71,9 +71,9 @@ class UDPHandler(socketserver.BaseRequestHandler):
 		bootp_req = bootp.BootpRequest(data)
 		bootp_req.log()
 		fw_name = self.server.fw_name
-		#address that the client will use as its IP source in further communications
+		# address that the client will use as its IP source in further communications
 		assigned_client_ip = server_config["client_ip"]
-		#address that the board can use to contact the bootp and tftp servers
+		# address that the board can use to contact the bootp and tftp servers
 		server_ip = server_config["server_ip"]
 		filename = os.path.basename(recovery_config["firmware"][fw_name]["path"])
 		reply = bootp_req.build_reply(assigned_client_ip, server_ip, filename)
@@ -82,12 +82,12 @@ class UDPHandler(socketserver.BaseRequestHandler):
 def am335x_usb(port, fw_name: str):
 	tftp_start_timeout = server_config["tftp_start_timeout"]
 	tftp_complete_timeout = server_config["tftp_complete_timeout"]
-	#TFTP server thread
+	# TFTP server thread
 	tftp_server = tftpy.TftpServer(os.path.dirname(recovery_config["firmware"][fw_name]["path"]))
 	tftp_thread = threading.Thread(name="Recovery TFTP server for AM335x", target=tftp_proc, args=[tftp_server])
 	tftp_thread.daemon = True
 
-	#BOOTP server thread
+	# BOOTP server thread
 	listen_address = server_config["listen"]
 	bootp_port = server_config["bootp_port"]
 	bootp_server = socketserver.UDPServer((listen_address, bootp_port), UDPHandler)
@@ -112,7 +112,7 @@ def am335x_usb(port, fw_name: str):
 			raise Exception("Timeout waiting for TFTP transfer to complete")
 		time.sleep(0.1)
 
-	#Note that this will not interrupt a tftp transfer in progress
+	# Note that this will not interrupt a tftp transfer in progress
 	tftp_server.stop()
 	logger.info("Waiting for TFTP server to stop...")
 	print("Waiting for TFTP shutdown...")

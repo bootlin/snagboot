@@ -28,10 +28,10 @@ USB_TIMEOUT = 5000
 USB_RETRY = 5 
 
 def main():
-	#Try to reset device
+	# Try to reset device
 	usb_vid = recovery_config["rom_usb"][0]
 	usb_pid = recovery_config["rom_usb"][1]
-	#FEL devices seem to require a slightly special retry procedure
+	# FEL devices seem to require a slightly special retry procedure
 	for i in range(USB_RETRY):
 		dev = usb.core.find(idVendor=usb_vid, idProduct=usb_pid)
 		if dev is None:
@@ -49,7 +49,7 @@ def main():
 			continue
 		break
 
-	#Try to set device configuration
+	# Try to set device configuration
 	for i in range(USB_RETRY):
 		dev = usb.core.find(idVendor=usb_vid, idProduct=usb_pid)
 		if dev is None:
@@ -78,7 +78,7 @@ def main():
 			time.sleep(1)
 			continue
 		break
-	#user can supply images separately or in a single file
+	# user can supply images separately or in a single file
 	if "u-boot-with-spl" in recovery_config["firmware"]:
 		run_firmware(fel_dev, "u-boot-with-spl")
 	else:

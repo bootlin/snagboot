@@ -77,7 +77,7 @@ class SDPCommand():
 	"FORMAT_32": b"\x20"
 	}
 
-	#High Assurance Boot status codes
+	# High Assurance Boot status codes
 	hab_codes = {
 	"HAB_OPEN": b"\x56\x78\x78\x56",
 	"HAB_CLOSED": b"\x12\x34\x34\x12"
@@ -208,17 +208,17 @@ class SDPCommand():
 		logger.info(f"SDPS write with parameters size:0x{size:x} offset:0x00")
 		soc_model = recovery_config["soc_model"]
 		if soc_model not in ["imx8qxp","imx815"]:
-			#only some mpu models require a preliminary command before the report 2
-			#transfer
-			packet1_arr = bytearray(b"\x01") #report 1
+			# only some mpu models require a preliminary command before the report 2
+			# transfer
+			packet1_arr = bytearray(b"\x01") # report 1
 			packet1_arr += SDPCommand.CBW_BLTC_SIGNATURE.to_bytes(4, "little")
-			packet1_arr += b"\x01\x00\x00\x00" #tag
-			packet1_arr += size.to_bytes(4, "little") #XferLength
+			packet1_arr += b"\x01\x00\x00\x00" # tag
+			packet1_arr += size.to_bytes(4, "little") # XferLength
 			packet1_arr += SDPCommand.CBW_HOST_TO_DEVICE_FLAGS.to_bytes(1, "little")
-			packet1_arr += b"\x00\x00" #reserved
-			packet1_arr += SDPCommand.BLTC_DOWNLOAD_FW.to_bytes(1, "little") #Command
-			packet1_arr += size.to_bytes(4, "big") #Length
-			packet1_arr += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" #reserved
+			packet1_arr += b"\x00\x00" # reserved
+			packet1_arr += SDPCommand.BLTC_DOWNLOAD_FW.to_bytes(1, "little") # Command
+			packet1_arr += size.to_bytes(4, "big") # Length
+			packet1_arr += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" # reserved
 			packet1 = bytes(packet1_arr)
 			self.dev.write(packet1)
 		if soc_model == "imx815":

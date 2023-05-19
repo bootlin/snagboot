@@ -31,7 +31,7 @@ def main():
 		run_firmware(port, "u-boot")
 		port.close()
 	else:
-		#Check that we are running in the expected network namespace
+		# Check that we are running in the expected network namespace
 		netns_name = recovery_config["args"]["netns"]
 		bash_cmd = "ip netns identify " + str(os.getpid())
 		process = subprocess.Popen(bash_cmd.split(), stdout=subprocess.PIPE)
@@ -40,8 +40,8 @@ def main():
 			print(f"This recovery needs to be run in the {netns_name} namespace!\nDid you run sudo am335x_usb_setup.sh?", file=sys.stderr)
 			sys.exit(-1)
 
-		#Install and run SPL
+		# Install and run SPL
 		run_firmware(None, "spl")
-		#Install and run U-Boot
+		# Install and run U-Boot
 		run_firmware(None, "u-boot")
 

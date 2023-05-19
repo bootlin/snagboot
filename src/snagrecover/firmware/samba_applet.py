@@ -49,7 +49,7 @@ from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
 
 class Applet():
-	#constants defined in atmel-software-package/samba_applets
+	# constants defined in atmel-software-package/samba_applets
 	APPLET_CMD_INITIALIZE = 0
 	COMM_TYPE_USB = 0
 
@@ -81,11 +81,11 @@ class Applet():
 		self.memops = memops
 		self.image = fw_blob
 
-		#struct used to configure sam-ba applets, with default params for extram
+		# struct used to configure sam-ba applets, with default params for extram
 		self.mailbox = {
 			"cmd": Applet.APPLET_CMD_INITIALIZE,
-			#not a valid status code, probably used to check if
-			#applet really wrote a return status
+			# not a valid status code, probably used to check if
+			# applet really wrote a return status
 			"status": 0xffffffff,
 			"com_type": Applet.COMM_TYPE_USB,
 			"trace_lvl": Applet.trace_levels["TRACE_LEVEL_DEBUG"],
@@ -106,7 +106,7 @@ class Applet():
 		return Applet.status_codes[self.memops.read32(self.address + 8)]
 
 	def configure(self) -> str:
-		#send command and parameters to applet before running it
+		# send command and parameters to applet before running it
 		logger.info("Starting configuring applet")
 		offset = 0
 		for param in ["cmd", "status", "com_type", "trace_lvl",\
@@ -134,7 +134,7 @@ class LowlevelApplet(Applet):
 		self.mailbox["console_instance"] = recovery_config["firmware"]["lowlevel"]["console_instance"]
 		self.mailbox["console_ioset"] = recovery_config["firmware"]["lowlevel"]["console_ioset"]
 		self.mailbox["applet_params"] = {
-				"preset": 0,#this parameter seems to be irrelevant for sama5d
+				"preset": 0,# this parameter seems to be irrelevant for sama5d
 		}
 
 class ExtramApplet(Applet):
@@ -165,7 +165,7 @@ class ExtramApplet(Applet):
 		Applet.__init__(self, memops, fw_blob)
 
 		self.mailbox["applet_params"] = {
-				"mode": 0,#extram only has one mode
+				"mode": 0,# extram only has one mode
 				"preset": None,
 		}
 

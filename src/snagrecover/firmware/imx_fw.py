@@ -90,7 +90,7 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		raise ValueError("Error: No IVT header in boot image")
 
 	if fw_name == "u-boot-with-dcd":
-		#WRITE DEVICE CONFIGURATION DATA
+		# WRITE DEVICE CONFIGURATION DATA
 		print("Writing Device Configuration Data...")
 		if ivtable.dcd == 0:
 			raise ValueError("Error: No DCD data in boot image")
@@ -110,15 +110,15 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 	logger.info(f"Downloading firmware {fw_name}...")
 	if fw_name == "flash-bin" and subfw_name == "u-boot":
 		"""
-		#get uboot/atf offset and size by assuming that it is located immediately after the
-		#section of the boot image that we previously downloaded to the board
+		get uboot/atf offset and size by assuming that it is located immediately after the
+		section of the boot image that we previously downloaded to the board
 		"""
 		write_offset = ivtable.offset + ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
 		write_size = len(fw_blob) - write_offset
 		if	write_size <= 0:
 			raise ValueError("Error: Invalid offset found for U-BOOT proper in boot image")
-		#We ask for a write at 0 but SPL should determine u-boot proper's 
-		#write address on its own
+		# We ask for a write at 0 but SPL should determine u-boot proper's 
+		# write address on its own
 		print("Downloading file...")
 		memops.write_blob(fw_blob, 0, write_offset, write_size)
 		print("Done\nJumping to firmware...")
@@ -126,12 +126,12 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		return None
 	else:
 		write_size = ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
-		#If the IVT offset is large enough, the write can overflow the source buffer
+		# If the IVT offset is large enough, the write can overflow the source buffer
 		if write_size > len(fw_blob) - ivtable.offset:
 			logger.warning("Write size is too large, truncating...")
 			write_size = len(fw_blob) - ivtable.offset
-		#protocols other than SPLV/U have a maximum download size
-		#split download into chunks < MAX_DOWNLOAD_SIZE
+		# protocols other than SPLV/U have a maximum download size
+		# split download into chunks < MAX_DOWNLOAD_SIZE
 		chunk_offset = 0
 		print("Downloading file...")
 		for chunk in utils.dnload_iter(fw_blob[ivtable.offset:ivtable.offset + write_size], 0x200000):
@@ -141,7 +141,7 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 
 	if fw_name in ["u-boot-with-dcd", "SPL"] or (fw_name == "flash-bin" and subfw_name == "spl"):
 		if soc_model in ["imx6q","imx6d","imx6sl"]:
-			#CLEAR DCD
+			# CLEAR DCD
 			print("Clearing Device Configuration Data...")
 			logger.info("Clearing DCD...")
 			"""
@@ -159,14 +159,14 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			logger.info("Done clearing DCD")
 			print("Done")
 		else:
-			#SEND SKIP_DCD_HEADER
+			# SEND SKIP_DCD_HEADER
 			print("Skipping DCD header...")
 			logger.info("Skipping DCD...")
 			sdp_cmd.skip_dcd_header()
 			logger.info("Done skipping DCD")
 			print("Done")
 
-	#JUMP TO FIRMWARE
+	# JUMP TO FIRMWARE
 	logger.info(f"Jumping to firmware {fw_name}")
 	print(f"Jumping to {fw_name}...")
 	memops.jump(ivtable.addr)
