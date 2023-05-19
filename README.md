@@ -3,27 +3,24 @@
 Snagboot intends to be an open-source and generic replacement to the
 vendor-specific, sometimes proprietary, tools used to recover and/or reflash
 embedded platforms. Examples of such tools include STM32CubeProgrammer, SAM-BA
-ISP, UUU, and sunxi-fel It is divided into two parts: 
+ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts: 
 
 - **snagrecover** uses vendor-specific ROM code mechanisms to initialize
   external RAM and run U-Boot, without modifying any non-volatile
   memories.
 - **snagflash** communicates with U-Boot to flash system images to non-volatile
-  memories, using either DFU, UMS or fastboot.
+  memories, using either DFU, UMS or Fastboot.
 
 <p align="center">
   <img src="docs/tutorial_snagrecover.gif" alt="animated" />
 </p>
 
-Currently supported SoC families: ST STM32MP1, Microchip SAMA5, NXP i.MX6/7/8,
-TI AM335x, Allwinner SUNXI, TI AM62x. Please check
-[supported_socs.yaml](src/snagrecover/supported_socs.yaml) for a more precise
-list of supported SoCs.
+The currently supported SoC families are ST STM32MP1, Microchip SAMA5, NXP
+i.MX6/7/8, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
+[supported_socs.yaml](src/snagrecover/supported_socs.yaml) or run `snagrecover
+--list-socs` for a more precise list of supported SoCs.
 
 ## Installation
-
-Snagboot can be installed as a local Python wheel. An installation script is
-provided to automatically build and install the package.
 
 Requirements:
 
@@ -32,12 +29,7 @@ Requirements:
  * The ensurepip Python package. On Debian, you can install the
    python[your python version]-venv package
 
-Build steps:
-
-```bash
-$ cd snagboot
-$ ./install.sh
-```
+Snagboot is available on pip: `python3 -m pip install --user snagboot`.
 
 This package provides two CLI tools: 
 
@@ -56,14 +48,22 @@ $ sudo udevadm control --reload-rules
 $ sudo udevadm trigger
 ```
 
-The affected devices will be accessible by the "plugdev" group, so please check
+The affected devices will be accessible to the "plugdev" group, so please check
 that you are part of this group. You can also modify the udev rules to pick a
 more restrictive group if you wish.
+
+Alternatively, Snagboot can be installed as a local Python wheel. An
+installation script is provided to automatically build and install the package.
+
+```bash
+$ cd snagboot
+$ ./install.sh
+```
 
 ## Usage guide
 
 **Note:** Running snagboot as root is not recommended and will typically not
-work, since it is installed for the current user only
+work, since it is probably installed for the current user only
 
 To recover and reflash a board using snagboot:
 
@@ -85,7 +85,7 @@ asciinema play -s=2 docs/tutorial_snagrecover.cast
 
 ## Contributing
 
-Contributions are welcome! Since Snagboot concentrates many different recovery
+Contributions are welcome! Since Snagboot includes many different recovery
 techniques and protocols, we try to keep the code base as structured as
 possible. Please consult the [contribution guidelines](CONTRIBUTING.md).
 

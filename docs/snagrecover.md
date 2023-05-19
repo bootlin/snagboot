@@ -7,10 +7,11 @@ The following command line arguments are always required:
    This must be one of the SoCs supported by snagrecover, run
  	snagrecover --list-socs for a list of supported SoCs
  * `-f file` or `-F dict`
-    Firmware configurations. See
-    [firmware binaries](fw_binaries.md) for more information on this.
+	Firmware configurations. See [firmware binaries](fw_binaries.md) for more
+	information on this.
 
-If you have changed your ROM code's USB VID/PID, you must specify it using the --rom-usb parameter: 
+If you have changed your ROM code's USB VID/PID (this usually isn't the case),
+you must specify it using the --rom-usb parameter: 
 
  * `--rom-usb vid:pid`
    USB device address vid:pid

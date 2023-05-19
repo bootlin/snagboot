@@ -15,7 +15,7 @@ version = "0.1"
 authors = [
   { name="Romain Gantois", email="romain.gantois@bootlin.com" },
 ]
-description = "Cross-vendor recovery and reflashing tool for embedded platforms"
+description = "Generic recovery and reflashing tool for embedded platforms"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [

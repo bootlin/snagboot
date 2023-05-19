@@ -4,9 +4,8 @@ Snagrecover requires firmware binaries to successfully recover the board. Each
 recovery flow has a set of named firmware that it will attempt to write to the
 board and run, in a predetermined order. Configurations for these firmware have
 to be passed to the recovery tool via the --firmware or --firmware-file
-argument. You can pass these options multiple times if necessary. This part of
-the documentation explains what firmware and configuration options are needed
-for each SoC family.
+argument. You can pass these options multiple times if necessary. This section
+explains what firmware and configuration options are needed for each SoC family.
 
 A firmware configuration file for snagrecover has the following structure:
 
@@ -23,20 +22,20 @@ fw_3:
   option3: value3
 ```
 
-The firmwares needed for each SoC family are listed below. Some
-[templates](../src/snagrecover/templates) are provided as references. Whatever SoC family you are
-using, you will probably want to configure your U-Boot build so that it can
-interact with snagflash correctly after recovery (e.g. use DFU, UMS or
-fastboot).
+The firmware needed for each SoC family are listed below. Some
+[templates](../src/snagrecover/templates) are provided for reference. Whichever
+type of SoC you are using, you will probably want to configure your U-Boot build
+so that it can interact with snagflash correctly after recovery (e.g. use DFU,
+UMS or fastboot).
 
 ## General tips on configuring U-Boot
 
-In many cases, in can be necessary to build the recovery U-Boot yourself
-e.g. when existing images do not work or SoC-specific configuration options are
-required. Here are a few SoC-independent tips that can be helpful when
-configuring U-Boot.
+In many cases, in can be necessary to build the recovery U-Boot yourself e.g.
+when existing images do not work or when specific features are needed to
+interact with snagflash. Here are a few SoC-independent tips that can be helpful
+when configuring U-Boot.
 
-- Set `CONFIG_AUTOBOOT=y` if you don't want U-Boot to try and boot automatically
+- Set `CONFIG_AUTOBOOT=n` if you don't want U-Boot to try and boot automatically
   after recovery e.g. if you want to get a U-Boot command line.
 - Sometimes U-Boot will try to load an environment from some memory device,
   which can cause issues. Setting `CONFIG_ENV_IS_NOWHERE=y` can help avoid this.
@@ -44,9 +43,9 @@ configuring U-Boot.
   `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM`, this will also change SPL's gadget id,
   so make sure to pass the "usb" firmware parameter when relevant. Note that you
   should not do this with i.MX SoCs! This is due to USB IDs being used by
-  snagrecover to match protocols.
+  snagrecover to match protocols during i.MX recovery.
 - If you want to use snagflash after recovery, make sure to write down the
-  aformentioned `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM` values so that you can
+  aforementioned `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM` values so that you can
   pass them to snagflash and setup proper udev rules so that you have rw access
   rights to the corresponding USB device. See [snagflash docs](snagflash.md) for more
   details.
@@ -55,34 +54,29 @@ configuring U-Boot.
 
 [example](../src/snagrecover/templates/stm32mp1-stm32mp157f-dk2.yaml)
 
-These instructions are for setting up a trusted boot using TF-A as a first
-stage and U-Boot as a second stage. Apparently using SPL as a first stage
-doesn’t work very well on these boards. We haven’t tested the recovery tool on
-a STM32MP13 board, the build process seems to be slightly different for those
-so you might have to refer to external docs if you want to build binaries to
-try and use the tool with one of these boards.
+TF-A is used as the first stage and U-Boot as the second stage.
 
 **fip:** Contains at least U-Boot with an stm32 image header. Usually the
 raw U-Boot image needs to be generated first, then packaged by a
 trusted-arm-firmware build. If the autoboot feature is enabled, then U-Boot will
-enter DFU mode.
+enter DFU mode after recovery.
 
 configuration:
  * path
 
-**tf-a:** Arm-trusted firmware BL2, with an stm32 image header. This should be
-built for trusted boot, i.e. using SP_MIN as the trusted firmware. In typical
-build strategies, you have to pass your U-Boot binary to the tf-a build process.
-If you change the USB VID/PID values used by tf-a, make sure to pass the "usb"
-firmware parameter.
+**tf-a:** Arm-trusted firmware BL2, with an stm32 image header. In typical
+build strategies, you have to pass your U-Boot binary to the tf-a build
+process.  If you change the USB VID/PID values used by tf-a, make sure to pass
+the "usb" firmware parameter. For the secure firmware, use SP_MIN if available.
+OPTEE can also work.
 
 configuration:
  * path
  * usb vid:pid (only if you have configured custom USB IDs in TF-A)
 
-### Example build process:
+### Example build process for an stm32mp15-based board
 
-Download mainline TF-A and U-Boot. In U-Boot:
+Download upstream TF-A and U-Boot. In U-Boot:
 
 ```bash 
 make stm32mp15_defconfig
@@ -95,21 +89,21 @@ In TF-A, run `make \<params\> all fip` where `params` contains the following:
 ARCH=aarch32 ARM_ARCH_MAJOR=7 AARCH32_SP=sp_min PLAT=stm32mp1 DTB_FILE_NAME=<your device tree>.dtb BL33_CFG=/path/to/u-boot.dtb BL33=/path/to/u-boot-nodtb.bin STM32MP_USB_PROGRAMMER=1
 ```
 
-This will generate tf-a-<your device tree>.stm32 which you can pass as tf-a,
-and fip.bin which you can pass as u-boot.
+This will generate tf-a-<your device tree>.stm32 and fip.bin, which you can
+pass to snagrecover.
 
 ## For Microchip SAMA5 devices
 
 [example](../src/snagrecover/templates/sama5-sama5d2xplained.yaml)
 
-**lowlevel:** SAM-BA ISP applet used to initialize the clock tree. You can
-obtain SAM-BA ISP applets by downloading the source code for SAM-BA ISP from
+**lowlevel:** SAM-BA applet used to initialize the clock tree. You can
+obtain SAM-BA applets by downloading the source code for SAM-BA ISP from
 Microchip’s website. In the downloaded folder, go to qml/SAMBA/Device/[board
 model]/applets. If the binaries aren’t there, check that your board is
 supported by the recovery tool.
 
 configuration:
- * path: this binary can be obtained from the SAM-BA ISP sources e.g.
+ * path: the binary can be obtained from the SAM-BA ISP sources e.g.
  	applet-lowlevel\_sama5d3-generic\_sram.bin
  * console\_instance: board-specific
  * console\_ioset: board-specific
@@ -117,7 +111,7 @@ configuration:
 **extram:** SAM-BA ISP applet used to initialize external RAM.
 
 configuration:
- * path: this binary can be obtained from the SAM-BA ISP sources e.g.
+ * path: the binary can be obtained from the SAM-BA ISP sources e.g.
  	applet-extram\_sama5d3-generic\_sram.bin
  * preset: board-specific, check your DDR model, e.g. "DDR2\_MT47H128M16:Preset
  	2 (2 x MT47H128M16)" supported presets are listed in
@@ -125,9 +119,8 @@ configuration:
  * console\_instance: board-specific
  * console\_ioset: board-specific
 
-**u-boot:** U-Boot binary. Make sure that “MMU-based Paged Memory Management
-Support” and “Skip the calls to certain low level initialization functions” are
-disabled.
+**u-boot:** U-Boot binary. Make sure that `CONFIG_SKIP_LOWLEVEL_INIT`
+ and `CONFIG_SYS_ARM_MMU` are both disabled!
 
 configuration:
  * path
@@ -138,7 +131,8 @@ configuration:
 [example](../src/snagrecover/templates/imx28-evk.yaml)
 
 **u-boot-sdps:** Contains at least U-Boot and other SoC-specific components. For
-i.MX28, this can be generated with the u-boot.sb target in U-Boot.
+i.MX28, this can be generated with the u-boot.sb target in U-Boot. SPL should
+support SDP.
 
 configuration:
  * path
@@ -161,8 +155,10 @@ configuration:
 
 [example](../src/snagrecover/templates/var-som-mx6.yaml)
 
-**SPL:** IVT header + U-BOOT SPL to be loaded in OCRAM. You can
-generate this by compiling the SPL target in U-Boot.
+**SPL:** IVT header + U-BOOT SPL to be loaded in OCRAM. You can generate this
+by compiling the SPL target in U-Boot. SPL should support SDP. You should not
+modify the default USB gadget VID/PID values, as they are used by snagrecover
+to match protocols.
 
 configuration:
  * path
@@ -177,12 +173,10 @@ configuration:
 
 [example](../src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
 
-iMX8 boards require more complicated firmware binaries, since U-BOOT cannot
-boot them on its own. The process for generating the bootloader firmware is
-highly vendor and board specific. We recommend that you follow your board
-vendor’s tutorial to generate a recovery sd card image , then dump the start of
-this sd card image (up to the start of the first partition) into a flash.bin 
-file.
+The process for generating the bootloader firmware for these SoCs is highly
+vendor and board specific. We recommend that you follow your board vendor’s
+tutorial to generate a recovery sd card image , then dump the start of this sd
+card image (up to the start of the first partition) into a flash.bin file.
 
 **flash-bin:** This should contain at least: IVT header + SPL + ddr firmware
 + ATF + u-boot. The precise image structure depends on the board and build
@@ -200,9 +194,17 @@ configuration:
 [example](../src/snagrecover/templates/am335x-beaglebone-black.yaml)
 
 **spl:** First stage bootloader. Build the spl/u-boot-spl.bin target for your
-board in U-Boot mainline. spl/u-boot-spl.bin is the required binary. If
-recovering via UART, SPL should be built with CONFIG\_SPL\_YMODEM_SUPPORT
-enabled.
+board in U-Boot mainline. If recovering via UART, SPL should be built with
+CONFIG\_SPL\_YMODEM_SUPPORT enabled. If recovering via USB, the USB Ethernet
+gadget should be enabled, which implies the following options:
+
+```bash
+CONFIG\_SPL\_NET\_SUPPORT=y
+CONFIG\_SPL\_NET\_VCI\_STRING="AM335x U-Boot SPL"
+CONFIG\_SPL\_USB\_GADGET\_SUPPORT=y
+CONFIG\_SPL\_USB\_ETHER=y
+# CONFIG\_SPL\_USB\_SDP\_SUPPORT is not set
+```
 
 configuration:
  * path
@@ -219,6 +221,7 @@ binary file.
 ## For Allwinner SUNXI devices
 
 ### Option 1: Single SPL+U-Boot binary
+
 [example](../src/snagrecover/templates/sunxi-orangepi-pc.yaml)
 
 **u-boot-with-spl:** Described in sunxi-u-boot.dtsi. For arm64 SOCs, this
@@ -254,7 +257,7 @@ AM62x SoCs require multiple complex firmware images to boot.
 
 **tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
 container with device tree blobs. If you change U-Boot's USB VID/PID, you should
-pass them using the usb firmware parameter.
+specify them with the usb firmware parameter. SPL should support DFU.
 
 configuration:
  * path

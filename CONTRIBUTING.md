@@ -30,7 +30,7 @@
   firmware binaries
 - when adding a new protocol to src/snagrecover/protocols, please use the
   memory_ops interface when possible
-- snagrecover should not use non-volatile memories
+- snagrecover should not modify non-volatile memories
 
 ## Wishlist
 

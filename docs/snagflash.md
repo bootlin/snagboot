@@ -1,23 +1,24 @@
 # Running snagflash
 
 **Note:** A delay might be required between snagrecover and snagflash, to let
-U-Boot start up before connecting to it.
+U-Boot start up before connecting to it. If Snagflash is run too early, it will
+retry a few times before failing.
 
-In all flashing modes, snagflash takes the protocol argument, which specifies either DFU, UMS or fastboot.
+Snagflash always requires the "protocol" argument.
 
  * `-P, --protocol {dfu,ums,fastboot}`
    The protocol to use for flashing
 
-If running snagflash right after snagrecover e.g. in an automated setting,
+When running snagflash right after snagrecover e.g. in an automated procedure,
 make sure that U-Boot will expose the DFU/Fastboot/UMS device by the time
 snagflash runs. You might want to configure your recovery U-Boot so that it
 autoruns the relevant command. In case snagflash doesn't find the USB port/UMS
 device it is looking for, it will retry a few times then fail.
 
-**Warning:** Since these vid:pid pairs can be wildly different from one U-Boot
-to another, they are not hardcoded in snagflash. Therefore, you will not
-necessary have access rights to these devices. Assuming that your U-Boot config
-has `CONFIG_USB_GADGET_VENDOR_NUM=vid` and `CONFIG_USB_GADGET_PRODUCT_NUM=pid`, you
+**Warning:** Since the vid:pid pairs of U-Boot USB gadgets can vary wildly, they
+are not hardcoded in snagflash. Therefore, you will not necessary have access
+rights to these devices. Assuming that your U-Boot config has
+`CONFIG_USB_GADGET_VENDOR_NUM=vid` and `CONFIG_USB_GADGET_PRODUCT_NUM=pid`, you
 can add the following udev rule to get access:
 
 `SUBSYSTEM=="usb", ATTRS{idVendor}=="vid", ATTRS{idProduct}=="pid", MODE="0660", GROUP="plugdev"`
@@ -31,8 +32,7 @@ In DFU mode, snagflash takes two additional arguments :
  * `-D --dfu-config  altsetting:path`
    The altsetting and path of a file to download to the board. This should match
    the value specified in dfu\_alt\_info in U-Boot. This flag can be passed
-   multiple times, to specify multiple files to download. The files will be
-   downloaded in the order that the flags were passed in.
+   multiple times, to specify multiple files to download.
 
 and optionally:
 
@@ -63,24 +63,20 @@ Then either one of:
  * `-d --dest path`
    Sets the destination file name for transfers to mounted devices. 
  * `-b –blockdev device` 
-   A file to be written to a raw block device.
+   Sets the block device for transfers to raw block devices.
  
 and optionally:
 
  * `--size`
-   You can specify this to copy only a portion of the source
- 	file. Only works for raw transfers. Can be specified in decimal or
- 	hexadecimal.
+   You can specify this to copy only a portion of the source file. This only
+   works for raw transfers, and can be specified in decimal or hexadecimal.
 
 Make sure that snagflash has the necessary access rights to the target
-devices/mount dirs. If you are passing a raw partition, make sure that it is not
-mounted. If you want to automate this process, you might have to write udev
-rules to make sure that device paths and mount points stay consistent across
-runs.
-
-**Note:** sizes can be specified in decimal or hexadecimal
+devices/mount directories. If you are passing a raw block device, make sure that
+it is not mounted.
 
 Example:
+
 ```bash
 # in U-Boot: ums 0 mmc 0
 snagflash -P ums -s binaries/u-boot.stm32 -b /dev/sdb1
@@ -94,9 +90,8 @@ In fastboot mode, snagflash takes two additional arguments:
  * `-p --port vid:pid`
    The USB address of the Fastboot device exposed by U-Boot 
  * `-f --fastboot_cmd  cmd:args`
-   A fastboot command to be sent to U-Boot. The
- 	following commands are supported by snagflash (which does not mean that they
- 	are supported by your U-Boot!) :
+   A fastboot command to be sent to U-Boot. The following commands are supported
+   by snagflash (which does not mean that they are supported by your U-Boot!) :
 
 ```
 getvar:<var>
