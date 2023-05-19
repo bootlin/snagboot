@@ -24,7 +24,7 @@ from snagrecover.protocols import dfu
 from snagrecover.recoveries import stm32_flashlayout as flashlayout
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error,parse_usb,get_usb
+from snagrecover.utils import parse_usb,get_usb
 import logging
 logger = logging.getLogger("snagrecover")
 

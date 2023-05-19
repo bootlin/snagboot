@@ -115,7 +115,7 @@ def check(port: fel.FEL, soc_info: dict) -> tuple:
 	tt_addr = memops.read32(soc_info["safe_addr"] + len(check_mmu) - 8)
 	if tt_addr == 0xcafedeca:
 		logger.info("MMU not enabled by ROM")
-		if not "tt_addr" in soc_info:
+		if "tt_addr" not in soc_info:
 			return None
 		logger.info("Generating custom MMU translation table")
 		"""

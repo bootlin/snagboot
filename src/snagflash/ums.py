@@ -64,7 +64,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 		try:
 			mapfile = tempfile.NamedTemporaryFile("w+")
 		except IOError as err:
-			raise Exception("Could not create temporary file for bmap")
+			raise Exception("Could not create temporary file for bmap") from err
 		mapfile.flush()
 		mapfile.seek(0)
 		creator = BmapCreate.BmapCreate(filepath, mapfile, "sha256")
@@ -75,7 +75,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 		writer = BmapCopy.BmapBdevCopy(src_file, dev, mapfileb, src_size)
 		writer.copy(False, True)
 	mapfileb.close()
-	if not mapfile is None:
+	if mapfile is not None:
 		mapfile.close()
 
 def write_raw(args):
@@ -88,7 +88,7 @@ def write_raw(args):
 	print(f"Reading {filepath}...")
 	with open(filepath, "rb") as file:
 		blob = file.read(-1)
-	if not args.size is None:
+	if args.size is not None:
 		size = int_arg(args.size)
 	else:
 		size = len(blob)

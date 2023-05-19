@@ -60,7 +60,7 @@ class DFU():
 		0x01: "errTARGET",
 		0x02: "errFILE",
 		0x03: "errWRITE",
-		0x03: "errERASE",
+		0x04: "errERASE",
 		0x05: "errCHECK_ERASED",
 		0x06: "errPROG",
 		0x07: "errVERIFY",
@@ -93,7 +93,7 @@ class DFU():
 		if t1 - t0 < timeout:
 			logger.warning("Too soon to send another get_status command")
 			while round(time.time() * 1000) - t0 < timeout:
-				None
+				pass
 			t1 = round(time.time() * 1000)
 		return round(time.time() * 1000)
 
@@ -152,17 +152,17 @@ class DFU():
 				return True
 		if show_progress:
 			print("")
-		logger.info(f"Done manifesting firmware")
+		logger.info("Done manifesting firmware")
 		return True
 
 	def dfu_abort(self):
-		status = self.dev.ctrl_transfer(0x21, 6, wValue=0, wIndex=0, data_or_wLength=None)
+		self.dev.ctrl_transfer(0x21, 6, wValue=0, wIndex=0, data_or_wLength=None)
 
 	def detach(self, partid: int):
 		self.set_partition(partid)
-		status = self.get_status()
+		self.get_status()
 		logger.info("Sending DFU_DETACH...")
-		status = self.dev.ctrl_transfer(0xa1, 0, wValue=0x7530, wIndex=0, data_or_wLength=0)
+		self.dev.ctrl_transfer(0xa1, 0, wValue=0x7530, wIndex=0, data_or_wLength=0)
 		return None
 
 	def set_partition(self, partid: int):
@@ -177,13 +177,13 @@ class DFU():
 		"""
 		partid = search_partid(self.dev, "@virtual", match_prefix=True)
 		if partid is None:
-				raise Exception(f"No DFU altsetting found with iInterface='@virtual*'")
+				raise Exception("No DFU altsetting found with iInterface='@virtual*'")
 		self.set_partition(partid)
-		status = self.get_status()
+		self.get_status()
 		#phase = phase_id dnload_addr offset additional_info
 		phase = self.dev.ctrl_transfer(0xa1, 2, wValue=0, wIndex=0, data_or_wLength=512)#DFU_UPLOAD
 		phase_id = phase[0]
 		logger.info(f"Phase id: {phase_id}")
-		status = self.get_status()
+		self.get_status()
 		return phase_id
 

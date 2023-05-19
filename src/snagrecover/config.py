@@ -81,8 +81,6 @@ def init_config(args: list):
 				recovery_config["rom_usb"] = default_usb_ids["imx"][soc_model]
 			else:
 				recovery_config["rom_usb"] = default_usb_ids[soc_family]
-		elif soc_family == "imx":
-			cli_error(f"you cannot pass the --rom-usb arg for i.MX SoCs")
 		else:
 			recovery_config["rom_usb"] = parse_usb(args.rom_usb)
 

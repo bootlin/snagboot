@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import serial
-import time
 from snagrecover.config import recovery_config
 from snagrecover.firmware.firmware import run_firmware
 import subprocess

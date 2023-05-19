@@ -83,7 +83,7 @@ class IVT():
 		offset = 0
 		while offset < len(blob): 
 			word = blob[offset:offset+4]
-			if not word in [IVT_HEADER_1, IVT_HEADER_2]:
+			if word not in [IVT_HEADER_1, IVT_HEADER_2]:
 				offset += 4
 				continue
 			self.offset = offset 

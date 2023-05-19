@@ -20,7 +20,6 @@
 import usb
 import time
 from snagrecover.protocols import fel
-from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 from snagrecover.utils import access_error
@@ -42,10 +41,10 @@ def main():
 			continue
 		try:
 			dev.reset()
-		except usb.core.USBError:
+		except usb.core.USBError as err:
 			print("Failed to reset USB device, retrying...")
 			if i == USB_RETRY - 1:
-				raise Exception("Maximum retry count exceeded")
+				raise Exception("Maximum retry count exceeded") from err
 			time.sleep(2)
 			continue
 		break
@@ -60,24 +59,22 @@ def main():
 			continue
 		try:
 			dev.set_configuration()
-		except usb.core.USBError:
+		except usb.core.USBError as err:
 			print("Failed to initialize device, retrying...")
 			if i == USB_RETRY - 1:
-				raise Exception("Maximum retry count exceeded")
+				raise Exception("Maximum retry count exceeded") from err
 			time.sleep(1)
 			continue
 		break
 
-
 	fel_dev = fel.FEL(dev, USB_TIMEOUT)
-	memops = memory_ops.MemoryOps(fel_dev)
 
 	for i in range(USB_RETRY):
 		try:
-			ret = fel_dev.verify_device()
-		except usb.core.USBError or Exception:
+			fel_dev.verify_device()
+		except (usb.core.USBError, Exception) as err:
 			if i == USB_RETRY - 1:
-				raise Exception("Maximum retry count exceeded")
+				raise Exception("Maximum retry count exceeded") from err
 			time.sleep(1)
 			continue
 		break

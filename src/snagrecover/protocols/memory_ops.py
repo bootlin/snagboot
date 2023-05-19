@@ -40,7 +40,7 @@ class MemoryOps():
 
 	def write_blob(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
 		if len(blob) > 0:
-			logger.debug(f"[MemoryOps] write_blob "\
+			logger.debug("[MemoryOps] write_blob "\
 				+f"0x{blob[offset]:x}...0x{blob[offset + size - 1]:x} "\
 				+f"addr 0x{addr:x} offset 0x{offset:x} size 0x{size:x}")
 		ret = self.backend.write_blob(blob, addr, offset, size)

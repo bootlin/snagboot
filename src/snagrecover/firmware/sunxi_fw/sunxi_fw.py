@@ -39,7 +39,7 @@ MAX_DT_NAME_SIZE = 512
 
 def rmr_jump(port: fel.FEL, entry_addr: int, soc_info: dict):
 	logger.info(f"Entering second stage firmware using rmr request, entry point: 0x{entry_addr:x}")
-	if not "rvbar_addr" in soc_info:
+	if "rvbar_addr" not in soc_info:
 		raise Exception("Cannot jump to U-Boot, your soc does not have an address defined for RVBAR")
 	"""
 	based on linux-sunxi sunxi-fel code
@@ -106,7 +106,7 @@ def write_node_img(port: fel.FEL, dt: libfdt.Fdt, fw_blob: bytes, node: int, dtb
 		ret_size = len(data) 
 	else:
 		logger.warning(f"Empty image {node.name}! skipping...")
-	print(f"Done")
+	print("Done")
 	return (addr, ret_size)
 
 def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
@@ -114,7 +114,7 @@ def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
 	cfgs = dt.path_offset("/configurations")
 	config = None
 	#search for configuration matching dt_name or default one
-	if not dt_name is None:
+	if dt_name is not None:
 		node = dt.first_subnode(cfgs)
 		if test_node_strprop(dt, node, "description", dt_name):
 			config = node
@@ -312,7 +312,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 			logger.warning("Invalid dt name, please check this SPL image's header")
 		else:
 			dt_name = str.decode(dt_name, "ascii")
-	 
+
 	#for A10, A10s, A13, R8: enable L2 cache
 	memops = memory_ops.MemoryOps(port)
 	if recovery_config["soc_model"] in ["a10", "a10s", "a13", "r8"]:
@@ -339,7 +339,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	ret = mmu.check(port, soc_info)
 	mmu.disable(port, soc_info)
 	must_restore_mmu = False
-	if not ret is None:
+	if ret is not None:
 		(tt, tt_addr) = ret
 		must_restore_mmu = True
 	#generate memory map for thunk, SPL, and bootrom sections

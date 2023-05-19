@@ -109,41 +109,41 @@ class Fastboot():
 		with open(path, "rb") as file:
 			blob = file.read(-1)
 		packet = f"download:{len(blob):08x}".encode()
-		ret = self.cmd(packet)
+		self.cmd(packet)
 		for chunk in utils.dnload_iter(blob, self.max_size):
 			self.dev.write(self.ep_out, chunk, timeout=self.timeout)
 		self.response()
 
 	def erase(self, part: str):
 		packet = f"erase:{part}\x00"
-		ret = self.cmd(packet)
+		self.cmd(packet)
 
 	def flash(self, part: str):
 		packet = f"flash:{part}\x00"
-		ret = self.cmd(packet)
+		self.cmd(packet)
 
 	def boot(self):
-		packet = f"boot"
-		ret = self.cmd(packet)
+		packet = "boot"
+		self.cmd(packet)
 
 	def fbcontinue(self):
 		"""
 		Can't name this 'continue' because Python
 		"""
-		packet = f"continue"
-		ret = self.cmd(packet)
+		packet = "continue"
+		self.cmd(packet)
 
 	def reboot(self):
-		packet = f"continue"
-		ret = self.cmd(packet)
+		packet = "continue"
+		self.cmd(packet)
 
 	def reboot_bootloader(self):
-		packet = f"reboot-bootloader"
-		ret = self.cmd(packet)
+		packet = "reboot-bootloader"
+		self.cmd(packet)
 
 	def powerdown(self):
-		packet = f"powerdown"
-		ret = self.cmd(packet)
+		packet = "powerdown"
+		self.cmd(packet)
 	
 	def ucmd(self, cmd: str):
 		"""
@@ -151,7 +151,7 @@ class Fastboot():
 		wait for it to complete.
 		"""
 		packet = f"UCmd:{cmd}\x00"
-		ret = self.cmd(packet)
+		self.cmd(packet)
 
 	def acmd(self, cmd: str):
 		"""
@@ -159,22 +159,22 @@ class Fastboot():
 		do not wait for it to complete.
 		"""
 		packet = f"ACmd:{cmd}\x00"
-		ret = self.cmd(packet)
+		self.cmd(packet)
 
 	def oem_run(self, cmd: str):
 		"""
 		Execute an arbitrary U-Boot command
 		"""
 		packet = f"oem run:{cmd}\x00"
-		ret = self.cmd(packet)
+		self.cmd(packet)
 
 	def oem_format(self):
 		"""
 		Execute gpt write mmc <dev> $partitions 
 		<dev> is preconfigured in U-Boot
 		"""
-		packet = f"oem format"
-		ret = self.cmd(packet)
+		packet = "oem format"
+		self.cmd(packet)
 
 	def oem_partconf(self, arg: str):
 		"""
@@ -182,7 +182,7 @@ class Fastboot():
 		<dev> is preconfigured in U-Boot
 		"""
 		packet = f"oem partconf:{arg}\x00"
-		ret = self.cmd(packet)
+		self.cmd(packet)
 
 	def oem_bootbus(self, arg: str):
 		"""
@@ -190,5 +190,5 @@ class Fastboot():
 		<dev> is preconfigured in U-Boot
 		"""
 		packet = f"oem bootbus:{arg}\x00"
-		ret = self.cmd(packet)
+		self.cmd(packet)
 

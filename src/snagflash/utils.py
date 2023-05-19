@@ -6,8 +6,8 @@ USB_RETRIES = 5
 
 def usb_error(vid: int, pid: int):
 	print(f"Device access error: could not open USB device {vid:04x}:{pid:04x}", file=sys.stderr)
-	print(f"If the device exists, make sure that you have rw access rights to it", file=sys.stderr)
-	print(f"If that is not the case, you can add the following line to your /etc/udev/rules.d/80-snagboot.rules file:\n", file=sys.stderr)
+	print("If the device exists, make sure that you have rw access rights to it", file=sys.stderr)
+	print("If that is not the case, you can add the following line to your /etc/udev/rules.d/80-snagboot.rules file:\n", file=sys.stderr)
 	print("SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"" + f"{vid:04x}" + "\", ATTRS{idProduct}==\"" + f"{pid:04x}" + "\", MODE=\"0660\", GROUP=\"plugdev\"", file=sys.stderr)
 	sys.exit(-1)
 

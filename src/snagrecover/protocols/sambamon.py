@@ -26,19 +26,19 @@ class SambaMon():
 		self.port = port
 		#set sam-ba monitor to binary mode
 		logger.debug("Sending sambamon command N#")
-		nbytes = port.write(b"N#")
-		ret = port.read_until(b"\r")
+		port.write(b"N#")
+		port.read_until(b"\r")
 		return None
 
 	def get_version(self) -> str:
 		#get SAM-BA monitor version
 		logger.debug("Sending sambamon command V#")
-		nbytes = self.port.write(b"V#")
+		self.port.write(b"V#")
 		ret = self.port.read_until(b"\r")
 		return ret.decode("ascii")
 
 	def read32(self, addr: int) -> int:
-		nbytes = self.port.write(bytes(f"w{addr:x},#", "ascii"))
+		self.port.write(bytes(f"w{addr:x},#", "ascii"))
 		ret = self.port.read(4)
 		value = int.from_bytes(ret, "little")
 		return value

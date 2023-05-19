@@ -19,9 +19,6 @@
 
 import logging
 logger = logging.getLogger("snagrecover")
-import serial
-import os
-import usb
 from snagrecover.firmware import samba_applet
 from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops

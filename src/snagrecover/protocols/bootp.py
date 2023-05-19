@@ -88,7 +88,7 @@ class BootpRequest():
 		return bytes(reply)
 
 	def log(self):
-		logger.debug(f"BootpRequest received packet:")
+		logger.debug("BootpRequest received packet:")
 		logger.debug(f"transaction id: {self.xid}\n")
 		logger.debug(f"seconds since boot attempt: {self.secs}\n")
 		logger.debug(f"client ip: {self.ciaddr}\n")
@@ -96,5 +96,5 @@ class BootpRequest():
 		logger.debug(f"server ip: {self.siaddr}\n")
 		logger.debug(f"client hardware address: {self.chaddr}\n")
 		logger.debug(f"boot file name: {self.file}\n")
-		logger.debug(f"End of BootpRequest received packet")
+		logger.debug("End of BootpRequest received packet")
 

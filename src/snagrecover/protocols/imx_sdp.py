@@ -54,7 +54,6 @@ reference manual
 
 import logging
 logger = logging.getLogger("snagrecover")
-import time
 from snagrecover import utils
 from snagrecover.protocols import hab_constants
 from snagrecover.config import recovery_config
@@ -191,7 +190,7 @@ class SDPCommand():
 		return None
 
 	def skip_dcd_header(self):
-		logger.info(f"Sending SKIP_DCD_HEADER command")
+		logger.info("Sending SKIP_DCD_HEADER command")
 		self.clear()
 		self.cmd = SDPCommand.command_codes["SKIP_DCD_HEADER"]
 		packet1 = self.build_packet()
@@ -208,7 +207,7 @@ class SDPCommand():
 		"""
 		logger.info(f"SDPS write with parameters size:0x{size:x} offset:0x00")
 		soc_model = recovery_config["soc_model"]
-		if not soc_model in ["imx8qxp","imx815"]:
+		if soc_model not in ["imx8qxp","imx815"]:
 			#only some mpu models require a preliminary command before the report 2
 			#transfer
 			packet1_arr = bytearray(b"\x01") #report 1

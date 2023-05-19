@@ -48,10 +48,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import hid
-import io
 import time
 import usb
-from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 from snagrecover.utils import access_error
@@ -124,7 +122,7 @@ def main():
 			except hid.HIDException:
 				continue
 			#check protocol using bcdDevice
-			if not valid_dev is None:
+			if valid_dev is not None:
 				print(f"Found HID device with config {splid}")
 				break
 		time.sleep(1)

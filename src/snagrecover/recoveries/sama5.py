@@ -18,10 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import serial
-import usb
 import os.path
 import time
-import yaml
 
 from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops

@@ -17,18 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import os
 import logging
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
-from snagrecover.protocols import memory_ops
 from snagrecover.firmware.imx_fw import imx_run
 from snagrecover.firmware.sama5_fw import sama5_run
 from snagrecover.firmware.am335x_fw import am335x_run
 from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
-import time
 import usb
 
 def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
