@@ -40,7 +40,7 @@ def wait_filepath(path: str):
 		time.sleep(2)
 		print(f"Retrying: find {path} {retries}/{FILEPATH_RETRIES}")
 		retries += 1
-	print(f"Done")
+	print("Done")
 
 def bmap_copy(filepath: str, dev, src_size: int):
 	mappath = os.path.splitext(filepath)[0] + ".bmap"

@@ -29,7 +29,7 @@ import ast
 
 def cli():
 	udev_path = os.path.dirname(__file__) + "/80-snagboot.rules"
-	am335_script_path = os.path.dirname(__file__) + "/am335_usb_setup.sh"
+	am335x_script_path = os.path.dirname(__file__) + "/am335x_usb_setup.sh"
 	template_path = os.path.dirname(__file__) + "/templates"
 	templates = [filename[:-5] for filename in os.listdir(template_path)]
 	templates.sort()
@@ -47,9 +47,9 @@ Templates:
 	mandatory.add_argument("-f", "--firmware-file", help="firmware configurations, passed as a yaml file", metavar="\"templates/colibri-imx7d.yaml\"", action="append")
 	mandatory.add_argument("-F", "--firmware", help="firmware configurations, formatted as a python3 dict", metavar="\"{'fw1': {'path': '/path/to', 'address': 0x00}}\"", action="append", type=ast.literal_eval)
 	optional = parser.add_argument_group("Optional")
-	optional.add_argument("--uart", help="use UART for AM335 recovery", metavar="/dev/ttyx")
+	optional.add_argument("--uart", help="use UART for AM335x recovery", metavar="/dev/ttyx")
 	optional.add_argument("--baudrate", help="UART baudrate", default=115200)
-	optional.add_argument("--netns", help="network namespace for AM335 USB recovery, defaults to 'snagbootnet'", default="snagbootnet")
+	optional.add_argument("--netns", help="network namespace for AM335x USB recovery, defaults to 'snagbootnet'", default="snagbootnet")
 	optional.add_argument("--loglevel", help="set loglevel", choices=["silent","info","debug"], default="silent")
 	optional.add_argument("--logfile", help="set logfile", default="board_recovery.log")
 	optional.add_argument("--rom-usb", help="USB ID used by ROM code", metavar="vid:pid")
@@ -58,7 +58,7 @@ Templates:
 	utilargs.add_argument("--version", help="show version", action="store_true")
 	utilargs.add_argument("-t", "--template", help="get an example firmware configuration file", metavar="name")
 	utilargs.add_argument("--udev", help="get required udev rules for snagrecover", action="store_true")
-	utilargs.add_argument("--am335-setup", help="get setup script for am335 USB recovery", action="store_true")
+	utilargs.add_argument("--am335x-setup", help="get setup script for am335x USB recovery", action="store_true")
 
 	args = parser.parse_args()
 
@@ -98,9 +98,9 @@ Templates:
 			print(file.read(-1))
 		sys.exit(0)
 
-	#print am335 setup script
-	if args.am335_setup:
-		with open(am335_script_path, "r") as file:
+	#print am335x setup script
+	if args.am335x_setup:
+		with open(am335x_script_path, "r") as file:
 			print(file.read(-1))
 		sys.exit(0)
 
@@ -137,15 +137,15 @@ Templates:
 	elif soc_family == "imx":
 		from snagrecover.recoveries.imx import main as imx_recovery
 		imx_recovery()
-	elif soc_family == "am335":
-		from snagrecover.recoveries.am335 import main as am335_recovery
-		am335_recovery()
+	elif soc_family == "am335x":
+		from snagrecover.recoveries.am335x import main as am335x_recovery
+		am335x_recovery()
 	elif soc_family == "sunxi":
 		from snagrecover.recoveries.sunxi import main as sunxi_recovery
 		sunxi_recovery()
-	elif soc_family == "am62":
-		from snagrecover.recoveries.am62 import main as am62_recovery
-		am62_recovery()
+	elif soc_family == "am62x":
+		from snagrecover.recoveries.am62x import main as am62x_recovery
+		am62x_recovery()
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 	print(f"Done recovering {soc_model} board")

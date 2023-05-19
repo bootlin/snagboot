@@ -23,7 +23,7 @@ specific type of SoC.
 
 - i.MX: SPL should have SDP USB gadget support
 - AM62x: SPL should have DFU USB gadget support
-- AM335: SPL should support booting from USB Ethernet, which implies the
+- AM335x: SPL should support booting from USB Ethernet, which implies the
   following options: 
 ```bash
 CONFIG\_SPL\_NET\_SUPPORT=y

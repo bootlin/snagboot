@@ -17,10 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import usb
 from snagrecover.protocols import fastboot as fb
 from snagflash.utils import get_usb
 import sys
+import logging
+logger = logging.getLogger("snagflash")
 
 def fastboot(args):
 	if (args.port is None) or (":" not in args.port):
@@ -32,6 +33,8 @@ def fastboot(args):
 	dev = get_usb(vid, pid)
 	dev.default_timeout = int(args.timeout)
 	fast = fb.Fastboot(dev)
+	#this is mostly there to dodge a linter error
+	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out} packet size {fast.max_size}")
 	for cmd in args.fastboot_cmd:
 		if ":" in cmd:
 			(cmd, sep, args) = cmd.partition(":")

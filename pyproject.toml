@@ -17,7 +17,7 @@ authors = [
 ]
 description = "Cross-vendor recovery and reflashing tool for embedded platforms"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
@@ -48,8 +48,9 @@ snagflash = "snagflash.cli:cli"
 # by default.
 select = ["E", "F", "B"]
 
-# Never enforce `E501` (line length violations).
-ignore = ["E501"]
+# Never enforce: `E501` (line length violations),
+#                `E402` (Module level import not at top of file).
+ignore = ["E501","E402"]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W",

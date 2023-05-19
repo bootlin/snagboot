@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 : '
 This script will do the following things to setup
-an environment for recovering an AM335 soc via USB:
+an environment for recovering an AM335x soc via USB:
 1. Create a new network namespace called $NETNS_NAME
 2. Run a subprocess that will trigger every time  
    a new ROM code or SPL USB ethernet gadget with a 
@@ -37,7 +37,7 @@ an environment for recovering an AM335 soc via USB:
 '
 
 print_usage () {
-	echo "am335_usb_setup.sh: Create network namespace and udev rules necessary for AM335 USB recovery"
+	echo "am335x_usb_setup.sh: Create network namespace and udev rules necessary for AM335x USB recovery"
 	echo "-r vid:pid ROM Ethernet USB gadget address"
 	echo "-s vid:pid SPL Ethernet USB gadget address"
 	echo "-n netns_name Name of the network namespace to be created, "

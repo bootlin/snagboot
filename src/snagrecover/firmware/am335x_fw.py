@@ -40,7 +40,7 @@ server_config = {
 	#basically do not matter, as we run the recovery 
 	#inside an isolated network namespace.
 	#However, they must match with the values 
-	#used in the am335 helper scripts
+	#used in the am335x helper scripts
 	"server_ip": "192.168.0.100",
 	"client_ip": "192.168.0.101",
 	"bootp_port": 9067,
@@ -79,12 +79,12 @@ class UDPHandler(socketserver.BaseRequestHandler):
 		reply = bootp_req.build_reply(assigned_client_ip, server_ip, filename)
 		sock.sendto(reply, ("<broadcast>", self.client_address[1]))
 
-def am335_usb(port, fw_name: str):
+def am335x_usb(port, fw_name: str):
 	tftp_start_timeout = server_config["tftp_start_timeout"]
 	tftp_complete_timeout = server_config["tftp_complete_timeout"]
 	#TFTP server thread
 	tftp_server = tftpy.TftpServer(os.path.dirname(recovery_config["firmware"][fw_name]["path"]))
-	tftp_thread = threading.Thread(name="Recovery TFTP server for AM335", target=tftp_proc, args=[tftp_server])
+	tftp_thread = threading.Thread(name="Recovery TFTP server for AM335x", target=tftp_proc, args=[tftp_server])
 	tftp_thread.daemon = True
 
 	#BOOTP server thread
@@ -93,7 +93,7 @@ def am335_usb(port, fw_name: str):
 	bootp_server = socketserver.UDPServer((listen_address, bootp_port), UDPHandler)
 	bootp_server.timeout = server_config["bootp_timeout"]
 	bootp_server.fw_name = fw_name
-	bootp_thread = threading.Thread(name="Recovery BOOTP server for AM335", target=bootp_proc, args=[bootp_server])
+	bootp_thread = threading.Thread(name="Recovery BOOTP server for AM335x", target=bootp_proc, args=[bootp_server])
 	bootp_thread.daemon = True
 
 	print("Starting TFTP server...")
@@ -123,7 +123,7 @@ def am335_usb(port, fw_name: str):
 	logger.info("Waiting for BOOTP server to stop...")
 	bootp_thread.join()
 
-def am335_uart(port, fw_name: str):
+def am335x_uart(port, fw_name: str):
 	TRANSFER_WAIT_TIMEOUT = 5
 	if fw_name == "u-boot":
 		print("Transfering U-Boot over a UART connection, this could take a while...")
@@ -148,9 +148,9 @@ def am335_uart(port, fw_name: str):
 		modem.send(file)
 	logger.info("xmodem transfer done")
 
-def am335_run(port, fw_name: str):
+def am335x_run(port, fw_name: str):
 	if recovery_config["args"]["uart"]:
-		am335_uart(port, fw_name)
+		am335x_uart(port, fw_name)
 	else:
-		am335_usb(port, fw_name)
+		am335x_usb(port, fw_name)
 

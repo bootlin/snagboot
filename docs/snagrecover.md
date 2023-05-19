@@ -16,7 +16,7 @@ If you have changed your ROM code's USB VID/PID, you must specify it using the -
    USB device address vid:pid
    e.g. --rom-usb 1111:ffff
 
-When recovering an AM335 SOC via UART using the snagrecover, you have to pass
+When recovering an AM335x SOC via UART using the snagrecover, you have to pass
 the --uart flag to the CLI. You can also pass the --baudrate flag in case the
 default 115200 baud rate does not fit your device.
 

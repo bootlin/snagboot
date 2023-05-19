@@ -197,7 +197,7 @@ configuration:
 
 ## For TI AM335x devices
 
-[example](../src/snagrecover/templates/am335-beaglebone-black.yaml)
+[example](../src/snagrecover/templates/am335x-beaglebone-black.yaml)
 
 **spl:** First stage bootloader. Build the spl/u-boot-spl.bin target for your
 board in U-Boot mainline. spl/u-boot-spl.bin is the required binary. If
@@ -250,7 +250,7 @@ for building the required images. When building the U-Boot SPL image for R5,
 please make sure that the resulting SPL supports Booting from DFU! The
 defconfig indicated by the linked documentation does not guarantee this!
 
-AM62 SoCs require multiple complex firmware images to boot. 
+AM62x SoCs require multiple complex firmware images to boot.
 
 **tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
 container with device tree blobs. If you change U-Boot's USB VID/PID, you should

@@ -7,7 +7,7 @@ actions. Referring to your board's user guide can help you find out
 what you need to do here. 
 
 The board should be connected to your host PC via USB (except for the special
-case of AM335 UART recovery). The specific USB port to use is board-dependent,
+case of AM335x UART recovery). The specific USB port to use is board-dependent,
 it is usually the OTG port. We also strongly recommend that you open a UART
 connection to the board so that you can monitor the recovery process as it
 unfolds. On STM32MP15 discovery kits, the default UART is often connected to the
@@ -109,9 +109,9 @@ Run the provided bash script to setup the network namespace and start the
 polling subprocess.
 
 ```bash 
-$ snagrecover --am335-setup > am335_usb_setup.sh
-$ chmod a+x am335_usb_setup.sh 
-$ sudo ./am335_usb_setup.sh
+$ snagrecover --am335x-setup > am335x_usb_setup.sh
+$ chmod a+x am335x_usb_setup.sh 
+$ sudo ./am335x_usb_setup.sh
 ```
 
 **Note:** If you have changed the ROM code's or SPL's USB VID/PID, you have to
@@ -125,16 +125,16 @@ run the recovery tool as you would normally (see [running
 snagrecover](snagrecover.md)), eg for the Beagle Bone Black:
 
 ```bash
-snagrecover -s am335 -f src/snagrecover/templates/am335-beaglebone_black.yaml
+snagrecover -s am3358 -f src/snagrecover/templates/am335x-beaglebone_black.yaml
 ```
 
 Once the recovery done, exit the recovery shell. This will cleanup the
 network namespace and udev rules. You can also run:
 
 ```bash 
-sudo scripts/am335_usb_setup.sh -c 
+sudo am335x_usb_setup.sh -c 
 ```
 
-**Note:** If for some reason, the am335_usb_setup.sh script exits without
+**Note:** If for some reason, the am335x_usb_setup.sh script exits without
 cleaning up the network namespace, you can run the above command
 to remove them.

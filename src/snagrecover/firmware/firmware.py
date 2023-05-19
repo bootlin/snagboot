@@ -24,7 +24,7 @@ from snagrecover.protocols import dfu
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware.imx_fw import imx_run
 from snagrecover.firmware.sama5_fw import sama5_run
-from snagrecover.firmware.am335_fw import am335_run
+from snagrecover.firmware.am335x_fw import am335x_run
 from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
@@ -55,9 +55,9 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	print("Done")
 	return None
 
-def am62_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
+def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 	"""
-	There isn't a lot of complicated logic to handle am62 firmware
+	There isn't a lot of complicated logic to handle am62x firmware
 	so we can leave it in the common module for now
 	"""
 	#find firmware altsetting (i.e. partition id)
@@ -106,12 +106,12 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		stm32mp1_run(port, fw_name, fw_blob)
 	elif soc_family == "imx":
 		imx_run(port, fw_name, fw_blob, subfw_name)
-	elif soc_family == "am335":
-		am335_run(port, fw_name)
+	elif soc_family == "am335x":
+		am335x_run(port, fw_name)
 	elif soc_family == "sunxi":
 		sunxi_run(port, fw_name, fw_blob)
-	elif soc_family == "am62":
-		am62_run(port, fw_name, fw_blob)
+	elif soc_family == "am62x":
+		am62x_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	print(f"Done installing firmware {fw_name}")

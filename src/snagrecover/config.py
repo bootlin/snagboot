@@ -28,7 +28,7 @@ default_usb_ids =  {
 	"stm32mp1": (0x0483,0xdf11),
 	"sama5":    (0x03eb,0x6124),
 	"sunxi":    (0x1f3a,0xefe8),
-	"am62":     (0x0451,0x6165),
+	"am62x":     (0x0451,0x6165),
 	"imx": {
 		"imx8qxp": (0x1fc9,0x012f),
 		"imx8qm": (0x1fc9,0x0129),
@@ -75,7 +75,7 @@ def init_config(args: list):
 	recovery_config.update({"soc_model": soc_model})
 	soc_family = get_family(soc_model)
 	recovery_config.update({"soc_family": soc_family})
-	if soc_family != "am335":
+	if soc_family != "am335x":
 		if args.rom_usb is None:
 			if soc_family == "imx":
 				recovery_config["rom_usb"] = default_usb_ids["imx"][soc_model]

@@ -21,7 +21,6 @@ from snagrecover.protocols import dfu
 import logging
 logger = logging.getLogger("snagflash")
 from snagflash.utils import int_arg,get_usb,cli_error
-import usb
 
 def dfu_cli(args):
 	if args.dfu_config is None:
@@ -50,10 +49,10 @@ def dfu_cli(args):
 		dfu_cmd.get_status()
 		dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
 		dfu_cmd.get_status()
-		print(f"Done")
-	print(f"Sending DFU detach command...")
+		print("Done")
+	print("Sending DFU detach command...")
 	dfu_cmd.detach(altsetting)
-	print(f"Done")
+	print("Done")
 
 
 

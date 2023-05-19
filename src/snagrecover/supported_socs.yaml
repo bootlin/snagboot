@@ -5,10 +5,10 @@ tested:
         family: sunxi
   a64:
         family: sunxi
-  am335:
-        family: am335
+  am3358:
+        family: am335x
   am625:
-        family: am62
+        family: am62x
   h3:
         family: sunxi
   imx28:
@@ -52,6 +52,18 @@ untested:
         family: sunxi
   af1c100s:
         family: sunxi
+  am3352:
+        family: am335x
+  am3354:
+        family: am335x
+  am3356:
+        family: am335x
+  am3357:
+        family: am335x
+  am3359:
+        family: am335x
+  am623:
+        family: am62x
   h2+:
         family: sunxi
   h5:
