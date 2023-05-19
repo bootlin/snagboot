@@ -31,6 +31,10 @@ def get_usb(vid: int, pid: int) -> usb.core.Device:
 		time.sleep(2)
 		dev = usb.core.find(idVendor = vid, idProduct = pid)
 		retries += 1
+	try:
+		dev.get_active_configuration()
+	except usb.core.USBError:
+		usb_error(vid, pid)
 	return dev
 
 		

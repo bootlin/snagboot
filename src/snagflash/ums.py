@@ -24,8 +24,6 @@ import tempfile
 from snagflash.bmaptools import BmapCreate
 from snagflash.bmaptools import BmapCopy
 import sys
-import logging
-logger = logging.getLogger("snagflash")
 import time
 
 FILEPATH_RETRIES = 5
@@ -35,7 +33,7 @@ def wait_filepath(path: str):
 	retries = 0
 	while not os.path.exists(path):
 		if retries >= FILEPATH_RETRIES:
-			print(f"Timeout: file {path} does not exist", file=sys.stderr)
+			print(f"Timeout: file or directory {path} does not exist", file=sys.stderr)
 			sys.exit(-1)
 		time.sleep(2)
 		print(f"Retrying: find {path} {retries}/{FILEPATH_RETRIES}")
@@ -48,6 +46,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 	print(f"Looking for {mappath}...")
 	gen_bmap = True
 	if os.path.exists(mappath):
+		print(f"Found bmap file {mappath}")
 		gen_bmap = False
 		mapfileb = open(mappath, "rb")
 		# check if the bmap file is clearsigned
@@ -55,7 +54,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 		# I'd prefer to avoid depending on the gpg package
 		hdr = mapfileb.read(34)
 		if hdr == b"-----BEGIN PGP SIGNED MESSAGE-----":
-			logger.warning("Bmap file found is clearsigned, skipping...")
+			print("Warning: bmap file is clearsigned, skipping...")
 			gen_bmap = True
 		else:
 			mapfileb.seek(0)
@@ -99,9 +98,14 @@ def write_raw(args):
 
 def ums(args):
 	if args.dest:
-		wait_filepath(args.dest)
-		print(f"Copy {args.src} to {args.dest}...")
+		if os.path.isdir(args.dest):
+			wait_filepath(args.dest)
+			print(f"Copying {args.src} to {args.dest}/{args.src}...")
+		else:
+			wait_filepath(os.path.dirname(args.dest))
+			print(f"Copying {args.src} to {args.dest}...")
 		shutil.copy(args.src, args.dest)
+		print("Done")
 	if args.blockdev:
 		write_raw(args)
 
