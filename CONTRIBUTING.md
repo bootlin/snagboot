@@ -37,6 +37,6 @@
 Here are a few things which would be nice to add to the recovery tool:
 - testing snagrecover on supported but untested SoCs (see
   [supported_socs.yaml](src/snagrecover/supported_socs.yaml))
-- snagrecover support for BCM283 SoCs 
-- snagrecover support for SAMA9 SoCs 
+- snagrecover support for BCM283 SoCs
+- snagrecover support for SAMA9 SoCs
 

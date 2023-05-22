@@ -28,7 +28,7 @@ can add the following udev rule to get access:
 In DFU mode, snagflash takes two additional arguments :
 
  * `-p --port vid:pid`
-   The USB address of the DFU device exposed by U-Boot 
+   The USB address of the DFU device exposed by U-Boot
  * `-D --dfu-config  altsetting:path`
    The altsetting and path of a file to download to the board. This should match
    the value specified in dfu\_alt\_info in U-Boot. This flag can be passed
@@ -57,14 +57,14 @@ In UMS mode, snagflash takes two mandatory arguments:
 
  * `-s --src filepath`
    Source file to copy to destination
-   
+
 Then either one of:
 
  * `-d --dest path`
-   Sets the destination file name for transfers to mounted devices. 
- * `-b –blockdev device` 
+   Sets the destination file name for transfers to mounted devices.
+ * `-b –blockdev device`
    Sets the block device for transfers to raw block devices.
- 
+
 and optionally:
 
  * `--size`
@@ -85,10 +85,10 @@ snagflash -P ums -s binaries/u-boot.stm32 -d /mnt/u-boot.stm32
 
 ## Fastboot mode
 
-In fastboot mode, snagflash takes two additional arguments: 
+In fastboot mode, snagflash takes two additional arguments:
 
  * `-p --port vid:pid`
-   The USB address of the Fastboot device exposed by U-Boot 
+   The USB address of the Fastboot device exposed by U-Boot
  * `-f --fastboot_cmd  cmd:args`
    A fastboot command to be sent to U-Boot. The following commands are supported
    by snagflash (which does not mean that they are supported by your U-Boot!) :
@@ -109,7 +109,7 @@ oem-run:<cmd>
 oem-format
 oem-partconf:<args>
 oem-bootbus:<args>
-``` 
+```
 
 Example:
 ```bash
@@ -120,5 +120,5 @@ snagflash -P fastboot -p 0483:0afb -f download:boot.img -f flash:0:1 -f boot
 For more information on Fastboot commands, see the [fastboot
 specification](https://android.googlesource.com/platform/system/core/+/refs/heads/master/fastboot/README.md)
 and the [U-Boot
-docs](https://elixir.bootlin.com/u-boot/v2023.04/source/doc/android/fastboot.rst). 
+docs](https://elixir.bootlin.com/u-boot/v2023.04/source/doc/android/fastboot.rst).
 

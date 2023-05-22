@@ -4,7 +4,7 @@ Your board should be properly set up to enter the SoC vendor’s specific recove
 mode (more vendor-specific details below). This usually involves setting some
 boot fuses, removing some external boot media and/or other board-specific
 actions. Referring to your board's user guide can help you find out
-what you need to do here. 
+what you need to do here.
 
 The board should be connected to your host PC via USB (except for the special
 case of AM335x UART recovery). The specific USB port to use is board-dependent,
@@ -40,7 +40,7 @@ Connect your host PC to the USB OTG port and power your board. The SoC’s boot
 fuses should be set so that it falls back to Serial Downloader mode. This can be
 achieved by setting them to boot from an external memory and removing any
 external boot media. An NXP Semiconductors USB device should appear on the host
-system. 
+system.
 
 ## Allwinner SUNXI
 
@@ -64,7 +64,7 @@ Peripheral booting is what interests us for recovering a board. It can be done
 over USB, UART or Ethernet. Out of the 3 possible peripheral boot modes,
 snagrecover supports UART mode, and USB mode.  UART is much simpler to setup but
 is very slow and for this reason is only supported by snagrecover, not
-snagflash. 
+snagflash.
 
 ### TI AM335x UART recovery
 
@@ -72,7 +72,7 @@ Connect a UART to the board, open a serial port and make sure that the ROM code
 boots in UART mode. If that’s the case, it should regularly ping the serial
 console which will result in the character “C” being displayed.
 
-As an example, here is the procedure for the Beaglebone black wireless board : 
+As an example, here is the procedure for the Beaglebone black wireless board :
 
 1. remove all connectors and make sure that the sd card slot is empty
 2. set up the UART cable on the serial header (GND:J1 RX: J4 TX: J5).
@@ -106,16 +106,16 @@ using the -n flag and to snagrecover using the --netns option.
 Run the provided bash script to setup the network namespace and start the
 polling subprocess.
 
-```bash 
+```bash
 $ snagrecover --am335x-setup > am335x_usb_setup.sh
-$ chmod a+x am335x_usb_setup.sh 
+$ chmod a+x am335x_usb_setup.sh
 $ sudo ./am335x_usb_setup.sh
 ```
 
 **Note:** If you have changed the ROM code's or SPL's USB VID/PID, you have to
 pass the new values to the script using the -s and -r args.
 
-At this point, we recommend that you change your shell prompt, so you do not 
+At this point, we recommend that you change your shell prompt, so you do not
 forget to log out of the special shell after recovery.
 
 Reset the board and run ip addr. Check that the board interface appears using
@@ -129,8 +129,8 @@ snagrecover -s am3358 -f src/snagrecover/templates/am335x-beaglebone_black.yaml
 Once the recovery is done, exit the recovery shell. This will clean up the
 network namespace and udev rules. You can also run:
 
-```bash 
-sudo am335x_usb_setup.sh -c 
+```bash
+sudo am335x_usb_setup.sh -c
 ```
 
 **Note:** If for some reason, the am335x_usb_setup.sh script exits without

@@ -50,7 +50,7 @@ when configuring U-Boot.
   rights to the corresponding USB device. See [snagflash docs](snagflash.md) for more
   details.
 
-## For ST STM32MP1 devices 
+## For ST STM32MP1 devices
 
 [example](../src/snagrecover/templates/stm32mp1-stm32mp157f-dk2.yaml)
 
@@ -78,14 +78,14 @@ configuration:
 
 Download upstream TF-A and U-Boot. In U-Boot:
 
-```bash 
+```bash
 make stm32mp15_defconfig
 make DEVICE_TREE=<your device tree>
 ```
 
 In TF-A, run `make \<params\> all fip` where `params` contains the following:
 
-```bash 
+```bash
 ARCH=aarch32 ARM_ARCH_MAJOR=7 AARCH32_SP=sp_min PLAT=stm32mp1 DTB_FILE_NAME=<your device tree>.dtb BL33_CFG=/path/to/u-boot.dtb BL33=/path/to/u-boot-nodtb.bin STM32MP_USB_PROGRAMMER=1
 ```
 
@@ -247,7 +247,7 @@ configuration:
 
 [example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
-**Warning:** Please refer to 
+**Warning:** Please refer to
 [this documentation](https://u-boot.readthedocs.io/en/latest/board/ti/am62x_sk.html)
 for building the required images. When building the U-Boot SPL image for R5,
 please make sure that the resulting SPL supports Booting from DFU! The
