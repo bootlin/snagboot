@@ -25,7 +25,7 @@ import time
 import logging
 logger = logging.getLogger("snagrecover")
 from xmodem import XMODEM
-# setting this logger to the same format as the main 
+# setting this logger to the same format as the main
 # logger since it sometimes prints out messages that seem
 # like fatal errors but are apparently benign
 xmodem_logger = logging.getLogger("xmodem.XMODEM")
@@ -37,9 +37,9 @@ import os.path
 server_config = {
 	"listen": "0.0.0.0",
 	# The values chosen for the client and server ips
-	# basically do not matter, as we run the recovery 
+	# basically do not matter, as we run the recovery
 	# inside an isolated network namespace.
-	# However, they must match with the values 
+	# However, they must match with the values
 	# used in the am335x helper scripts
 	"server_ip": "192.168.0.100",
 	"client_ip": "192.168.0.101",

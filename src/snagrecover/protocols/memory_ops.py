@@ -32,7 +32,7 @@ class MemoryOps():
 		value = self.backend.read32(addr)
 		logger.debug(f"[MemoryOps] read32 0x{addr:x} 0x{value:x}")
 		return value
-	
+
 	def write32(self, addr: int, value: int) -> bool:
 		logger.debug(f"[MemoryOps] write32 0x{addr:x} 0x{value:x}")
 		ret = self.backend.write32(addr, value)

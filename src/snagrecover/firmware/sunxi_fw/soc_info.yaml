@@ -22,11 +22,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-#Data structures describing the layout of 
-#SPL, thunk, preserved BOOTROM regions and 
-#backup regions for the preserved regions 
+#Data structures describing the layout of
+#SPL, thunk, preserved BOOTROM regions and
+#backup regions for the preserved regions
 #in the SoC SRAM.
-#rom regions should not overlap, and they 
+#rom regions should not overlap, and they
 #should be ordered by ascending start addresses!
 a10:
   sram_size: 0xc000

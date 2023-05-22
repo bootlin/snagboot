@@ -118,7 +118,7 @@ def main():
 		print("Initializing external RAM...")
 		run_firmware(port, "extram")
 		print("Done initializing RAM")
-		
+
 		# REMAP ROM ADDRESSES
 		memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
 

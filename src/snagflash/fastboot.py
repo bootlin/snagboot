@@ -39,10 +39,10 @@ def fastboot(args):
 		if ":" in cmd:
 			(cmd, sep, args) = cmd.partition(":")
 		else:
-			args = None 
+			args = None
 		cmd = cmd.translate({ord("-"): ord("_")})
 		print(f"Sending command {cmd} with args {args}")
-		if args is None:  
+		if args is None:
 			eval(f"fast.{cmd}()")
 		else:
 			eval(f"fast.{cmd}(args)")

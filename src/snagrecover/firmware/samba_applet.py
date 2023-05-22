@@ -101,7 +101,7 @@ class Applet():
 			self.address = 0x300000
 		elif soc_model == "sama5d4":
 			self.address = 0x200000
-	
+
 	def get_status(self) -> str:
 		return Applet.status_codes[self.memops.read32(self.address + 8)]
 

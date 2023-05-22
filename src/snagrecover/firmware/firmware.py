@@ -81,9 +81,9 @@ def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	"""
-	The "subfw_name" option allows selecting firmware 
-	subimages inside the same image. This avoids 
-	having the user pass the same binary in two different 
+	The "subfw_name" option allows selecting firmware
+	subimages inside the same image. This avoids
+	having the user pass the same binary in two different
 	configs.
 	"""
 	soc_family = recovery_config["soc_family"]

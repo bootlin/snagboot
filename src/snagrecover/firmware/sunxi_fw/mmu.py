@@ -21,7 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-MMU configuration steps needed to successfully 
+MMU configuration steps needed to successfully
 recover some SoCs.
 """
 from snagrecover.protocols import fel
@@ -62,7 +62,7 @@ def restore(port: fel.FEL, soc_info: dict, tt: bytes, tt_addr: int):
 			+ b"\x10\x0f\x01\xee"\
 			+ b"\x1e\xff\x2f\xe1"
 	"""
-	Here we modify the TT to add a few optimizations 
+	Here we modify the TT to add a few optimizations
 	from the linux-sunxi community described at :
 	https://github.com/linux-sunxi/sunxi-tools/commit/e4b3da2b17ee9d7c5cab9b80e708b3a309fc4c96
 	"""
@@ -87,12 +87,12 @@ def check(port: fel.FEL, soc_info: dict) -> tuple:
 	"""
 	mrc		15, 0, r0, cr1, cr0, 0 read SCTLR
 	ands	r0, r0, #1			   test MMU enable bit
-	beq		14 <end>			   if MMU was not enabled, return default 
+	beq		14 <end>			   if MMU was not enabled, return default
 	mrc		15, 0, r0, cr2, cr0, 2 read TTBCR
 	and		r2, r0, #7			   get TTBCR.N
-	str		r2, ret2	
+	str		r2, ret2
 	mrc		15, 0, r0, cr2, cr0, 0 read TTBR0
-	str		r0, ret1	
+	str		r0, ret1
 	end:
 	bx		lr
 	ret1: .word 0xcafedeca
@@ -127,7 +127,7 @@ def check(port: fel.FEL, soc_info: dict) -> tuple:
 		"""
 		"""
 		Based on linux-sunxi sunxi-fel code
-		ldr r0, [dacr] 
+		ldr r0, [dacr]
 		mcr 15, 0, r0, cr3, cr0, {0} write DACR
 		ldr r0, [ttbrc]
 		mcr 15, 0, r0, cr2, cr0, 2 write TTBCR
@@ -151,7 +151,7 @@ def check(port: fel.FEL, soc_info: dict) -> tuple:
 				+ b"\x1e\xff\x2f\xe1"\
 				+ b"\x55\x55\x55\x55"\
 				+ b"\x00\x00\x00\x00"\
-				+ soc_info["tt_addr"].to_bytes(4, "little") 
+				+ soc_info["tt_addr"].to_bytes(4, "little")
 		memops.write_blob(mmu_cfg_prog, soc_info["safe_addr"], 0, len(mmu_cfg_prog))
 		memops.jump(soc_info["safe_addr"])
 		tt = b""

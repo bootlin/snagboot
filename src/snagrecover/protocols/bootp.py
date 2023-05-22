@@ -70,11 +70,11 @@ class BootpRequest():
 		reply[20:24] = encode_ipv4(server_ip)
 		reply[108:236] = encode_filename(filename).lower()
 		"""
-		The vendor area of the packet can contain all sorts of 
-		additional data (see RFC1533 for a partial list). We are 
-		not trying to implement a fully functionnal BOOTP server so 
-		we do not parse and handle this area. However, SPL expects 
-		to find a DHCP ACK in the BOOTP packets it receives. Thus, 
+		The vendor area of the packet can contain all sorts of
+		additional data (see RFC1533 for a partial list). We are
+		not trying to implement a fully functionnal BOOTP server so
+		we do not parse and handle this area. However, SPL expects
+		to find a DHCP ACK in the BOOTP packets it receives. Thus,
 		we include this in every BOOTP response we send.
 		"""
 		# initialize vendor area to 0

@@ -70,7 +70,7 @@ def check_soc_model(soc_model: str):
 def init_config(args: list):
 	# this is the only time that config.recovery_config should be modified!
 	# get soc model
-	soc_model = args.soc 
+	soc_model = args.soc
 	check_soc_model(soc_model)
 	recovery_config.update({"soc_model": soc_model})
 	soc_family = get_family(soc_model)

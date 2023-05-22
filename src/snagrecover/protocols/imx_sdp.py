@@ -93,7 +93,7 @@ class SDPCommand():
 		self.addr = 0
 		self.format = b"\x00"
 		self.data_count = 0
-		self.data = 0 
+		self.data = 0
 		self.reserved = b"\x00"
 
 	def clear(self):
@@ -101,7 +101,7 @@ class SDPCommand():
 		self.addr = 0
 		self.format = b"\x00"
 		self.data_count = 0
-		self.data = 0 
+		self.data = 0
 		self.reserved = b"\x00"
 		return None
 

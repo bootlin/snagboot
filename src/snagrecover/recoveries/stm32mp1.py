@@ -52,7 +52,7 @@ def main():
 		phase_id = dfu_cmd.stm32_get_phase()
 		dfu_cmd.detach(phase_id)
 
-	# DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM 
+	# DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM
 	if soc_model == "stm32mp15":
 		phase_id = dfu_cmd.stm32_get_phase()
 		part0 = dfu.search_partid(dev, "@Partition0", match_prefix=True)
@@ -82,7 +82,7 @@ def main():
 	run_firmware(dev, "fip")
 
 	# DETACH DFU DEVICE
-	print("Sending detach command to SPL...")	
+	print("Sending detach command to SPL...")
 	phase_id = dfu_cmd.stm32_get_phase()
 	dfu_cmd.detach(phase_id)
 

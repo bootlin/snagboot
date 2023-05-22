@@ -117,7 +117,7 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		write_size = len(fw_blob) - write_offset
 		if	write_size <= 0:
 			raise ValueError("Error: Invalid offset found for U-BOOT proper in boot image")
-		# We ask for a write at 0 but SPL should determine u-boot proper's 
+		# We ask for a write at 0 but SPL should determine u-boot proper's
 		# write address on its own
 		print("Downloading file...")
 		memops.write_blob(fw_blob, 0, write_offset, write_size)

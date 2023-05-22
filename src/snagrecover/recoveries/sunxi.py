@@ -25,7 +25,7 @@ from snagrecover.config import recovery_config
 from snagrecover.utils import access_error
 
 USB_TIMEOUT = 5000
-USB_RETRY = 5 
+USB_RETRY = 5
 
 def main():
 	# Try to reset device

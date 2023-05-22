@@ -21,18 +21,18 @@
 This script will do the following things to setup
 an environment for recovering an AM335x soc via USB:
 1. Create a new network namespace called $NETNS_NAME
-2. Run a subprocess that will trigger every time  
-   a new ROM code or SPL USB ethernet gadget with a 
-   certain PID:VID pair is registered. 
+2. Run a subprocess that will trigger every time
+   a new ROM code or SPL USB ethernet gadget with a
+   certain PID:VID pair is registered.
    It will:
    2.1. Move the network interface to $NETNS_NAME
-   2.2. Add a static IP address to the interface, 
+   2.2. Add a static IP address to the interface,
        so that the board can reach the recovery tool
    2.3. Route an arbitrary client ip to the interface,
        so that the recovery tool can reach the board
    3.4. Route 255.255.255.255 to the interface, so
-   	that the recovery tool can reach the board 
-	using a broadcast, when the board does not 
+   	that the recovery tool can reach the board
+	using a broadcast, when the board does not
 	know its own IP yet
 '
 
@@ -74,7 +74,7 @@ cleanup () {
 }
 
 config_interface () {
-	#This sets up the necessary 
+	#This sets up the necessary
 	#network config inside the recovery namespace
 
 	SERVER_IP="192.168.0.100"
@@ -169,7 +169,7 @@ echo "Creating network namespace $NETNS_NAME..."
 ip netns add $NETNS_NAME || fail_on_error "Could not create namespace $NETNS_NAME"
 
 #iptables rules
-ip netns exec $NETNS_NAME iptables -t nat -A PREROUTING -p udp --dport 67 -j DNAT --to-destination :9067 
+ip netns exec $NETNS_NAME iptables -t nat -A PREROUTING -p udp --dport 67 -j DNAT --to-destination :9067
 ip netns exec $NETNS_NAME iptables -t nat -A PREROUTING -p udp --dport 69 -j DNAT --to-destination :9069
 ip netns exec $NETNS_NAME iptables -t nat -A POSTROUTING -p udp --sport 9067 -j MASQUERADE --to-ports 67
 ip netns exec $NETNS_NAME iptables -t nat -A POSTROUTING -p udp --sport 9069 -j MASQUERADE --to-ports 69
@@ -179,7 +179,7 @@ echo -e "Logging user $SUDOER into new shell\n"
 echo "===== $NETNS_NAME ====="
 echo "You can now setup the board and run the recovery tool."
 echo "Please type 'exit' to delete the namespace, stop the polling process and leave the shell when you are done."
-ip netns exec $NETNS_NAME su $SUDOER 
+ip netns exec $NETNS_NAME su $SUDOER
 
 #leave shell and cleanup
 cleanup

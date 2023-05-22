@@ -81,12 +81,12 @@ class IVT():
 
 	def from_blob(self, blob: bytes) -> bool:
 		offset = 0
-		while offset < len(blob): 
+		while offset < len(blob):
 			word = blob[offset:offset+4]
 			if word not in [IVT_HEADER_1, IVT_HEADER_2]:
 				offset += 4
 				continue
-			self.offset = offset 
+			self.offset = offset
 			self.header =	 int.from_bytes(word, "little")
 			self.entry =	 int.from_bytes(blob[offset + 4:offset + 8], "little")
 			self.reserved1 = int.from_bytes(blob[offset + 8:offset + 12], "little")

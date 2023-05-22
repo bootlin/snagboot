@@ -27,7 +27,7 @@ from snagrecover import utils
 def search_partid(dev: usb.core.Device, partname: str, match_prefix=False) -> int:
 	# search for an altsetting associated with a partition name
 	cfg = dev.get_active_configuration()
-	# note that we're really iterating over multiple altsettings of 
+	# note that we're really iterating over multiple altsettings of
 	# the same interface here
 	partid = None
 	intfs = cfg.interfaces()
@@ -111,7 +111,7 @@ class DFU():
 		t0 = round(time.time() * 1000)
 		if state != DFU.state_codes["dfuIDLE"]:
 			raise ValueError(f"Incompatible state {state} detected")
-	
+
 		if self.stm32:
 			block_index = 2 # wValue 0 and 1 seem to be reserved
 		else:

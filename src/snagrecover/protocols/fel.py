@@ -23,13 +23,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import usb
-from snagrecover import utils 
+from snagrecover import utils
 
 class FEL():
 	MAX_MSG_LEN = 65536
 	"""
-	For some of these requests, I haven't 
-	been able to find any detailed 
+	For some of these requests, I haven't
+	been able to find any detailed
 	documentation.
 	"""
 	standard_request_codes = {
@@ -179,7 +179,7 @@ class FEL():
 		packet = value.to_bytes(4, "little")
 		nbytes = self.message("FEL_DOWNLOAD", addr, 4, packet)
 		return int.from_bytes(nbytes, "little") == 4
-		
+
 	def write_blob(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
 		# chop up download in muliple chunks if necessary
 		ret = True
