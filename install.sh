@@ -1,7 +1,8 @@
 #!/bin/env sh
 
+VENV=$(python3 -c "import sys;print(sys.prefix != sys.base_prefix)")
 EXTRA=""
-if [ -z "${VIRTUAL_ENV_PROMPT}" ]; then
+if [ "$VENV" = "False" ]; then
 	EXTRA="--user"
 fi
 
