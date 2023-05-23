@@ -1,18 +1,18 @@
 # This file is part of Snagboot
 # Copyright (C) 2023 Bootlin
-# 
+#
 # Written by Romain Gantois <romain.gantois@bootlin.com> in 2023.
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -27,7 +27,7 @@ from snagrecover import utils
 def search_partid(dev: usb.core.Device, partname: str, match_prefix=False) -> int:
 	# search for an altsetting associated with a partition name
 	cfg = dev.get_active_configuration()
-	# note that we're really iterating over multiple altsettings of 
+	# note that we're really iterating over multiple altsettings of
 	# the same interface here
 	partid = None
 	intfs = cfg.interfaces()
@@ -111,7 +111,7 @@ class DFU():
 		t0 = round(time.time() * 1000)
 		if state != DFU.state_codes["dfuIDLE"]:
 			raise ValueError(f"Incompatible state {state} detected")
-	
+
 		if self.stm32:
 			block_index = 2 # wValue 0 and 1 seem to be reserved
 		else:

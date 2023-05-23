@@ -1,5 +1,5 @@
 #Binaries with IVT headers have their load addresses indicated in the header,
 #hence we don't need to indicate these addresses in the following configs
-flash-bin: 
+flash-bin:
   path: flash.bin
 

@@ -1,18 +1,18 @@
 # This file is part of Snagboot
 # Copyright (C) 2023 Bootlin
-# 
+#
 # Written by Romain Gantois <romain.gantois@bootlin.com> in 2023.
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -20,21 +20,21 @@
 # Based on NXP mfgtools (https://github.com/nxp-imx/mfgtools):
 # Copyright 2018 NXP.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
-# 
+#
 # Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
-# 
+#
 # Redistributions in binary form must reproduce the above copyright notice, this
 # list of conditions and the following disclaimer in the documentation and/or
 # other materials provided with the distribution.
-# 
+#
 # Neither the name of the Freescale Semiconductor nor the names of its
 # contributors may be used to endorse or promote products derived from this
 # software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -81,12 +81,12 @@ class IVT():
 
 	def from_blob(self, blob: bytes) -> bool:
 		offset = 0
-		while offset < len(blob): 
+		while offset < len(blob):
 			word = blob[offset:offset+4]
 			if word not in [IVT_HEADER_1, IVT_HEADER_2]:
 				offset += 4
 				continue
-			self.offset = offset 
+			self.offset = offset
 			self.header =	 int.from_bytes(word, "little")
 			self.entry =	 int.from_bytes(blob[offset + 4:offset + 8], "little")
 			self.reserved1 = int.from_bytes(blob[offset + 8:offset + 12], "little")

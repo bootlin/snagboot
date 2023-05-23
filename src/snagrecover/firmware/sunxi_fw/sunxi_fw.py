@@ -1,8 +1,8 @@
 # This file is part of Snagboot
 # Copyright (C) 2023 Bootlin
-# 
+#
 # Written by Romain Gantois <romain.gantois@bootlin.com> in 2023.
-# 
+#
 # Based on sunxi-tools (https://github.com/linux-sunxi/sunxi-tools/{fel.c,fit_image.c})
 # Copyright (C) 2012  Henrik Nordstrom <henrik@henriknordstrom.net>
 # Copyright (C) 2018-2020  Andre Przywara <osp@andrep.de>
@@ -11,12 +11,12 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -93,7 +93,7 @@ def write_node_img(port: fel.FEL, dt: libfdt.Fdt, fw_blob: bytes, node: int, dtb
 		# image is stored outside of the FIT data
 		logger.debug("Image is outside FIT")
 		fit_size = dt.totalsize()
-		# make sure fit size is word-aligned 
+		# make sure fit size is word-aligned
 		if fit_size % 4 != 0:
 			fit_size = 4 * floor(fit_size / 4.0) + 4
 		offset = fit_size + data_offset.as_uint32()
@@ -103,7 +103,7 @@ def write_node_img(port: fel.FEL, dt: libfdt.Fdt, fw_blob: bytes, node: int, dtb
 		logger.debug("Image is inside FIT")
 		data = bytes(prop)
 		memops.write_blob(data, addr, 0, len(data))
-		ret_size = len(data) 
+		ret_size = len(data)
 	else:
 		logger.warning(f"Empty image {node.name}! skipping...")
 	print("Done")
@@ -155,7 +155,7 @@ def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
 
 def write_legacy(port: fel.FEL, fw_blob: bytes):
 	"""
-	Write U-Boot image, assuming legacy format described 
+	Write U-Boot image, assuming legacy format described
 	in U-Boot/include/image.h
 	"""
 	print("Checking checksums...")
@@ -191,12 +191,12 @@ def region_intersects(start1: int, size1: int, start2: int, size2: int) -> bool:
 
 def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: dict) -> bytes:
 	"""
-	This is a bit complicated. Basically, we're 
-	writing SPL in RAM, but instead of overwriting the 
-	regions used by the boot ROM, we're writing the 
-	overlapping SPL chunks in backup regions, that 
-	will be swapped with the boot ROM regions by the 
-	thunk code before calling SPL (and re-swapped afterwards 
+	This is a bit complicated. Basically, we're
+	writing SPL in RAM, but instead of overwriting the
+	regions used by the boot ROM, we're writing the
+	overlapping SPL chunks in backup regions, that
+	will be swapped with the boot ROM regions by the
+	thunk code before calling SPL (and re-swapped afterwards
 	when we want to return to FEL mode. This is essentially
 	the same technique than the one used by the linux-sunxi tool.
 	"""
@@ -248,7 +248,7 @@ def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: d
 			spl_chunk_list =  [{
 				"img_start": 0,
 				"sram_start": spl_start,
-				"size": spl_len 
+				"size": spl_len
 			}]
 	else:
 		spl_chunk_list.append({
@@ -264,7 +264,7 @@ def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: d
 		if chunk["size"] == 0:
 			continue
 		if "backup_start" in chunk:
-			# this chunk corresponds to a preserved ROM region, 
+			# this chunk corresponds to a preserved ROM region,
 			# so we write it to its backup region in SRAM
 			memops.write_blob(fw_blob, chunk["backup_start"], chunk["img_start"], chunk["size"])
 		else:
@@ -273,16 +273,16 @@ def write_spl_fragments(port: fel.FEL, fw_blob: bytes, spl_len: int, soc_info: d
 
 def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	"""
-	Here we use the technique employed by the sunxi-fel tool 
-	from the linux-sunxi community to write SPL to SRAM without 
-	overwriting the BOOTROM context. They write SPL in chunks, leaving 
-	the important BOOTROM sections untouched. Then, they download and 
-	run a small assembly program called "thunk" to re-assemble SPL and 
-	run it. SPL will call return_to_fel when it is done. This will 
-	return control to thunk, which will restore the BOOTROM sections by 
-	swapping them with the SPL sections and give back control to the 
-	BOOTROM so that we can download U-Boot proper using FEL. 
-	You can check the linux-sunxi wiki for more details on 
+	Here we use the technique employed by the sunxi-fel tool
+	from the linux-sunxi community to write SPL to SRAM without
+	overwriting the BOOTROM context. They write SPL in chunks, leaving
+	the important BOOTROM sections untouched. Then, they download and
+	run a small assembly program called "thunk" to re-assemble SPL and
+	run it. SPL will call return_to_fel when it is done. This will
+	return control to thunk, which will restore the BOOTROM sections by
+	swapping them with the SPL sections and give back control to the
+	BOOTROM so that we can download U-Boot proper using FEL.
+	You can check the linux-sunxi wiki for more details on
 	this subject: https://linux-sunxi.org/FEL/USBBoot
 	"""
 	print("Reading SoC info...")
@@ -320,8 +320,8 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 		logger.info("enabling L2 cache")
 
 		"""
-		here, we are writing and reading from the 
-		system control coprocessor, see the armv7-a 
+		here, we are writing and reading from the
+		system control coprocessor, see the armv7-a
 		reference manual for more details
 		mrc 15, 0, r2, cr1, cr0, 1 read ACTLR
 		orr r2, r2, #2			   set bit 2
@@ -410,7 +410,7 @@ def sunxi_run(port, fw_name: str, fw_blob: bytes):
 	elif fw_name == "u-boot":
 		"""
 		Note that the dt name is not passed here,
-		since we want to decouple the SPL and U-Boot 
+		since we want to decouple the SPL and U-Boot
 		images in this case, which means that we require
 		a default configuration node if a FIT image is used
 		"""

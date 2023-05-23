@@ -1,30 +1,30 @@
 # This file is part of Snagboot
 # Copyright (C) 2023 Bootlin
-# 
+#
 # Written by Romain Gantois <romain.gantois@bootlin.com> in 2023.
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import usb
 import time
-from snagrecover import utils 
+from snagrecover import utils
 import logging
 logger = logging.getLogger("snagrecover")
 
 """
-See doc/android/fastboot-protocol.rst in the U-Boot sources 
+See doc/android/fastboot-protocol.rst in the U-Boot sources
 for more information on fastboot support in U-Boot.
 """
 
@@ -61,7 +61,6 @@ class Fastboot():
 		elif dev.speed == usb.util.SPEED_SUPER:
 			self.max_size = 1024
 
-	
 	def cmd(self, packet: bytes):
 		if len(packet) > self.max_size:
 			raise ValueError(f"Packet {packet} exceeds the 64-byte length limit.")
@@ -144,10 +143,10 @@ class Fastboot():
 	def powerdown(self):
 		packet = "powerdown"
 		self.cmd(packet)
-	
+
 	def ucmd(self, cmd: str):
 		"""
-		Execute an arbitrary U-Boot command and 
+		Execute an arbitrary U-Boot command and
 		wait for it to complete.
 		"""
 		packet = f"UCmd:{cmd}\x00"
@@ -155,7 +154,7 @@ class Fastboot():
 
 	def acmd(self, cmd: str):
 		"""
-		Execute an arbitrary U-Boot command and 
+		Execute an arbitrary U-Boot command and
 		do not wait for it to complete.
 		"""
 		packet = f"ACmd:{cmd}\x00"
@@ -170,7 +169,7 @@ class Fastboot():
 
 	def oem_format(self):
 		"""
-		Execute gpt write mmc <dev> $partitions 
+		Execute gpt write mmc <dev> $partitions
 		<dev> is preconfigured in U-Boot
 		"""
 		packet = "oem format"
@@ -178,7 +177,7 @@ class Fastboot():
 
 	def oem_partconf(self, arg: str):
 		"""
-		Execute mmc partconf <dev> <arg> 0 
+		Execute mmc partconf <dev> <arg> 0
 		<dev> is preconfigured in U-Boot
 		"""
 		packet = f"oem partconf:{arg}\x00"
@@ -186,7 +185,7 @@ class Fastboot():
 
 	def oem_bootbus(self, arg: str):
 		"""
-		Execute mmc bootbus <dev> <arg> 0 
+		Execute mmc bootbus <dev> <arg> 0
 		<dev> is preconfigured in U-Boot
 		"""
 		packet = f"oem bootbus:{arg}\x00"
