@@ -1,18 +1,18 @@
 # This file is part of Snagboot
 # Copyright (C) 2023 Bootlin
-# 
+#
 # Written by Romain Gantois <romain.gantois@bootlin.com> in 2023.
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -70,11 +70,11 @@ class BootpRequest():
 		reply[20:24] = encode_ipv4(server_ip)
 		reply[108:236] = encode_filename(filename).lower()
 		"""
-		The vendor area of the packet can contain all sorts of 
-		additional data (see RFC1533 for a partial list). We are 
-		not trying to implement a fully functionnal BOOTP server so 
-		we do not parse and handle this area. However, SPL expects 
-		to find a DHCP ACK in the BOOTP packets it receives. Thus, 
+		The vendor area of the packet can contain all sorts of
+		additional data (see RFC1533 for a partial list). We are
+		not trying to implement a fully functionnal BOOTP server so
+		we do not parse and handle this area. However, SPL expects
+		to find a DHCP ACK in the BOOTP packets it receives. Thus,
 		we include this in every BOOTP response we send.
 		"""
 		# initialize vendor area to 0

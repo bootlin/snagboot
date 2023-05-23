@@ -1,9 +1,9 @@
 # Troubleshooting
 
-## AttributeError: /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so: undefined symbol: hid_get_input_report 
+## AttributeError: /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so: undefined symbol: hid_get_input_report
 
 This is related to hid 1.0.5 using a symbol which isn't supported in your
-version of libhidapi-hidraw0. Downgrading to hid==1.0.4 should fix the issue: 
+version of libhidapi-hidraw0. Downgrading to hid==1.0.4 should fix the issue:
 
 ```bash
 python3 -m pip uninstall hid
@@ -23,7 +23,7 @@ Make sure that your SPL supports whatever USB gadget is needed to recover your
 specific type of SoC. These are specified in the [firmware
 binaries](fw_binaries.md) section of the docs.
 
-## U-Boot DFU/UMS/Fastboot commands fail with `Controller uninitialized` 
+## U-Boot DFU/UMS/Fastboot commands fail with `Controller uninitialized`
 
 On some boards, you have to enable `CONFIG_USB_ETHER` in U-Boot for USB gadgets
 to work correctly.

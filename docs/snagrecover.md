@@ -1,7 +1,7 @@
 # Running snagrecover
 
 You can run “snagrecover -h” for a detailed overview of the available options.
-The following command line arguments are always required: 
+The following command line arguments are always required:
 
  * `-s soc_model`
    This must be one of the SoCs supported by snagrecover, run
@@ -11,7 +11,7 @@ The following command line arguments are always required:
 	information on this.
 
 If you have changed your ROM code's USB VID/PID (this usually isn't the case),
-you must specify it using the --rom-usb parameter: 
+you must specify it using the --rom-usb parameter:
 
  * `--rom-usb vid:pid`
    USB device address vid:pid

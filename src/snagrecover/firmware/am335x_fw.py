@@ -1,18 +1,18 @@
 # This file is part of Snagboot
 # Copyright (C) 2023 Bootlin
-# 
+#
 # Written by Romain Gantois <romain.gantois@bootlin.com> in 2023.
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -25,7 +25,7 @@ import time
 import logging
 logger = logging.getLogger("snagrecover")
 from xmodem import XMODEM
-# setting this logger to the same format as the main 
+# setting this logger to the same format as the main
 # logger since it sometimes prints out messages that seem
 # like fatal errors but are apparently benign
 xmodem_logger = logging.getLogger("xmodem.XMODEM")
@@ -37,9 +37,9 @@ import os.path
 server_config = {
 	"listen": "0.0.0.0",
 	# The values chosen for the client and server ips
-	# basically do not matter, as we run the recovery 
+	# basically do not matter, as we run the recovery
 	# inside an isolated network namespace.
-	# However, they must match with the values 
+	# However, they must match with the values
 	# used in the am335x helper scripts
 	"server_ip": "192.168.0.100",
 	"client_ip": "192.168.0.101",

@@ -36,6 +36,3 @@ def get_usb(vid: int, pid: int) -> usb.core.Device:
 	except usb.core.USBError:
 		usb_error(vid, pid)
 	return dev
-
-		
-

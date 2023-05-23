@@ -3,7 +3,7 @@
 Snagboot intends to be an open-source and generic replacement to the
 vendor-specific, sometimes proprietary, tools used to recover and/or reflash
 embedded platforms. Examples of such tools include STM32CubeProgrammer, SAM-BA
-ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts: 
+ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts:
 
 - **snagrecover** uses vendor-specific ROM code mechanisms to initialize
   external RAM and run U-Boot, without modifying any non-volatile
@@ -31,7 +31,7 @@ Requirements:
 
 Snagboot is available on pip: `python3 -m pip install --user snagboot`.
 
-This package provides two CLI tools: 
+This package provides two CLI tools:
 
 ```bash
 $ snagrecover -h
@@ -73,7 +73,7 @@ To recover and reflash a board using snagboot:
 4. [Run snagrecover](docs/snagrecover.md) and check that the recovery was a success i.e. that U-Boot is running properly.
 5. [Run snagflash](docs/snagflash.md) to reflash the board
 
-If you encounter issues, please take a look at the 
+If you encounter issues, please take a look at the
 [troubleshooting](docs/troubleshooting.md) section.
 
 You can play the snagrecover tutorial in your terminal!
