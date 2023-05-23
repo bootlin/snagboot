@@ -11,7 +11,7 @@ where = ["src"]
 
 [project]
 name = "snagboot"
-version = "0.1"
+version = "1.0"
 authors = [
   { name="Romain Gantois", email="romain.gantois@bootlin.com" },
 ]

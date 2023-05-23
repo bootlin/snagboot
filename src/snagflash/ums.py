@@ -100,9 +100,11 @@ def ums(args):
 	if args.dest:
 		if os.path.isdir(args.dest):
 			wait_filepath(args.dest)
-			print(f"Copying {args.src} to {args.dest}/{args.src}...")
+			print(f"Copying {args.src} to {args.dest}/{os.path.basename(args.src)}...")
 		else:
-			wait_filepath(os.path.dirname(args.dest))
+			dirname = os.path.dirname(args.dest)
+			if dirname != "":
+				wait_filepath(dirname)
 			print(f"Copying {args.src} to {args.dest}...")
 		shutil.copy(args.src, args.dest)
 		print("Done")

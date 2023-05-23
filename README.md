@@ -52,6 +52,10 @@ The affected devices will be accessible to the "plugdev" group, so please check
 that you are part of this group. You can also modify the udev rules to pick a
 more restrictive group if you wish.
 
+**Warning:** The "plugdev" group does not exist on Fedora, please make sure you
+modify the udev rules before installing them! You should replace "plugdev" with
+any group you wish, e.g. "users". 
+
 Alternatively, Snagboot can be installed as a local Python wheel. An
 installation script is provided to automatically build and install the package.
 
