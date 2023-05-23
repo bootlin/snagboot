@@ -37,6 +37,10 @@
 Here are a few things which would be nice to add to the recovery tool:
 - testing snagrecover on supported but untested SoCs (see
   [supported_socs.yaml](src/snagrecover/supported_socs.yaml))
-- snagrecover support for BCM283 SoCs
-- snagrecover support for SAMA9 SoCs
-
+- snagrecover support for RaspberryPi platforms (Broadcom BCM283x and
+  BCM271x SoCs)
+- snagrecover support for Rockchip SOCs. Some initial investigation
+  has been done in this direction, but there are some difficulties due
+  to the lack of proper USB gadget support in the U-Boot SPL for
+  Rockchip platforms. Contact us if you're interested in this effort.
+- snagrecover support for Microchip AT91 SoCs
