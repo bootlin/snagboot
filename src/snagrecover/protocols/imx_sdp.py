@@ -203,11 +203,12 @@ class SDPCommand():
 	def sdps_write(self, blob: bytes, size: int) -> bool:
 		"""
 		Command used to write the first stage firmware for boards using the SDPS
-		protocol. It has not yet been tested and may require some tweaks.
+		protocol. It has not yet been tested on all supported platforms and may
+		require some tweaks.
 		"""
 		logger.info(f"SDPS write with parameters size:0x{size:x} offset:0x00")
 		soc_model = recovery_config["soc_model"]
-		if soc_model not in ["imx8qxp","imx815"]:
+		if soc_model not in ["imx8qm", "imx8qxp","imx815"]:
 			# only some mpu models require a preliminary command before the report 2
 			# transfer
 			packet1_arr = bytearray(b"\x01") # report 1

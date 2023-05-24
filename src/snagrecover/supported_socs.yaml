@@ -21,6 +21,8 @@ tested:
         family: imx
   imx8mm:
         family: imx
+  imx8qm:
+        family: imx
   r8:
         family: sunxi
   sama5d2:
@@ -91,8 +93,6 @@ untested:
   imx8dxl:
         family: imx
   imx8mq:
-        family: imx
-  imx8qm:
         family: imx
   imx8qxp:
         family: imx
