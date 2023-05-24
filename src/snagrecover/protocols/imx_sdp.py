@@ -226,7 +226,7 @@ class SDPCommand():
 		else:
 			transfer_size = 1024
 
-		for chunk in utils.dnload_iter(blob, transfer_size):
+		for chunk in utils.dnload_iter(blob[0:size], transfer_size):
 			packet2 = b"\x02" + chunk
 			self.dev.write(packet2)
 		"""
