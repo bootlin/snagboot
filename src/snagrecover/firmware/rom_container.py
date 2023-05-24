@@ -55,18 +55,18 @@ CONTAINER_TAG = 0x87
 V2X_BOOTIMG_FLAG = 0x0b
 
 ROM_CONTAINER_STRUCT_SIZE = 16
-ROM_BOOTIMG_STRUCT_SIZE = 34
+ROM_BOOTIMG_STRUCT_SIZE = 128
 
 def get_container_size(boot_blob: bytes) -> int:
 	"""
 	This function is used to compute the size of the first stage firmware
-	container for boards socs using the SDPS protocol. It has not yet been tested.
+	container for boards socs using the SDPS protocol.
 	"""
 	soc_model = recovery_config["soc_model"]
 	if soc_model == "imx815":
 		return len(boot_blob)
 	rom_container_tag = boot_blob[CONTAINER_HDR_ALIGNMENT + 3]
-	if rom_container_tag != b"\x87":
+	if rom_container_tag != CONTAINER_TAG:
 		return len(boot_blob)
 
 	cont_index = 1
@@ -76,14 +76,14 @@ def get_container_size(boot_blob: bytes) -> int:
 		# skip V2X container
 		cont_index = 2
 		rom_container_tag = boot_blob[2 * CONTAINER_HDR_ALIGNMENT + 3]
-		if rom_container_tag != b"\x87":
+		if rom_container_tag != CONTAINER_TAG:
 			return len(boot_blob)
 	container_offset = cont_index * CONTAINER_HDR_ALIGNMENT
 	num_images = int(boot_blob[container_offset + 11])
 	romimg_offset = container_offset + ROM_CONTAINER_STRUCT_SIZE + (num_images - 1) * ROM_BOOTIMG_STRUCT_SIZE
-	romimg_offset = int.from_bytes(boot_blob[romimg_offset: romimg_offset], "little")
-	romimg_size = int.from_bytes(boot_blob[romimg_offset + 4: romimg_offset + 8], "little")
-	container_size = romimg_offset + romimg_size + cont_index * CONTAINER_HDR_ALIGNMENT
+	img_offset = int.from_bytes(boot_blob[romimg_offset: romimg_offset + 4], "little")
+	img_size = int.from_bytes(boot_blob[romimg_offset + 4: romimg_offset + 8], "little")
+	container_size = img_offset + img_size + cont_index * CONTAINER_HDR_ALIGNMENT
 	# round container size up
 	container_size = ceil(container_size / (1.0 * CONTAINER_HDR_ALIGNMENT)) * CONTAINER_HDR_ALIGNMENT
 	if container_size >= len(boot_blob):
