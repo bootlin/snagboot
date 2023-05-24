@@ -85,11 +85,14 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			raise ValueError("Error: failed to write first stage firmware")
 		return None
 
+	# Try to extract ivtable from binary blob
 	ivtable = ivt.IVT()
-	if ivtable.from_blob(fw_blob) is None:
-		raise ValueError("Error: No IVT header in boot image")
+	if not ivtable.from_blob(fw_blob):
+		logger.warning("IVT header not found")
 
 	if fw_name == "u-boot-with-dcd":
+		if ivtable.header is None:
+			raise ValueError("Error: No IVT header in boot image (required for DCD)")
 		# WRITE DEVICE CONFIGURATION DATA
 		print("Writing Device Configuration Data...")
 		if ivtable.dcd == 0:
@@ -113,7 +116,11 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		get uboot/atf offset and size by assuming that it is located immediately after the
 		section of the boot image that we previously downloaded to the board
 		"""
-		write_offset = ivtable.offset + ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
+		if ivtable.header is not None:
+			write_offset = ivtable.offset + ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
+		else:
+			logger.warning("IVT header not found, extracting size from raw blob")
+			write_offset = rom_container.get_container_size(fw_blob)
 		write_size = len(fw_blob) - write_offset
 		if	write_size <= 0:
 			raise ValueError("Error: Invalid offset found for U-BOOT proper in boot image")
@@ -125,11 +132,16 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		memops.jump(0)
 		return None
 	else:
-		write_size = ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
-		# If the IVT offset is large enough, the write can overflow the source buffer
-		if write_size > len(fw_blob) - ivtable.offset:
-			logger.warning("Write size is too large, truncating...")
-			write_size = len(fw_blob) - ivtable.offset
+		if ivtable.header is not None:
+			write_size = ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
+			# If the IVT offset is large enough, the write can overflow the source buffer
+			if write_size > len(fw_blob) - ivtable.offset:
+				logger.warning("Write size is too large, truncating...")
+				write_size = len(fw_blob) - ivtable.offset
+		else:
+			logger.warning("IVT header not found, extracting size from raw blob")
+			write_offset = rom_container.get_container_size(fw_blob)
+			write_size = len(fw_blob) - write_offset
 		# protocols other than SPLV/U have a maximum download size
 		# split download into chunks < MAX_DOWNLOAD_SIZE
 		chunk_offset = 0
