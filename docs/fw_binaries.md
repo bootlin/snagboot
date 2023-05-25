@@ -126,17 +126,6 @@ configuration:
  * path
  * address: check the value of CONFIG\_TEXT\_BASE in your  u-boot configuration
 
-## For NXP i.MX SoCs that use the SDPS protocol: imx28,imx93,imx8{qxp,qm,dxl,15,65}
-
-[example](../src/snagrecover/templates/imx28-evk.yaml)
-
-**u-boot-sdps:** Contains at least U-Boot and other SoC-specific components. For
-i.MX28, this can be generated with the u-boot.sb target in U-Boot. SPL should
-support SDP.
-
-configuration:
- * path
-
 ## For NXP i.MX6/7 SoCs
 
 ### Option1: Use dcd to initialize the external RAM
@@ -169,22 +158,19 @@ You can generate this by compiling the u-boot.imx target in U-Boot.
 configuration:
  * path
 
-## For NXP i.MX8 devices
+## For NXP i.MX8, i.MX28 and i.MX93 devices
 
 [example](../src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
 
-The process for generating the bootloader firmware for these SoCs is highly
+The process for generating the bootloader firmware for i.MX8 SoCs is highly
 vendor and board specific. We recommend that you follow your board vendor’s
 tutorial to generate a recovery sd card image , then dump the start of this sd
-card image (up to the start of the first partition) into a flash.bin file.
+card image (up to the start of the first partition) into a flash.bin file. For
+i.MX28 SoCs, the required binary can be generated with the u-boot.sb target in
+U-Boot.
 
-**flash-bin:** This should contain at least: IVT header + SPL + ddr firmware
-+ ATF + u-boot. The precise image structure depends on the board and build
-process. The recovery tool will download the IVT header + SPL + ddr
-firmware part of the image to OCRAM and run it, then download the ATF+u-boot
-part to external RAM. Normally, SPL should support the SDPV (instead of SDPU)
-protocol, which makes it capable of autofinding u-boot proper in the image we
-send.
+**flash-bin:** This should contain at least spl and u-boot. The precise image
+structure depends on the SoC and build process.
 
 configuration:
  * path

@@ -89,9 +89,9 @@ def main():
 	except hid.HIDException:
 		access_error("USB HID", f"{vid:04x}:{pid:04x}")
 	if soc_model in sdps_socs:
-		run_firmware(dev, "u-boot-sdps")
+		run_firmware(dev, "flash-bin", "spl-sdps")
 		# On some SoCs (e.g.: i.MX8QM) we can have a second stage based on SPDV
-		if "flash-bin" not in recovery_config["firmware"]:
+		if soc_model != "imx8qm":
 			return None
 	elif "u-boot-with-dcd" in recovery_config["firmware"]:
 		run_firmware(dev, "u-boot-with-dcd")

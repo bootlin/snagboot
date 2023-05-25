@@ -78,7 +78,7 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 	sdp_cmd = imx_sdp.SDPCommand(port)
 	memops = memory_ops.MemoryOps(sdp_cmd)
 
-	if fw_name == "u-boot-sdps":
+	if fw_name == "flash-bin" and subfw_name == "spl-sdps":
 		write_size = rom_container.get_container_size(fw_blob)
 		ret = sdp_cmd.sdps_write(fw_blob, write_size)
 		if not ret:

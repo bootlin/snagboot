@@ -1,5 +1,2 @@
-u-boot-sdps:
-  path: imx-boot-imx8qmmek-sd.bin-flash_spl
-
 flash-bin:
   path: imx-boot-imx8qmmek-sd.bin-flash_spl

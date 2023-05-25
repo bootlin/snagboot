@@ -1,2 +1,2 @@
-u-boot-sdps:
+flash-bin:
   path: u-boot.sb
