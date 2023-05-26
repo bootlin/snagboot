@@ -17,7 +17,7 @@ ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts:
 
 The currently supported SoC families are ST STM32MP1, Microchip SAMA5, NXP
 i.MX6/7/8, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
-[supported_socs.yaml](src/snagrecover/supported_socs.yaml) or run `snagrecover
+[supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml) or run `snagrecover
 --list-socs` for a more precise list of supported SoCs.
 
 ## Installation
@@ -64,6 +64,9 @@ $ cd snagboot
 $ ./install.sh
 ```
 
+There is also an [AUR package](https://aur.archlinux.org/packages/snagboot)
+available.
+
 ## Usage guide
 
 **Note:** Running snagboot as root is not recommended and will typically not
@@ -72,13 +75,13 @@ work, since it is probably installed for the current user only
 To recover and reflash a board using snagboot:
 
 1. Check that your SoC is supported in snagrecover by running: `snagrecover --list-socs`
-2. [Setup your board for recovery](docs/board_setup.md)
-3. [Build or download the firmware binaries necessary for recovering and reflashing the board.](docs/fw_binaries.md)
-4. [Run snagrecover](docs/snagrecover.md) and check that the recovery was a success i.e. that U-Boot is running properly.
-5. [Run snagflash](docs/snagflash.md) to reflash the board
+2. [Setup your board for recovery](https://github.com/bootlin/snagboot/blob/main/docs/board_setup.md)
+3. [Build or download the firmware binaries necessary for recovering and reflashing the board.](https://github.com/bootlin/snagboot/blob/main/docs/fw_binaries.md)
+4. [Run snagrecover](https://github.com/bootlin/snagboot/blob/main/docs/snagrecover.md) and check that the recovery was a success i.e. that U-Boot is running properly.
+5. [Run snagflash](https://github.com/bootlin/snagboot/blob/main/docs/snagflash.md) to reflash the board
 
 If you encounter issues, please take a look at the
-[troubleshooting](docs/troubleshooting.md) section.
+[troubleshooting](https://github.com/bootlin/snagboot/blob/main/docs/troubleshooting.md) section.
 
 You can play the snagrecover tutorial in your terminal!
 
@@ -91,10 +94,10 @@ asciinema play -s=2 docs/tutorial_snagrecover.cast
 
 Contributions are welcome! Since Snagboot includes many different recovery
 techniques and protocols, we try to keep the code base as structured as
-possible. Please consult the [contribution guidelines](CONTRIBUTING.md).
+possible. Please consult the [contribution guidelines](https://github.com/bootlin/snagboot/blob/main/CONTRIBUTING.md).
 
 ## License
 
-Snagboot is released under the [GNU General Public License version 2](LICENSE)
+Snagboot is released under the [GNU General Public License version 2](https://github.com/bootlin/snagboot/blob/main/LICENSE)
 
 

@@ -5,8 +5,6 @@
   restrictive EULAs.
 - when adding new SoC supports/protocols, please follow the general code
   structure used by existing SoC supports
-- when you modify a file in the codebase, please modify its license header
-  accordingly
 
 ## Style guide
 
