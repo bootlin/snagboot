@@ -57,6 +57,7 @@ logger = logging.getLogger("snagrecover")
 from snagrecover import utils
 from snagrecover.protocols import hab_constants
 from snagrecover.config import recovery_config
+import hid
 
 
 class SDPCommand():
@@ -179,14 +180,22 @@ class SDPCommand():
 		self.addr = addr
 		packet = self.build_packet()
 		self.dev.write(packet)
-		self.check_hab()
-		status = self.dev.read(65, timeout = 100)[1:]
-		if status != b"":
-			decoded_err = hab_constants.status_codes[int(status[0])] \
-				+ " | " + hab_constants.reason_codes[int(status[1])]\
-				+ " | " + hab_constants.context_codes[int(status[2])]\
-				+ " | " + hab_constants.engine_tags[int(status[3])]
-			raise ValueError(f"Error: error status {decoded_err} returned after jump to 0x{addr:x}")
+		"""
+		Looks like the following checks will fail sometimes,
+		even if the jump was successful. We still perform them 
+		though, in case the SoC actually expects them
+		"""
+		try:
+			self.check_hab()
+			status = self.dev.read(65, timeout = 100)[1:]
+			if status != b"":
+				decoded_err = hab_constants.status_codes[int(status[0])] \
+					+ " | " + hab_constants.reason_codes[int(status[1])]\
+					+ " | " + hab_constants.context_codes[int(status[2])]\
+					+ " | " + hab_constants.engine_tags[int(status[3])]
+				logger.warning(f"error status {decoded_err} returned after jump to 0x{addr:x}")
+		except hid.HIDException as err:
+			logger.warning(f"Caught HIDException {str(err)}")
 		return None
 
 	def skip_dcd_header(self):
