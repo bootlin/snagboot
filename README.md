@@ -42,19 +42,20 @@ You also need to install udev rules so that snagrecover has read and write
 access to the USB devices exposed by the SoCs.
 
 ```bash
-$ snagrecover --udev > 80-snagboot.rules
-$ sudo cp 80-snagboot.rules /etc/udev/rules.d/
+$ snagrecover --udev > 50-snagboot.rules
+$ sudo cp 50-snagboot.rules /etc/udev/rules.d/
 $ sudo udevadm control --reload-rules
 $ sudo udevadm trigger
 ```
 
-The affected devices will be accessible to the "plugdev" group, so please check
-that you are part of this group. You can also modify the udev rules to pick a
-more restrictive group if you wish.
+These rules work by adding the "uaccess" tag to the relevant USB devices.
+Systemd will then add an ACL to give access to currently logged in users. More
+info
+[here](https://enotty.pipebreaker.pl/2012/05/23/linux-automatic-user-acl-management/). 
 
-**Warning:** The "plugdev" group does not exist on Fedora, please make sure you
-modify the udev rules before installing them! You should replace "plugdev" with
-any group you wish, e.g. "users". 
+**Warning:** If your distro does not use systemd, the "uaccess" method could
+possibly not work. In this case, make sure to customize the provided udev rules
+for your specific system.
 
 Alternatively, Snagboot can be installed as a local Python wheel. An
 installation script is provided to automatically build and install the package.

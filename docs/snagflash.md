@@ -21,7 +21,7 @@ rights to these devices. Assuming that your U-Boot config has
 `CONFIG_USB_GADGET_VENDOR_NUM=vid` and `CONFIG_USB_GADGET_PRODUCT_NUM=pid`, you
 can add the following udev rule to get access:
 
-`SUBSYSTEM=="usb", ATTRS{idVendor}=="vid", ATTRS{idProduct}=="pid", MODE="0660", GROUP="plugdev"`
+`SUBSYSTEM=="usb", ATTRS{idVendor}=="vid", ATTRS{idProduct}=="pid", MODE="0660", TAG+="uaccess"`
 
 ## DFU mode
 

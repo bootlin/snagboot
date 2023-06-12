@@ -28,7 +28,7 @@ import logging
 import ast
 
 def cli():
-	udev_path = os.path.dirname(__file__) + "/80-snagboot.rules"
+	udev_path = os.path.dirname(__file__) + "/50-snagboot.rules"
 	am335x_script_path = os.path.dirname(__file__) + "/am335x_usb_setup.sh"
 	template_path = os.path.dirname(__file__) + "/templates"
 	templates = [filename[:-5] for filename in os.listdir(template_path)]
