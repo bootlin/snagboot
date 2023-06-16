@@ -190,7 +190,7 @@ echo -e "Logging user $SUDOER into new shell\n"
 echo "===== $NETNS_NAME ====="
 echo "You can now setup the board and run the recovery tool."
 echo "Please type 'exit' to delete the namespace, stop the polling process and leave the shell when you are done."
-ip netns exec $NETNS_NAME su $SUDOER
+ip netns exec $NETNS_NAME su - $SUDOER
 
 #leave shell and cleanup
 cleanup
