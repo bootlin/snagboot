@@ -108,6 +108,11 @@ def am335x_usb(port, fw_name: str):
 			raise Exception("Timeout waiting for TFTP request")
 		time.sleep(0.1)
 	t0 = time.time()
+
+	bootp_server.shutdown()
+	bootp_server.server_close()
+	logger.info("Waiting for BOOTP server to stop...")
+
 	while tftp_server.sessions != {}:
 		if time.time() - t0 > tftp_complete_timeout:
 			raise Exception("Timeout waiting for TFTP transfer to complete")
@@ -116,13 +121,11 @@ def am335x_usb(port, fw_name: str):
 	# Note that this will not interrupt a tftp transfer in progress
 	tftp_server.stop()
 	logger.info("Waiting for TFTP server to stop...")
+
+	print("Waiting for BOOTP shutdown...")
+	bootp_thread.join()
 	print("Waiting for TFTP shutdown...")
 	tftp_thread.join()
-	bootp_server.shutdown()
-	bootp_server.server_close()
-	print("Waiting for BOOTP shutdown...")
-	logger.info("Waiting for BOOTP server to stop...")
-	bootp_thread.join()
 
 xmodem_total_size = 0
 def xmodem_callback(total_packets: int, success_count: int, error_count: int):
