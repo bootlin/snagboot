@@ -61,7 +61,8 @@ DEFAULT_ROMUSB="0451:6141"
 DEFAULT_SPLUSB="0451:d022"
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 NETNS_NAME="snagbootnet"
-SUDOER="$(logname)"
+# logname from coreutils may not work on all systems ...
+SUDOER="$(ps -o user= -p $(ps -o ppid= -p $(ps -o ppid= -p $$)))"
 poller_id=""
 
 #delete the new network namespace and udev rules
@@ -101,7 +102,7 @@ trap_ctrlc() {
 }
 trap "trap_ctrlc" 2
 
-while getopts "r:s:n:ch" opt; do
+while getopts "r:s:n:chu:" opt; do
   case $opt in
     r) ROMUSB=$OPTARG;;
     s) SPLUSB=$OPTARG;;
@@ -126,6 +127,16 @@ done
 #check user
 if [ ! "$(whoami)" == "root" ]; then
 	fail_on_error "This script should be run as root!"
+fi
+
+#check SUDOER
+if [ -z "${SUDOER}" ]; then
+	fail_on_error "User name could not be determined on this system"
+fi
+
+id ${SUDOER} 2>1 1>/dev/null
+if [ ! $? ]; then
+	fail_on_error "${SUDOER} is not a valid user name"
 fi
 
 #check usb args
