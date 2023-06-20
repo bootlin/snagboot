@@ -168,7 +168,7 @@ poll_interface () {
 {
 while true; do
 	poll_interface
-	sleep 0.5
+	sleep 0.1
 done
 } & poller_id=$!
 
