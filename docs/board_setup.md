@@ -99,7 +99,7 @@ but you have to run it in an isolated network namespace. A polling subprocess is
 also needed to automatically move the board interface to the special namespace.
 We have provided a helper bash script to do this automatically.
 
-**Note:** The new network namespace will be named “recoverynet”. If you already
+**Note:** The new network namespace will be named “snagbootnet”. If you already
 have a netns with that name, you should pass a different one to the bash script
 using the -n flag and to snagrecover using the --netns option.
 
