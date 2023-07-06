@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
-from snagflash.utils import int_arg
 import shutil
 import tempfile
 from snagflash.bmaptools import BmapCreate
@@ -87,11 +86,8 @@ def write_raw(args):
 	print(f"Reading {filepath}...")
 	with open(filepath, "rb") as file:
 		blob = file.read(-1)
-	if args.size is not None:
-		size = int_arg(args.size)
-	else:
 		size = len(blob)
-	print(f"Copying {size} bytes of {filepath} to {devpath}...")
+	print(f"Copying {filepath} to {devpath}...")
 	with open(devpath, "rb+") as dev:
 		bmap_copy(filepath, dev, size)
 	print("Done")
@@ -108,7 +104,7 @@ def ums(args):
 			print(f"Copying {args.src} to {args.dest}...")
 		shutil.copy(args.src, args.dest)
 		print("Done")
-	if args.blockdev:
+	elif args.blockdev:
 		write_raw(args)
 
 

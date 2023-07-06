@@ -53,7 +53,6 @@ def cli():
 	umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
 	umsargs.add_argument("-d", "--dest", help="mounted transfer: set destination file name")
 	umsargs.add_argument("-b", "--blockdev", help="raw transfer: set destination block device", metavar="device")
-	umsargs.add_argument("--size", help="raw transfer: transfer size")
 	args = parser.parse_args()
 
 	# show version

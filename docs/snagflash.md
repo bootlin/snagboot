@@ -65,12 +65,6 @@ Then either one of:
  * `-b –blockdev device`
    Sets the block device for transfers to raw block devices.
 
-and optionally:
-
- * `--size`
-   You can specify this to copy only a portion of the source file. This only
-   works for raw transfers, and can be specified in decimal or hexadecimal.
-
 Make sure that snagflash has the necessary access rights to the target
 devices/mount directories. If you are passing a raw block device, make sure that
 it is not mounted.
@@ -82,6 +76,16 @@ Example:
 snagflash -P ums -s binaries/u-boot.stm32 -b /dev/sdb1
 snagflash -P ums -s binaries/u-boot.stm32 -d /mnt/u-boot.stm32
 ```
+
+**Note:** If you want a static block device path, you can use the following udev
+rules to create symlinks when a certain VID:PID pair is detected: 
+- For a parent block device: `SUBSYSTEM=="block", KERNEL!="*[0-9]",
+  SUBSYSTEMS=="usb", ATTRS{idVendor}=="...", ATTRS{idProduct}=="...",
+  MODE="0660", TAG+="uaccess", SYMLINK+="myblockdev"`
+- For a partition device: `SUBSYSTEM=="block", ATTR{partition}=="*",
+  SUBSYSTEMS=="usb", ATTRS{idVendor}=="...", ATTRS{idProduct}=="...",
+  MODE="0660", TAG+="uaccess", SYMLINK+="myblockdev$attr{partition}"`
+
 
 ## Fastboot mode
 
