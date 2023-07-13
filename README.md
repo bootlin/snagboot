@@ -25,7 +25,9 @@ i.MX6/7/8, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
 Requirements:
 
  * One of the libhidapi backends. On Debian, you can install the
-   `libhidapi-hidraw0` package or the `libhidapi-libusb0` package
+   `libhidapi-hidraw0` package or the `libhidapi-libusb0` package.
+   On OSX you can install the
+   [`hidapi`](https://formulae.brew.sh/formula/hidapi) package.
  * The ensurepip Python package. On Debian, you can install the
    python[your python version]-venv package
 
