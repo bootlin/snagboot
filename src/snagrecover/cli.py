@@ -146,6 +146,9 @@ Templates:
 	elif soc_family == "am62x":
 		from snagrecover.recoveries.am62x import main as am62x_recovery
 		am62x_recovery()
+	elif soc_family == "am62ax":
+		from snagrecover.recoveries.am62ax import main as am62ax_recovery
+		am62ax_recovery()
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 	print(f"Done recovering {soc_model} board")
