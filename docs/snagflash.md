@@ -34,11 +34,6 @@ In DFU mode, snagflash takes two additional arguments :
    the value specified in dfu\_alt\_info in U-Boot. This flag can be passed
    multiple times, to specify multiple files to download.
 
-and optionally:
-
- * `--size`
-   You can specify this to download only a portion of the source file.
-
 Example:
 ```bash
 # in U-Boot: setenv dfu_alt_info "mmc=uboot part 0 1"
