@@ -260,3 +260,33 @@ DM firmware, U-Boot SPL for A53 and device tree blobs
 configuration:
  * path
 
+## For TI AM62Ax devices
+
+[example](../src/snagrecover/templates/am62ax.yaml)
+
+**Warning** Please refer to
+[this documentation](https://software-dl.ti.com/processor-sdk-linux/esd/AM62AX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-General-Info.html#build-u-boot)
+for building the required images. The instructions for building the binaries are 
+board-specific. When building the images make sure to use the USB DFU defconfig for
+Snagrecover and SD Boot defconfig for Snagflash.
+
+AM62Ax SoCs require multiple complex firmware images to boot.
+
+**tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
+container with device tree blobs. If you change U-Boot's USB VID/PID, you should
+specify them with the usb firmware parameter. SPL should support DFU.
+
+configuration:
+ * path
+ * usb vid:pid (only if you changed the default vid/pid in U-Boot's config)
+
+**u-boot:** FIT container with U-Boot proper for A53 and device tree blobs
+
+configuration:
+ * path
+
+**tispl:** FIT container with ATF FOR A53, OPTEE (not necessary for recovery),
+DM firmware, U-Boot SPL for A53 and device tree blobs
+
+configuration:
+ * path

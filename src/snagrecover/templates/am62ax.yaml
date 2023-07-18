@@ -1,6 +1,6 @@
 tiboot3:
-  path: ./am62ax_test/tiboot3.bin
+  path: tiboot3.bin
 tispl:
-  path: ./am62ax_test/tispl.bin
+  path: tispl.bin
 u-boot:
-  path: ./am62ax_test/u-boot.img
+  path: u-boot.img
