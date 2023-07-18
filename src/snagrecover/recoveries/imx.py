@@ -91,7 +91,7 @@ def main():
 	if soc_model in sdps_socs:
 		run_firmware(dev, "flash-bin", "spl-sdps")
 		# On some SoCs (e.g.: i.MX8QM) we can have a second stage based on SPDV
-		if soc_model != "imx8qm":
+		if soc_model not in ["imx8qm", "imx8qxp"]:
 			return None
 	elif "u-boot-with-dcd" in recovery_config["firmware"]:
 		run_firmware(dev, "u-boot-with-dcd")
