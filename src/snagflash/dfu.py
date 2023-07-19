@@ -45,9 +45,10 @@ def dfu_cli(args):
 		dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
 		dfu_cmd.get_status()
 		print("Done")
-	print("Sending DFU detach command...")
-	dfu_cmd.detach(altsetting)
-	print("Done")
+	if not args.dfu_keep:
+		print("Sending DFU detach command...")
+		dfu_cmd.detach(altsetting)
+		print("Done")
 
 
 
