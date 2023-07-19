@@ -82,8 +82,6 @@ def cli():
 
 	logger.info("Running snagflash using protocol {args.protocol}")
 	if args.protocol == "dfu":
-		if args.dfu_config is None:
-			cli_error("missing at least one DFU config!")
 		dfu_cli(args)
 	elif args.protocol == "ums":
 		if args.src is None or (args.blockdev is None and args.dest is None):

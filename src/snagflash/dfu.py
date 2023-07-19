@@ -32,23 +32,21 @@ def dfu_cli(args):
 	pid = int(dev_addr[1], 16)
 	dev = get_usb(vid, pid)
 	dev.default_timeout = int(args.timeout)
-	for dfu_config in args.dfu_config:
-		(altsetting,sep,path) = dfu_config.partition(":")
-		altsetting = int(altsetting)
-		with open(path, "rb") as file:
-			blob = file.read(-1)
-		size = len(blob)
-		print(f"Downloading {path} to altsetting {altsetting}...")
-		logger.debug(f"DFU config altsetting:{altsetting} size:0x{size:x} path:{path}")
-		dfu_cmd = dfu.DFU(dev, stm32=False)
-		dfu_cmd.get_status()
-		dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
-		dfu_cmd.get_status()
-		print("Done")
+	if args.dfu_config:
+		for dfu_config in args.dfu_config:
+			(altsetting,sep,path) = dfu_config.partition(":")
+			altsetting = int(altsetting)
+			with open(path, "rb") as file:
+				blob = file.read(-1)
+			size = len(blob)
+			print(f"Downloading {path} to altsetting {altsetting}...")
+			logger.debug(f"DFU config altsetting:{altsetting} size:0x{size:x} path:{path}")
+			dfu_cmd = dfu.DFU(dev, stm32=False)
+			dfu_cmd.get_status()
+			dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
+			dfu_cmd.get_status()
+			print("Done")
 	if not args.dfu_keep:
 		print("Sending DFU detach command...")
 		dfu_cmd.detach(altsetting)
 		print("Done")
-
-
-
