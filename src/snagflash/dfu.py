@@ -23,7 +23,7 @@ logger = logging.getLogger("snagflash")
 from snagflash.utils import get_usb,cli_error
 
 def dfu_cli(args):
-	if args.dfu_config is None:
+	if args.dfu_config is None and not args.dfu_detach:
 		cli_error("missing command line argument --dfu-config")
 	if (args.port is None) or (":" not in args.port):
 		cli_error("missing command line argument --port [vid:pid]")
@@ -32,6 +32,7 @@ def dfu_cli(args):
 	pid = int(dev_addr[1], 16)
 	dev = get_usb(vid, pid)
 	dev.default_timeout = int(args.timeout)
+	altsetting = 0
 	if args.dfu_config:
 		for dfu_config in args.dfu_config:
 			(altsetting,sep,path) = dfu_config.partition(":")
@@ -46,7 +47,9 @@ def dfu_cli(args):
 			dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
 			dfu_cmd.get_status()
 			print("Done")
-	if not args.dfu_keep:
+	if not args.dfu_keep or args.dfu_detach:
 		print("Sending DFU detach command...")
+		dfu_cmd = dfu.DFU(dev, stm32=False)
+		dfu_cmd.get_status()
 		dfu_cmd.detach(altsetting)
 		print("Done")
