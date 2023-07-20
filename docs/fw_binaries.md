@@ -242,7 +242,7 @@ defconfig indicated by the linked documentation does not guarantee this!
 **AM62Ax:** Please refer to
 [this documentation](https://software-dl.ti.com/processor-sdk-linux/esd/AM62AX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-General-Info.html#build-u-boot)
 for building the required images. The instructions for building the binaries are 
-board-specific. When building the images make sure to use the USB DFU defconfig for
+board-specific. When building the images please make sure to use the USB DFU defconfig for
 Snagrecover and SD Boot defconfig for Snagflash.
 
 
