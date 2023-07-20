@@ -69,5 +69,3 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="1f3a", ATTRS{idProduct}=="efe8", MODE="0660"
 #TI AM62x rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="6165", MODE="0660", TAG+="uaccess"
 
-#TI AM62ax rules
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="6165", MODE="0660", TAG+="uaccess"

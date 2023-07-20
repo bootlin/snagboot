@@ -229,7 +229,7 @@ SPL part, you can typically use u-boot.img for this
 configuration:
  * path
 
-## For TI AM62x devices
+## For TI AM62x/AM62Ax devices
 
 [example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
@@ -239,38 +239,14 @@ for building the required images. When building the U-Boot SPL image for R5,
 please make sure that the resulting SPL supports Booting from DFU! The
 defconfig indicated by the linked documentation does not guarantee this!
 
-AM62x SoCs require multiple complex firmware images to boot.
-
-**tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
-container with device tree blobs. If you change U-Boot's USB VID/PID, you should
-specify them with the usb firmware parameter. SPL should support DFU.
-
-configuration:
- * path
- * usb vid:pid (only if you changed the default vid/pid in U-Boot's config)
-
-**u-boot:** FIT container with U-Boot proper for A53 and device tree blobs
-
-configuration:
- * path
-
-**tispl:** FIT container with ATF FOR A53, OPTEE (not necessary for recovery),
-DM firmware, U-Boot SPL for A53 and device tree blobs
-
-configuration:
- * path
-
-## For TI AM62Ax devices
-
-[example](../src/snagrecover/templates/am62ax.yaml)
-
-**Warning** Please refer to
+**AM62Ax:** Please refer to
 [this documentation](https://software-dl.ti.com/processor-sdk-linux/esd/AM62AX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-General-Info.html#build-u-boot)
 for building the required images. The instructions for building the binaries are 
 board-specific. When building the images make sure to use the USB DFU defconfig for
 Snagrecover and SD Boot defconfig for Snagflash.
 
-AM62Ax SoCs require multiple complex firmware images to boot.
+
+AM62x/AM62Ax SoCs require multiple complex firmware images to boot.
 
 **tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
 container with device tree blobs. If you change U-Boot's USB VID/PID, you should
@@ -290,3 +266,4 @@ DM firmware, U-Boot SPL for A53 and device tree blobs
 
 configuration:
  * path
+

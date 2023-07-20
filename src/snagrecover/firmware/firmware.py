@@ -79,33 +79,6 @@ def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 		print("Sending detach command...")
 		dfu_cmd.detach(partid)
 
-def am62ax_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
-	"""
-	There isn't a lot of complicated logic to handle am62ax firmware
-	so we can leave it in the common module for now
-	"""
-	# find firmware altsetting (i.e. partition id)
-	if fw_name == "tiboot3":
-		partname = "bootloader"
-	elif fw_name == "tispl":
-		partname = "tispl.bin"
-	elif fw_name == "u-boot":
-		partname = "u-boot.img"
-	else:
-		cli_error(f"unsupported firmware {fw_name}")
-	print("Searching for partition id...")
-	partid = dfu.search_partid(dev, partname)
-	if partid is None:
-		raise Exception(f"No DFU altsetting found with iInterface='{partname}'")
-	dfu_cmd = dfu.DFU(dev, stm32=False)
-	print("Downloading file...")
-	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
-	print("Done")
-	if fw_name == "tispl":
-		# run tispl firmware
-		print("Sending detach command...")
-		dfu_cmd.detach(partid)
-
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	"""
 	The "subfw_name" option allows selecting firmware
@@ -136,8 +109,6 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		sunxi_run(port, fw_name, fw_blob)
 	elif soc_family == "am62x":
 		am62x_run(port, fw_name, fw_blob)
-	elif soc_family == "am62ax":
-		am62ax_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	print(f"Done installing firmware {fw_name}")
