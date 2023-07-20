@@ -20,7 +20,7 @@
 from snagrecover.protocols import dfu
 import logging
 logger = logging.getLogger("snagflash")
-from snagflash.utils import int_arg,get_usb,cli_error
+from snagflash.utils import get_usb,cli_error
 
 def dfu_cli(args):
 	if args.dfu_config is None:

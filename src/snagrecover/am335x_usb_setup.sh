@@ -61,8 +61,9 @@ DEFAULT_ROMUSB="0451:6141"
 DEFAULT_SPLUSB="0451:d022"
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 NETNS_NAME="snagbootnet"
-# logname from coreutils may not work on all systems ...
-SUDOER="$(ps -o user= -p $(ps -o ppid= -p $(ps -o ppid= -p $$)))"
+SUDOER="$SUDO_USER"
+SUDOER_BASHRC=$(eval echo "~$SUDOER")"/.bashrc"
+CUSTOM_RCFILE=". $SUDOER_BASHRC; export PS1='(am335_recovery) \u@\h:\w \$ '"
 poller_id=""
 
 #delete the new network namespace and udev rules
@@ -93,14 +94,6 @@ config_interface () {
 	ip netns exec $NETNS_NAME ip route add $CLIENT_IP dev $IF_NAME
 }
 
-
-#make sure sh won't fail without cleanup on Ctrl-c
-trap_ctrlc() {
-	cleanup
-	echo "Done"
-	exit
-}
-trap "trap_ctrlc" 2
 
 while getopts "r:s:n:chu:" opt; do
   case $opt in
@@ -134,9 +127,18 @@ if [ -z "${SUDOER}" ]; then
 	fail_on_error "User name could not be determined on this system"
 fi
 
-id ${SUDOER} 2>1 1>/dev/null
-if [ ! $? ]; then
-	fail_on_error "${SUDOER} is not a valid user name"
+id "$SUDOER" >/dev/null 2>&1; code=$?
+if [ $code -eq 1 ] || [ "$SUDOER" == "root" ]; then
+	# SUDO_USER may not work on all systems ...
+	SUDOER="$(ps -o user= -p $(ps -o ppid= -p $(ps -o ppid= -p $$)))"
+	id "$SUDOER" >/dev/null 2>&1; code=$?
+	if [ $code -eq 1 ] || [ "$SUDOER" = "root" ]; then
+		fail_on_error "Failed to find the username of sudo caller: found $SUDOER"
+	fi
+fi
+
+if [ ! -f "$SUDOER_BASHRC" ]; then
+	fail_on_error "Could not find a valid .bashrc file for user $SUDOER"
 fi
 
 #check usb args
@@ -155,13 +157,13 @@ SPLUSB=$(echo -n "$SPLUSB/" | sed -e 's/^0*//' -e 's/:0*/:/' -e 's/:/\//')
 
 echo "Starting polling subprocess..."
 poll_interface () {
-	ROMNETFILE=$(grep -l "PRODUCT=$ROMUSB" $(grep -l "DEVTYPE=usb_interface" /sys/class/net/*/device/uevent))
-	SPLNETFILE=$(grep -l "PRODUCT=$SPLUSB" $(grep -l "DEVTYPE=usb_interface" /sys/class/net/*/device/uevent))
+	ROMNETFILE=$(grep -s -l "PRODUCT=$ROMUSB" $(grep -s -l "DEVTYPE=usb_interface" /sys/class/net/*/device/uevent))
+	SPLNETFILE=$(grep -s -l "PRODUCT=$SPLUSB" $(grep -s -l "DEVTYPE=usb_interface" /sys/class/net/*/device/uevent))
 	if [ -e "$ROMNETFILE" ]; then
-		config_interface  "$(echo $ROMNETFILE | cut -d '/' -f 5)"
+		config_interface  "$(echo $ROMNETFILE | cut -d '/' -f 5)" >/dev/null 2>&1
 	fi
 	if [ -e "$SPLNETFILE" ]; then
-		config_interface  "$(echo $SPLNETFILE | cut -d '/' -f 5)"
+		config_interface  "$(echo $SPLNETFILE | cut -d '/' -f 5)" >/dev/null 2>&1
 	fi
 }
 
@@ -190,7 +192,7 @@ echo -e "Logging user $SUDOER into new shell\n"
 echo "===== $NETNS_NAME ====="
 echo "You can now setup the board and run the recovery tool."
 echo "Please type 'exit' to delete the namespace, stop the polling process and leave the shell when you are done."
-ip netns exec $NETNS_NAME su - $SUDOER
+ip netns exec $NETNS_NAME su $SUDOER --session-command "bash --rcfile <(echo \"$CUSTOM_RCFILE\")"
 
 #leave shell and cleanup
 cleanup

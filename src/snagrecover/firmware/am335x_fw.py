@@ -34,6 +34,7 @@ import tftpy
 import threading
 import os.path
 import collections
+import errno
 
 server_config = {
 	"listen": "0.0.0.0",
@@ -78,7 +79,13 @@ class UDPHandler(socketserver.BaseRequestHandler):
 		server_ip = server_config["server_ip"]
 		filename = os.path.basename(recovery_config["firmware"][fw_name]["path"])
 		reply = bootp_req.build_reply(assigned_client_ip, server_ip, filename)
-		sock.sendto(reply, ("<broadcast>", self.client_address[1]))
+		try:
+			sock.sendto(reply, ("<broadcast>", self.client_address[1]))
+		except OSError as err:
+			if err.errno == errno.ENETUNREACH:
+				logger.warning("Error in UDP handler: network is unreachable")
+			else:
+				raise err
 
 def am335x_usb(port, fw_name: str):
 	tftp_start_timeout = server_config["tftp_start_timeout"]
