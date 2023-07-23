@@ -37,6 +37,8 @@ In DFU mode, snagflash takes additional arguments :
    An optional argument to avoid detaching DFU mode after download and keep the mode active
  * `--dfu-detach`
    An optional argument to only request detaching DFU mode
+ * `--dfu-reset`
+   Reset USB device after download and reboot the board
 
 Example:
 ```bash
