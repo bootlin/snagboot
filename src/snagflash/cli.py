@@ -47,6 +47,9 @@ def cli():
 	common.add_argument("--timeout", help="USB timeout, sometimes increasing this is necessary when downloading large files", default=60000)
 	dfuargs = parser.add_argument_group("DFU")
 	dfuargs.add_argument("-D", "--dfu-config", help="The altsetting and path of a file to download to the board. in DFU mode", action="append", metavar="altsetting:path")
+	dfuargs.add_argument("--dfu-keep", help="Avoid detaching DFU mode after download and keep the mode active", action="store_true")
+	dfuargs.add_argument("--dfu-detach", help="Only request detaching DFU mode", action="store_true")
+	dfuargs.add_argument("--dfu-reset", help="Reset USB device after download and reboot the board", action="store_true")
 	fbargs = parser.add_argument_group("Fastboot")
 	fbargs.add_argument("-f", "--fastboot-cmd", help="A fastboot command.", action="append", metavar="cmd:args")
 	umsargs = parser.add_argument_group("UMS")
@@ -81,8 +84,6 @@ def cli():
 
 	logger.info("Running snagflash using protocol {args.protocol}")
 	if args.protocol == "dfu":
-		if args.dfu_config is None:
-			cli_error("missing at least one DFU config!")
 		dfu_cli(args)
 	elif args.protocol == "ums":
 		if args.src is None or (args.blockdev is None and args.dest is None):

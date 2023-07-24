@@ -25,7 +25,7 @@ can add the following udev rule to get access:
 
 ## DFU mode
 
-In DFU mode, snagflash takes two additional arguments :
+In DFU mode, snagflash takes additional arguments :
 
  * `-p --port vid:pid`
    The USB address of the DFU device exposed by U-Boot
@@ -33,6 +33,12 @@ In DFU mode, snagflash takes two additional arguments :
    The altsetting and path of a file to download to the board. This should match
    the value specified in dfu\_alt\_info in U-Boot. This flag can be passed
    multiple times, to specify multiple files to download.
+ * `--dfu-keep`
+   An optional argument to avoid detaching DFU mode after download and keep the mode active
+ * `--dfu-detach`
+   An optional argument to only request detaching DFU mode
+ * `--dfu-reset`
+   Reset USB device after download and reboot the board
 
 Example:
 ```bash
