@@ -115,7 +115,7 @@ configuration:
  	applet-extram\_sama5d3-generic\_sram.bin
  * preset: board-specific, check your DDR model, e.g. "DDR2\_MT47H128M16:Preset
  	2 (2 x MT47H128M16)" supported presets are listed in
- 	recovery/firmware/samba\_applet.py
+ 	snagrecover/firmware/samba\_applet.py
  * console\_instance: board-specific
  * console\_ioset: board-specific
 
