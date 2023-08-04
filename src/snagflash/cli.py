@@ -18,12 +18,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import argparse
+from snagrecover import __version__
 from snagflash.dfu import dfu_cli
 from snagflash.ums import ums
 from snagflash.fastboot import fastboot
 from snagflash.utils import cli_error
 import logging
-import pkg_resources
 import sys
 
 def cli():
@@ -60,8 +60,7 @@ def cli():
 
 	# show version
 	if args.version:
-		version = pkg_resources.require("snagboot")[0].version
-		print(f"Snagboot v{version}")
+		print(f"Snagboot v{__version__}")
 		sys.exit(0)
 
 	# setup logging

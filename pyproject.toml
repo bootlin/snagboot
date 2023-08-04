@@ -9,9 +9,12 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.dynamic]
+version = {attr = "snagrecover.__version__"}
+
 [project]
 name = "snagboot"
-version = "1.1"
+dynamic = ["version"]
 authors = [
   { name="Romain Gantois", email="romain.gantois@bootlin.com" },
 ]

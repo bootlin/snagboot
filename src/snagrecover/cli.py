@@ -19,9 +19,9 @@
 
 import sys
 import argparse
+from snagrecover import __version__
 from snagrecover.utils import cli_error
 import snagrecover.config as config
-import pkg_resources
 import yaml
 import os
 import logging
@@ -79,8 +79,7 @@ Templates:
 
 	# show version
 	if args.version:
-		version = pkg_resources.require("snagboot")[0].version
-		print(f"Snagboot v{version}")
+		print(f"Snagboot v{__version__}")
 		sys.exit(0)
 
 	# print template
