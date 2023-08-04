@@ -68,7 +68,7 @@ class BootpRequest():
 		reply[0] = 2 # BOOTP_REPLY
 		reply[16:20] = encode_ipv4(client_ip)
 		reply[20:24] = encode_ipv4(server_ip)
-		reply[108:236] = encode_filename(filename).lower()
+		reply[108:236] = encode_filename(filename)
 		"""
 		The vendor area of the packet can contain all sorts of
 		additional data (see RFC1533 for a partial list). We are
