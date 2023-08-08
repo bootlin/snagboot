@@ -49,6 +49,7 @@ default_usb_ids =  {
 		"imxrt106x": (0x1fc9,0x0135),
 		"imx8mm": (0x1fc9,0x0134),
 		"imx8mq": (0x1fc9,0x012b),
+		"imx53" : (0x15a2,0x004e),
 	}
 }
 

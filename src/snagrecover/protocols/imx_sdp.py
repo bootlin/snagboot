@@ -58,6 +58,7 @@ from snagrecover import utils
 from snagrecover.protocols import hab_constants
 from snagrecover.config import recovery_config
 import hid
+import struct
 
 
 class SDPCommand():
@@ -87,35 +88,36 @@ class SDPCommand():
 	CBW_BLTC_SIGNATURE = 0x43544C42
 	CBW_HOST_TO_DEVICE_FLAGS = 0x00
 	BLTC_DOWNLOAD_FW = 0x02
+	FT_APP = b"\xaa"
+	FT_UNUSED =b"\x00"
 
 	def __init__(self, dev):
 		self.dev = dev
-		self.cmd = None
-		self.addr = 0
-		self.format = b"\x00"
-		self.data_count = 0
-		self.data = 0
-		self.reserved = b"\x00"
+		self.clear()
 
 	def clear(self):
+		if self.is_hid():
+			self._hid_report = b"\x01"
+		else:
+			self._hid_report = b""
 		self.cmd = None
 		self.addr = 0
 		self.format = b"\x00"
 		self.data_count = 0
 		self.data = 0
-		self.reserved = b"\x00"
-		return None
+		self.file_type = self.FT_UNUSED
 
 	def build_packet(self) -> bytes:
-		return b"\x01" + self.cmd + self.addr.to_bytes(4, "big") \
+		return self._hid_report + self.cmd + self.addr.to_bytes(4, "big") \
 		+ self.format + self.data_count.to_bytes(4, "big") \
-		+ self.data.to_bytes(4, "big") + self.reserved
+		+ self.data.to_bytes(4, "big") + self.file_type
 
 	def end_cmd(self):
-		self.dev.read(1, timeout = 5000)
+		if self.is_hid():
+			self._read(0, timeout = 5000)
 
 	def check_hab(self):
-		hab_status = self.dev.read(5, timeout=5000)[1:]
+		hab_status = self._read(4, timeout=5000)
 		if hab_status != SDPCommand.hab_codes["HAB_OPEN"]:
 			raise ValueError(f"Error: status HAB_CLOSED or unknown: {hab_status} found on address ")
 		return None
@@ -130,7 +132,7 @@ class SDPCommand():
 		logger.debug(f"Sending SDP packet {packet}")
 		self.dev.write(packet)
 		self.check_hab()
-		value = self.dev.read(65, timeout=5000)[1:5]
+		value = self._read(64, timeout=5000)[:4]
 		self.end_cmd()
 		return int.from_bytes(value, "little")
 
@@ -145,29 +147,141 @@ class SDPCommand():
 		logger.debug(f"Sending SDP packet {packet}")
 		self.dev.write(packet)
 		self.check_hab()
-		complete_status = self.dev.read(65, timeout=5000)[1:5]
+		complete_status = self._read(64, timeout=5000)[:4]
 		self.end_cmd()
 		return complete_status == b"\x12\x8A\x8A\x12"
 
 	def write_dcd(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
-		return self.write_blob(blob, addr, offset, size, write_dcd=True)
+		if self.is_hid():
+			return self.write_blob(blob, addr, offset, size, write_dcd=True)
+
+		# Non HID devices do not have a DCD_WRITE command
+		# They do have a "FileType" byte in WRITE_FILE but that does not
+		# appear to actually process the DCD immediately (which we need to
+		# configure dram to download u-boot)
+		# So instead we manually interpret the DCD as individual read / write
+		# operations. This is what imx_usb_loader does too.
+		(tag, lg, version), hdr_len = self._unpack_from_blob(">BHB", blob, offset)
+		if tag != 0xD2:
+			raise ValueError("Bad DCD tag %02x" % tag)
+		if version != 0x40:
+			raise ValueError("Bad DCD version %02x" % version)
+
+		pos = offset + hdr_len
+		end = offset + lg
+		while pos < end:
+			(tag, lg), _ = self._unpack_from_blob(">BH", blob, pos)
+
+			if tag == 0xcc:
+				self._invoke_for_each_dcd_element_addr_data(self._process_dcd_write_data, blob, pos)
+			elif tag == 0xcf:
+				self._invoke_for_each_dcd_element_addr_data(self._process_dcd_check_data, blob, pos)
+			elif tag == 0xc0: # nop
+				pass
+			else:
+				raise ValueError("Invalid DCD command tag %02x" % tag)
+
+			pos += lg
+
+	# unpack binaary data defined by struct format from blob at offset return as (unpacked eltts), total_size
+	def _unpack_from_blob(self, fmt, blob, offset):
+		s = struct.Struct(fmt)
+		return s.unpack(blob[offset:offset + s.size]), s.size
+
+	# Invoke fn for each addr, data pair in the DCD element starting at offset pos of blob
+	def _invoke_for_each_dcd_element_addr_data(self, fn, blob, pos):
+		(tag, lg, param), hdr_len = self._unpack_from_blob(">BHB", blob, pos)
+		elt_size = param & 7
+		if elt_size != 4:
+			raise ValueError("Only 32 bit access currently supported")
+
+		fmt = struct.Struct(">II")
+		cur = pos + hdr_len
+		last = pos + lg
+		while cur < last:
+			addr, val = fmt.unpack(blob[cur:cur + fmt.size])
+			ret = fn(addr, val, param)
+			if not ret:
+				raise RuntimeError("Failed addr=%08x val=%08x" % (addr, val))
+
+			cur += fmt.size
+
+	def _process_dcd_write_data(self, addr, value_mask, param):
+		logger.debug("dcd write: addr=%08x val=%08x pram=%2x", addr, value_mask, param)
+		is_mask = bool(param & (1 << 3))
+		is_set = bool(param & (1 << 4))
+		if is_mask:
+			value = self.read32(addr)
+			if is_set:
+				value |= value_mask
+			else:
+				value &= ~value_mask
+		else:
+			value = value_mask
+
+		return self.write32(addr, value)
+
+	def _process_dcd_check_data(self, addr, mask, param):
+		logger.debug("dcd check: addr=%08x mask=%08x param=%2x", addr, mask, param)
+		is_mask = bool(param & (1 << 3))
+		is_set = bool(param & (1 << 4))
+
+		while True:
+			value = self.read32(addr)
+			logger.debug("    check: value=%08x", value)
+			if (is_mask, is_set) == (False, False):
+				if (value & mask) == 0:
+					break
+
+			if (is_mask, is_set) == (False, True):
+				if (value & mask) == mask:
+					break
+
+			if (is_mask, is_set) == (True, False):
+				if (value & mask) != mask:
+					break
+
+			if (is_mask, is_set) == (True, True):
+				if (value & mask) != 0:
+					break
+
+		return True
 
 	def write_blob(self, blob: bytes, addr: int, offset: int, size: int, write_dcd: bool = False) -> bool:
 		self.clear()
-		if write_dcd:
-			self.cmd = SDPCommand.command_codes["DCD_WRITE"]
-		else:
-			self.cmd = SDPCommand.command_codes["WRITE_FILE"]
 		self.addr = addr
 		self.data_count = size
+		self.cmd = SDPCommand.command_codes["WRITE_FILE"]
+
+		# SoCs using HID have separate commands for DCD and DATA
+		if self.is_hid() and write_dcd:
+			self.cmd = SDPCommand.command_codes["DCD_WRITE"]
+
+		if not self.is_hid():
+			self.file_type = self.FT_APP
+
 		packet1 = self.build_packet()
 		self.dev.write(packet1)
-		for chunk in utils.dnload_iter(blob[offset:offset + size], 1024):
-			packet2 = b"\x02" + chunk
-			self.dev.write(packet2)
-		self.check_hab()
-		complete_status = self.dev.read(65, timeout=5000)[1:5]
-		self.end_cmd()
+
+		if self.is_hid():
+			for chunk in utils.dnload_iter(blob[offset:offset + size], 1024):
+				packet2 = b"\x02" + chunk
+				self.dev.write(packet2)
+
+			self.check_hab()
+			complete_status = self._read(64, timeout=5000)[:4]
+			self.end_cmd()
+		else:
+			self.check_hab()
+			self.dev.write(blob[offset:offset + size])
+
+			self.clear()
+			self.cmd = SDPCommand.command_codes["ERROR_STATUS"]
+			packet = self.build_packet()
+			self.dev.write(packet)
+
+			complete_status = self._read(64, timeout=5000)[:4]
+
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		if write_dcd:
 			return complete_status == b"\x12\x8A\x8A\x12"
@@ -175,6 +289,9 @@ class SDPCommand():
 			return complete_status == b"\x88\x88\x88\x88"
 
 	def jump(self, addr: int):
+		if not self.is_hid():
+			return
+
 		self.clear()
 		self.cmd = SDPCommand.command_codes["JUMP_ADDRESS"]
 		self.addr = addr
@@ -182,12 +299,12 @@ class SDPCommand():
 		self.dev.write(packet)
 		"""
 		Looks like the following checks will fail sometimes,
-		even if the jump was successful. We still perform them 
+		even if the jump was successful. We still perform them
 		though, in case the SoC actually expects them
 		"""
 		try:
 			self.check_hab()
-			status = self.dev.read(65, timeout = 100)[1:]
+			status = self._read(64, timeout = 100)
 			if status != b"":
 				decoded_err = hab_constants.status_codes[int(status[0])] \
 					+ " | " + hab_constants.reason_codes[int(status[1])]\
@@ -205,7 +322,7 @@ class SDPCommand():
 		packet1 = self.build_packet()
 		self.dev.write(packet1)
 		self.check_hab()
-		ack = self.dev.read(65, timeout=5000)[1:5]
+		ack = self._read(64, timeout=5000)[:4]
 		self.end_cmd()
 		return ack == b"\x09\xd0\x0d\x90"
 
@@ -241,10 +358,19 @@ class SDPCommand():
 			self.dev.write(packet2)
 		"""
 		self.check_hab()
-		complete_status = self.dev.read(65, timeout=5000)[1:5]
+		complete_status = self._read(64, timeout=5000)[:4]
 		self.end_cmd()
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		return complete_status == b"\x88\x88\x88\x88"
 		"""
 		return True
 
+	def is_hid(self):
+		return self.dev.__class__ == hid.Device
+
+	def _read(self, count, timeout=None):
+		# In hid mode strip the report id
+		first = 0
+		if self.is_hid():
+			first = 1
+		return self.dev.read(count + first, timeout=timeout)[first:]
