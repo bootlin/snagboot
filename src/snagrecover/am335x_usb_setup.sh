@@ -95,7 +95,7 @@ config_interface () {
 }
 
 
-while getopts "r:s:n:chu:" opt; do
+while getopts "r:s:n:ch:" opt; do
   case $opt in
     r) ROMUSB=$OPTARG;;
     s) SPLUSB=$OPTARG;;

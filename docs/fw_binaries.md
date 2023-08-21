@@ -89,7 +89,7 @@ In TF-A, run `make \<params\> all fip` where `params` contains the following:
 ARCH=aarch32 ARM_ARCH_MAJOR=7 AARCH32_SP=sp_min PLAT=stm32mp1 DTB_FILE_NAME=<your device tree>.dtb BL33_CFG=/path/to/u-boot.dtb BL33=/path/to/u-boot-nodtb.bin STM32MP_USB_PROGRAMMER=1
 ```
 
-This will generate tf-a-<your device tree>.stm32 and fip.bin, which you can
+This will generate tf-a-\<your device tree\>.stm32 and fip.bin, which you can
 pass to snagrecover.
 
 ## For Microchip SAMA5 devices

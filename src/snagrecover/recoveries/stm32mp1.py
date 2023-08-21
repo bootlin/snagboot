@@ -82,7 +82,7 @@ def main():
 	run_firmware(dev, "fip")
 
 	# DETACH DFU DEVICE
-	print("Sending detach command to SPL...")
+	print("Sending detach command to U-Boot...")
 	phase_id = dfu_cmd.stm32_get_phase()
 	dfu_cmd.detach(phase_id)
 
