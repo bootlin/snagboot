@@ -22,7 +22,7 @@ import usb.util
 import time
 import logging
 logger = logging.getLogger("snagrecover")
-from errno import EIO
+from errno import EIO,ENODEV
 from snagrecover import utils
 
 def search_partid(dev: usb.core.Device, partname: str, match_prefix=False) -> int:
@@ -166,8 +166,8 @@ class DFU():
 		try:
 			self.dev.ctrl_transfer(0xa1, 0, wValue=0x7530, wIndex=0, data_or_wLength=0)
 		except usb.core.USBError as e:
-			if e.errno == EIO:
-				logger.warning("EIO on DFU_DETACH")
+			if e.errno in [EIO, ENODEV]:
+				logger.warning(f"EIO or ENODEV: {e.errno} on DFU_DETACH")
 			else:
 				raise e
 		return None
