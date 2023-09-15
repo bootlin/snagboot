@@ -77,6 +77,58 @@ sdps_socs = [
 "imx93"
 ]
 
+# SoCs that use raw bulk endpoints rather than HID
+raw_bulk_ep_socs = [
+"imx53",
+]
+
+def build_hid_dev(vid, pid):
+	try:
+		return hid.Device(vid, pid)
+	except hid.HIDException:
+		access_error("USB HID", f"{vid:04x}:{pid:04x}")
+
+def build_raw_ep_dev(vid, pid):
+	dev = usb.core.find(idVendor=vid, idProduct=pid)
+	if dev is None:
+		access_error("USB RAW", f"{vid:04x}:{pid:04x}")
+
+	class Adapter:
+		# The protocol code was written to expect a HID device rather
+		# than raw USB.
+		# This adapter makes it compatible by
+		#		- Adding the endpoint numbers to the calls
+		#		- Converting read results from an array to bytes
+		def __init__(self, dev):
+			def is_bulk(ep):
+				return usb.util.endpoint_type(ep.bmAttributes) == usb.util.ENDPOINT_TYPE_BULK
+			def is_bulk_in(ep):
+				return  is_bulk(ep) and usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_IN
+			def is_bulk_out(ep):
+				return is_bulk(ep) and usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_OUT
+
+			cfg = dev.get_active_configuration()
+			intf = cfg[(0,0)]
+			ep_in = usb.util.find_descriptor(intf, custom_match = is_bulk_in)
+			if ep_in is None:
+				access_error("USB RAW: cannot find BULK IN endpoint")
+
+			ep_out = usb.util.find_descriptor(intf, custom_match = is_bulk_out)
+			if ep_out is None:
+				access_error("USB RAW: cannot find BULK OUT endpoint")
+
+			self._dev = dev
+			self._read_ep = ep_in.bEndpointAddress
+			self._write_ep = ep_out.bEndpointAddress
+
+		def read(self, size, timeout=None):
+			return self._dev.read(self._read_ep, size, timeout).tobytes()
+
+		def write(self, data, timeout=None):
+			return self._dev.write(self._write_ep, data, timeout)
+
+	return Adapter(dev)
+
 ###################### main ##################################
 
 def main():
@@ -84,10 +136,11 @@ def main():
 	vid = recovery_config["rom_usb"][0]
 	pid = recovery_config["rom_usb"][1]
 
-	try:
-		dev = hid.Device(vid, pid)
-	except hid.HIDException:
-		access_error("USB HID", f"{vid:04x}:{pid:04x}")
+	if soc_model in raw_bulk_ep_socs:
+		dev = build_raw_ep_dev(vid, pid)
+	else:
+		dev = build_hid_dev(vid, pid)
+
 	if soc_model in sdps_socs:
 		run_firmware(dev, "flash-bin", "spl-sdps")
 		# On some SoCs (e.g.: i.MX8QM) we can have a second stage based on SPDV

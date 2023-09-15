@@ -57,6 +57,7 @@ from snagrecover.config import recovery_config
 from snagrecover import utils
 
 dcd_addr = {
+"imx53": 0xf8006000,
 "imx6q": 0x00910000,
 "imx6sx": 0x00910000,
 "imx6d": 0x00910000,
@@ -77,6 +78,8 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 
 	sdp_cmd = imx_sdp.SDPCommand(port)
 	memops = memory_ops.MemoryOps(sdp_cmd)
+	dcd_cleared = False
+	need_dcd_clear = fw_name in ["u-boot-with-dcd", "SPL"] or (fw_name == "flash-bin" and subfw_name == "spl")
 
 	if fw_name == "flash-bin" and subfw_name == "spl-sdps":
 		write_size = rom_container.get_container_size(fw_blob)
@@ -142,6 +145,15 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			logger.warning("IVT header not found, extracting size from raw blob")
 			write_offset = rom_container.get_container_size(fw_blob)
 			write_size = len(fw_blob) - write_offset
+
+		if need_dcd_clear and not sdp_cmd.is_hid():
+			# Non HID devices automatically start after download so cannot update IVT
+			# So patch it before writing
+			fw_blob_mod = bytearray(fw_blob)
+			fw_blob_mod[ivtable.offset + 12 : ivtable.offset + 16] = bytearray(b"\x00\x00\x00\x00")
+			fw_blob = bytes(fw_blob_mod)
+			dcd_cleared = True
+
 		# protocols other than SPLV/U have a maximum download size
 		# split download into chunks < MAX_DOWNLOAD_SIZE
 		chunk_offset = 0
@@ -151,7 +163,7 @@ def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			chunk_offset += MAX_DOWNLOAD_SIZE
 		print("Done")
 
-	if fw_name in ["u-boot-with-dcd", "SPL"] or (fw_name == "flash-bin" and subfw_name == "spl"):
+	if need_dcd_clear and not dcd_cleared:
 		if soc_model in ["imx6q","imx6d","imx6sl"]:
 			# CLEAR DCD
 			print("Clearing Device Configuration Data...")
