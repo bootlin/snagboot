@@ -88,7 +88,7 @@ def init_config(args: list):
 	fw_configs = {}
 	if args.firmware:
 		for fw in args.firmware:
-			if type(fw) != dict:
+			if not isinstance(fw, dict):
 				cli_error("firmware config to CLI did not evaluate to Python3 dict: {fw}")
 			fw_configs = {**fw_configs, **fw}
 		recovery_config["firmware"] = fw_configs
@@ -99,7 +99,7 @@ def init_config(args: list):
 		for path in args.firmware_file:
 			with open(path, "r") as file:
 				fw_configs = {**fw_configs, **yaml.safe_load(file)}
-		if type(fw_configs) != dict:
+		if not isinstance(fw_configs, dict):
 			cli_error(f"firmware config passed to CLI did not evaluate to dict: {fw_configs}")
 		recovery_config["firmware"] = fw_configs
 
