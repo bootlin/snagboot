@@ -30,6 +30,7 @@ Requirements:
    [`hidapi`](https://formulae.brew.sh/formula/hidapi) package.
  * The ensurepip Python package. On Debian, you can install the
    python[your python version]-venv package
+ * Swig is required to build pylibfdt. You can simply install the `swig` package on most distros.
 
 Snagboot is available on pip: `python3 -m pip install --user snagboot`.
 
