@@ -40,6 +40,8 @@ def fastboot(args):
 		cmd, args = cmd[0], cmd[1:]
 		cmd = cmd.replace("-", "_")
 		print(f"Sending command {cmd} with args {args}")
+		if cmd == "continue":
+			cmd = "fbcontinue"
 		getattr(fast, cmd)(*args)
 	print("Done")
 
