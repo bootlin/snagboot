@@ -40,6 +40,6 @@ def fastboot(args):
 		cmd, args = cmd[0], cmd[1:]
 		cmd = cmd.translate({ord("-"): ord("_")})
 		print(f"Sending command {cmd} with args {args}")
-		eval(f"fast.{cmd}(*args)")
+		getattr(fast, cmd)(*args)
 	print("Done")
 
