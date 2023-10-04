@@ -36,15 +36,10 @@ def fastboot(args):
 	# this is mostly there to dodge a linter error
 	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out} packet size {fast.max_size}")
 	for cmd in args.fastboot_cmd:
-		if ":" in cmd:
-			(cmd, sep, args) = cmd.partition(":")
-		else:
-			args = None
+		cmd = cmd.split(":", 1)
+		cmd, args = cmd[0], cmd[1:]
 		cmd = cmd.translate({ord("-"): ord("_")})
 		print(f"Sending command {cmd} with args {args}")
-		if args is None:
-			eval(f"fast.{cmd}()")
-		else:
-			eval(f"fast.{cmd}(args)")
+		eval(f"fast.{cmd}(*args)")
 	print("Done")
 
