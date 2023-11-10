@@ -1,0 +1,6 @@
+tiboot3:
+  path: tiboot3.bin-perif
+tispl:
+  path: tispl.bin
+u-boot:
+  path: u-boot.img
