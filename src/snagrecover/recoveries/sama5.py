@@ -19,13 +19,13 @@
 
 import serial
 import os.path
+import glob
 import time
-
 from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error,get_usb
+from snagrecover.utils import get_usb, prettify_usb_addr
 import logging
 
 logger = logging.getLogger("snagrecover")
@@ -77,21 +77,33 @@ def check_id(memops: memory_ops.MemoryOps) -> bool:
             check &= exid in cfg["EXID_VAL"]
     return check
 
+def get_serial_port_path(dev) -> str:
+	cfg = dev.get_active_configuration()
+	pretty_path = prettify_usb_addr((dev.bus, dev.port_numbers))
+	if cfg.bNumInterfaces == 0:
+		raise ValueError(f"Error: usb device at {pretty_path} has no active interfaces")
+	intf = cfg.interfaces()[0]
+	intf_path =  "/sys/bus/usb/devices/"\
+		+ f"{pretty_path}:{cfg.bConfigurationValue}.{intf.bInterfaceNumber}"
+	tty_paths = glob.glob(intf_path + "/tty/tty*")
+	if len(tty_paths) == 0:
+		raise ValueError(f"Error: no tty devices were found at {intf_path}")
+
+	tty_path = tty_paths[0]
+	return f"/dev/{os.path.basename(tty_path)}"
+
 def main():
 	# CONNECT TO SAM-BA MONITOR
 	print("Connecting to SAM-BA monitor...")
 	soc_model = recovery_config["soc_model"]
-	usb_vid = recovery_config["rom_usb"][0]
-	usb_pid = recovery_config["rom_usb"][1]
-	dev = get_usb(usb_vid, usb_pid)
-	dev.reset()# SAM-BA monitor needs a reset sometimes
 
-	port_path = f"/dev/serial/by-id/usb-{usb_vid:04x}_{usb_pid:04x}-if00"
-	t0 = time.time()
-	while not os.path.exists(port_path):
-		if time.time() - t0 > SERIAL_PORT_TIMEOUT:
-			access_error("serial port", f"{port_path}")
+	dev = get_usb(recovery_config["rom_usb"])
 
+	# SAM-BA monitor needs a reset sometimes
+	dev.reset()
+	time.sleep(1)
+
+	port_path = get_serial_port_path(dev)
 	with serial.Serial(os.path.realpath(port_path), baudrate=115200, timeout=5, write_timeout=5) as port:
 		monitor = sambamon.SambaMon(port)
 		memops = memory_ops.MemoryOps(monitor)

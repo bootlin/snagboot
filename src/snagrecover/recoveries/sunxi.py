@@ -19,24 +19,34 @@
 
 import usb
 import time
+import functools
 from snagrecover.protocols import fel
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error
+from snagrecover.utils import access_error, prettify_usb_addr, is_usb_path
 
 USB_TIMEOUT = 5000
 USB_RETRY = 5
 
 def main():
 	# Try to reset device
-	usb_vid = recovery_config["rom_usb"][0]
-	usb_pid = recovery_config["rom_usb"][1]
-	# FEL devices seem to require a slightly special retry procedure
+	usb_addr = recovery_config["rom_usb"]
+	if is_usb_path(usb_addr):
+		find_usb = functools.partial(usb.core.find,
+				bus=usb_addr[0],
+				port_numbers=usb_addr[1])
+	else:
+		find_usb = functools.partial(usb.core.find,
+				idVendor=usb_addr[0],
+				idProduct=usb_addr[1])
+
+	# FEL devices seem to require a slightly special retry procedure, which
+	# is why we don't just call get_usb from utils.
 	for i in range(USB_RETRY):
-		dev = usb.core.find(idVendor=usb_vid, idProduct=usb_pid)
+		dev = find_usb()
 		if dev is None:
 			if i == USB_RETRY - 1:
-				access_error("USB FEL", f"{usb_vid:04x}:{usb_pid:04x}")
+				access_error("USB FEL", prettify_usb_addr(usb_addr))
 			print("Failed to find device, retrying...")
 			continue
 		try:
@@ -51,10 +61,10 @@ def main():
 
 	# Try to set device configuration
 	for i in range(USB_RETRY):
-		dev = usb.core.find(idVendor=usb_vid, idProduct=usb_pid)
+		dev = find_usb()
 		if dev is None:
 			if i == USB_RETRY - 1:
-				access_error("USB FEL", f"{usb_vid:04x}:{usb_pid:04x}")
+				access_error("USB FEL", prettify_usb_addr(usb_addr))
 			print("Failed to find device, retrying...")
 			continue
 		try:

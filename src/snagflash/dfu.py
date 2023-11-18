@@ -20,7 +20,7 @@
 from snagrecover.protocols import dfu
 import logging
 logger = logging.getLogger("snagflash")
-from snagflash.utils import cli_error, get_usb, reset_usb
+from snagrecover.utils import parse_usb_addr, get_usb, cli_error, reset_usb
 from usb.core import Device
 
 def dfu_detach(dev: Device, altsetting: int = 0):
@@ -50,12 +50,9 @@ def dfu_reset(dev: Device):
 def dfu_cli(args):
 	if args.dfu_config is None and not args.dfu_detach and not args.dfu_reset:
 		cli_error("missing command line argument --dfu-config")
-	if (args.port is None) or (":" not in args.port):
+	if (args.port is None):
 		cli_error("missing command line argument --port [vid:pid]")
-	dev_addr = args.port.split(":")
-	vid  = int(dev_addr[0], 16)
-	pid = int(dev_addr[1], 16)
-	dev = get_usb(vid, pid)
+	dev = get_usb(parse_usb_addr(args.port))
 	dev.default_timeout = int(args.timeout)
 	altsetting = 0
 	if args.dfu_config:

@@ -14,8 +14,15 @@ If you have changed your ROM code's USB VID/PID (this usually isn't the case),
 you must specify it using the --rom-usb parameter:
 
  * `--rom-usb vid:pid`
-   USB device address vid:pid
+   USB device address vid:pid or bus-port1.port2.[...]
    e.g. --rom-usb 1111:ffff
+   e.g. --rom-usb 3-1.2
+
+If you do not want to rely on vid:pid addresses, you can instead use bus-ports
+addresses to specify USB devices in a more stable way.The bus-ports address of a
+USB device can be found in sysfs :
+
+`/sys/bus/usb/devices/...`.
 
 When recovering an AM335x SOC via UART using the snagrecover, you have to pass
 the --uart flag to the CLI. You can also pass the --baudrate flag in case the

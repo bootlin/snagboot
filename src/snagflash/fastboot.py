@@ -18,19 +18,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from snagrecover.protocols import fastboot as fb
-from snagflash.utils import get_usb
+from snagrecover.utils import parse_usb_addr, get_usb
 import sys
 import logging
 logger = logging.getLogger("snagflash")
 
 def fastboot(args):
-	if (args.port is None) or (":" not in args.port):
-		print("Error: Missing command line argument --port [vid:pid]")
+	if (args.port is None):
+		print("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
 		sys.exit(-1)
-	dev_addr = args.port.split(":")
-	vid  = int(dev_addr[0], 16)
-	pid = int(dev_addr[1], 16)
-	dev = get_usb(vid, pid)
+	dev = get_usb(parse_usb_addr(args.port))
 	dev.default_timeout = int(args.timeout)
 	fast = fb.Fastboot(dev)
 	# this is mostly there to dodge a linter error

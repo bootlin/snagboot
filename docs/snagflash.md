@@ -23,11 +23,13 @@ can add the following udev rule to get access:
 
 `SUBSYSTEM=="usb", ATTRS{idVendor}=="vid", ATTRS{idProduct}=="pid", MODE="0660", TAG+="uaccess"`
 
+Alternatively, you can also use bus-ports addresses, which can be more stable.
+
 ## DFU mode
 
 In DFU mode, snagflash takes additional arguments :
 
- * `-p --port vid:pid`
+ * `-p --port [vid:pid | bus-port1.port2.(...)]`
    The USB address of the DFU device exposed by U-Boot
  * `-D --dfu-config  altsetting:path`
    The altsetting and path of a file to download to the board. This should match
@@ -92,7 +94,7 @@ rules to create symlinks when a certain VID:PID pair is detected:
 
 In fastboot mode, snagflash takes two additional arguments:
 
- * `-p --port vid:pid`
+ * `-p --port [vid:pid | bus-port1.port2.(...)]`
    The USB address of the Fastboot device exposed by U-Boot
  * `-f --fastboot_cmd  cmd:args`
    A fastboot command to be sent to U-Boot. The following commands are supported

@@ -72,7 +72,7 @@ OPTEE can also work.
 
 configuration:
  * path
- * usb vid:pid (only if you have configured custom USB IDs in TF-A)
+ * usb vid:pid or bus-port1.port2.[...] (only if you have configured custom USB IDs in TF-A)
 
 ### Example build process for an stm32mp15-based board
 
@@ -254,7 +254,7 @@ specify them with the usb firmware parameter. SPL should support DFU.
 
 configuration:
  * path
- * usb vid:pid (only if you changed the default vid/pid in U-Boot's config)
+ * usb vid:pid or bus-port1.port2.[...] (only if you have configured custom USB IDs in TF-A)
 
 **u-boot:** FIT container with U-Boot proper for A53 and device tree blobs
 

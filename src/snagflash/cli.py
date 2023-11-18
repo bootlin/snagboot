@@ -22,7 +22,7 @@ from snagrecover import __version__
 from snagflash.dfu import dfu_cli
 from snagflash.ums import ums
 from snagflash.fastboot import fastboot
-from snagflash.utils import cli_error
+from snagrecover.utils import cli_error
 import logging
 import sys
 
@@ -43,7 +43,7 @@ def cli():
 	common.add_argument("--logfile", help="set logfile", default="board_flashing.log")
 	common.add_argument("--version", help="show version", action="store_true")
 	common.add_argument("-P", "--protocol", help="Protocol to use for flashing", choices=["dfu","ums","fastboot"])
-	common.add_argument("-p", "--port", help="USB device address for DFU and Fastboot commands", metavar="vid:pid")
+	common.add_argument("-p", "--port", help="USB device address for DFU and Fastboot commands", metavar="vid:pid|bus-port1.port2.[...]")
 	common.add_argument("--timeout", help="USB timeout, sometimes increasing this is necessary when downloading large files", default=60000)
 	dfuargs = parser.add_argument_group("DFU")
 	dfuargs.add_argument("-D", "--dfu-config", help="The altsetting and path of a file to download to the board. in DFU mode", action="append", metavar="altsetting:path")

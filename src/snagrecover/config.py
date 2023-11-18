@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
-from snagrecover.utils import cli_error,parse_usb
+from snagrecover.utils import cli_error, parse_usb_addr
 import logging
 logger = logging.getLogger("snagrecover")
 import os
@@ -83,7 +83,7 @@ def init_config(args: list):
 			else:
 				recovery_config["rom_usb"] = default_usb_ids[soc_family]
 		else:
-			recovery_config["rom_usb"] = parse_usb(args.rom_usb)
+			recovery_config["rom_usb"] = parse_usb_addr(args.rom_usb)
 
 	fw_configs = {}
 	if args.firmware:
