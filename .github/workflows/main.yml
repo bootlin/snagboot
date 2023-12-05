@@ -23,7 +23,7 @@ jobs:
       - name: Lint with ruff
         run: |
           # default set of ruff rules with GitHub Annotations
-          ruff --format=github .
+          ruff check --output-format=github .
       - name: Build and install
         run: |
           ./install.sh
