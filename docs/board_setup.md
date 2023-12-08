@@ -123,7 +123,7 @@ Reset the board and run ip addr. Check that the board interface appears using
 snagrecover](snagrecover.md)), eg for the Beagle Bone Black:
 
 ```bash
-snagrecover -s am3358 -f src/snagrecover/templates/am335x-beaglebone_black.yaml
+snagrecover -s am3358 -f src/snagrecover/templates/am335x-beaglebone-black.yaml
 ```
 
 Once the recovery is done, exit the recovery shell. This will clean up the
