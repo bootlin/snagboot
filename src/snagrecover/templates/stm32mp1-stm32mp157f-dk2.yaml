@@ -1,4 +1,4 @@
 tf-a:
-  path: ./tf-a-stm32mp157c-dk2.stm32
+  path: ./tf-a-stm32mp157f-dk2.stm32
 fip:
   path: ./fip.bin
