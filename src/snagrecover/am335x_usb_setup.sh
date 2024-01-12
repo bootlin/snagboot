@@ -194,7 +194,7 @@ echo "===== $NETNS_NAME ====="
 echo "You can now setup the board and run the recovery tool."
 echo "Please type 'exit' to delete the namespace, stop the polling process and leave the shell when you are done."
 
-echo "cd $(pwd); exec </dev/tty" | SUDO_PS1='(am335_recovery) \u@\h:\w \$' ip netns exec "$NETNS_NAME" sudo -i -u "$SUDOER" sh -i
+echo "cd $(pwd); exec </dev/tty" | SUDO_PS1='(am335_recovery) \u@\h:\w \$' ip netns exec "$NETNS_NAME" sudo -i -u "$SUDOER" bash -i
 
 #leave shell and cleanup
 cleanup
