@@ -52,20 +52,16 @@ import time
 import usb
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error, get_usb
+from snagrecover.utils import access_error, get_usb, prettify_usb_addr
 from snagrecover.protocols.imx_sdp import SDPCommand
 import logging
 logger = logging.getLogger("snagrecover")
 
-# USB IDs used by SPL
-spl_usb_ids = {
-"SPL/1": ["SDPU",0x0525,0xb4a4,0x0000,0x04ff],
-"SPL/2": ["SDPU",0x0525,0xb4a4,0x9999,0x9999],
-"SPL/3": ["SDPU",0x3016,0x1001,0x0000,0x04ff],
-"SPL1/1": ["SDPV",0x0525,0xb4a4,0x0500,0x9998],
-"SPL1/2": ["SDPV",0x1fc9,0x0151,0x0500,0x9998],
-"SPL1/3": ["SDPV",0x3016,0x100,0x0500,0x9998]
-}
+
+# SPL devices that use the SDPV variant of SDP can
+# be identified using their bcdVersion
+SDPV_MIN_BCDVER = 0x0500
+SDPV_MAX_BCDVER = 0x9998
 
 # SoCs that use the SDPS protocol instead of SDP
 sdps_socs = [
@@ -82,6 +78,10 @@ sdps_socs = [
 raw_bulk_ep_socs = [
 "imx53",
 ]
+
+def dev_uses_sdpv(usb_dev):
+	bcdversion = usb_dev.bcdDevice
+	return bcdversion >= SDPV_MIN_BCDVER and bcdversion <= SDPV_MAX_BCDVER
 
 def build_raw_ep_dev(dev: usb.core.Device):
 	class Adapter:
@@ -131,6 +131,9 @@ def main():
 	else:
 		sdp_cmd = SDPCommand(HIDDevice(usb_dev))
 
+	rom_path = (usb_dev.bus, usb_dev.port_numbers)
+	rom_devnum = usb_dev.address
+
 	if soc_model in sdps_socs:
 		run_firmware(sdp_cmd, "flash-bin", "spl-sdps")
 		# On some SoCs (e.g.: i.MX8QM) we can have a second stage based on SPDV
@@ -149,30 +152,23 @@ def main():
 	# WAIT FOR SPL DEVICE
 	print("Waiting for SPL device...")
 	t0 = time.time()
-	valid_dev = None
-	while time.time() - t0 < 5 and (valid_dev is None):
-		# Try every possible SPL1 USB config
-		for splid in spl_usb_ids.keys():
-			print(f"Trying usb config {splid}")
-			protocol = spl_usb_ids[splid][0]
-			vid = spl_usb_ids[splid][1]
-			pid = spl_usb_ids[splid][2]
-			dev = usb.core.find(idVendor=vid, idProduct=pid)
-			if dev is not None:
-				valid_dev = [protocol, vid, pid]
-				print(f"Found HID device with config {splid}")
-				break
+	while time.time() - t0 < 5:
+		# The SPL device should be found at the same USB path as the ROM device
+		usb_dev = get_usb(rom_path, error_on_fail=False)
+		if usb_dev is not None and usb_dev.address != rom_devnum:
+			print(f"Found USB device at {prettify_usb_addr(rom_path)} for SPL stage!")
+			break
+
 		time.sleep(1)
 
-	if valid_dev is None:
-		access_error("SPL USB HID", "")
+	if usb_dev is None:
+		access_error("SPL USB HID", f"{prettify_usb_addr(rom_path)}")
 
-	protocol = valid_dev[0]
-	sdp_cmd = SDPCommand(HIDDevice(dev))
+	sdp_cmd = SDPCommand(HIDDevice(usb_dev))
 	# MX8 boot images are more complicated to generate so we allow everything to be
 	# packaged in a single blob
 	if "imx8" in soc_model:
-		if protocol != "SDPV":
+		if not dev_uses_sdpv(usb_dev):
 			raise Exception("Error: The installed SPL version does not support autofinding U-Boot")
 		run_firmware(sdp_cmd, "flash-bin", "u-boot")
 	else:

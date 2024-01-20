@@ -329,5 +329,3 @@ class HIDDevice():
 	def hidraw_write(self, data: bytes):
 		return self.hidraw.write(data)
 
-	def get_usb_path(self):
-		return (self.usb_dev.bus, self.usb_dev.port_numbers)

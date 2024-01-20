@@ -57,7 +57,7 @@ def prettify_usb_addr(usb_addr) -> str:
 	else:
 		return f"{usb_addr[0]:04x}:{usb_addr[1]:04x}"
 
-def get_usb(addr) -> usb.core.Device:
+def get_usb(addr, error_on_fail=True) -> usb.core.Device:
 	if is_usb_path(addr):
 		# bus-port1.port2.(...)
 		find_usb = functools.partial(usb.core.find,
@@ -76,13 +76,19 @@ def get_usb(addr) -> usb.core.Device:
 		time.sleep(USB_INTERVAL)
 		print(f"USB retry {retry}/{USB_RETRIES}")
 		if retry >= USB_RETRIES:
-			access_error("USB", pretty_addr)
+			if error_on_fail:
+				access_error("USB", pretty_addr)
+			return None
 		dev = find_usb()
 		retry += 1
+
 	try:
 		dev.get_active_configuration()
 	except usb.core.USBError:
-		access_error("USB", pretty_addr)
+		if error_on_fail:
+			access_error("USB", pretty_addr)
+		return None
+
 	return dev
 
 def reset_usb(dev: usb.core.Device) -> None:
