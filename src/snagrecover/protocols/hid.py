@@ -314,6 +314,8 @@ class HIDDevice():
 	def close(self):
 		if self.hidraw:
 			self.hidraw.close()
+		else:
+			usb.util.release_interface(self.usb_dev, self.main_intf.bInterfaceNumber)
 
 	def hidraw_read(self, length: int, timeout: int):
 		r,w,e = select.select([self.hidraw], [], [], timeout)
