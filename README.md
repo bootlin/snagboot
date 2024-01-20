@@ -22,12 +22,9 @@ i.MX6/7/8, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
 
 ## Installation
 
-Requirements:
+System requirements:
 
- * One of the libhidapi backends. On Debian, you can install the
-   `libhidapi-hidraw0` package or the `libhidapi-libusb0` package.
-   On OSX you can install the
-   [`hidapi`](https://formulae.brew.sh/formula/hidapi) package.
+ * libusb 1.x, libusb 0.1.x or OpenUSB
  * The ensurepip Python package. On Debian, you can install the
    python[your python version]-venv package
  * Swig is required to build pylibfdt. You can simply install the `swig` package on most distros.
