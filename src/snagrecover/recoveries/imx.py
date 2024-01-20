@@ -53,6 +53,7 @@ import usb
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 from snagrecover.utils import access_error
+from snagrecover.protocols.imx_sdp import SDPCommand
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -137,24 +138,24 @@ def main():
 	pid = recovery_config["rom_usb"][1]
 
 	if soc_model in raw_bulk_ep_socs:
-		dev = build_raw_ep_dev(vid, pid)
+		sdp_cmd = SDPCommand(build_raw_ep_dev(vid, pid))
 	else:
-		dev = build_hid_dev(vid, pid)
+		sdp_cmd = SDPCommand(build_hid_dev(vid, pid))
 
 	if soc_model in sdps_socs:
-		run_firmware(dev, "flash-bin", "spl-sdps")
+		run_firmware(sdp_cmd, "flash-bin", "spl-sdps")
 		# On some SoCs (e.g.: i.MX8QM) we can have a second stage based on SPDV
 		if soc_model not in ["imx8qm", "imx8qxp"]:
 			return None
 	elif "u-boot-with-dcd" in recovery_config["firmware"]:
-		run_firmware(dev, "u-boot-with-dcd")
+		run_firmware(sdp_cmd, "u-boot-with-dcd")
 		return None
 	elif "SPL" in recovery_config["firmware"]:
-		run_firmware(dev, "SPL")
+		run_firmware(sdp_cmd, "SPL")
 	else:
-		run_firmware(dev, "flash-bin", "spl")
+		run_firmware(sdp_cmd, "flash-bin", "spl")
 	logger.info("SDP command sequence done, closing hid device...")
-	dev.close()
+	sdp_cmd.close()
 
 	# WAIT FOR SPL DEVICE
 	print("Waiting for SPL device...")
@@ -187,14 +188,15 @@ def main():
 
 	protocol = valid_dev[0]
 	with hid.Device(valid_dev[1], valid_dev[2]) as dev:
+		sdp_cmd = SDPCommand(dev)
 		# MX8 boot images are more complicated to generate so we allow everything to be
 		# packaged in a single blob
 		if "imx8" in soc_model:
 			if protocol != "SDPV":
 				raise Exception("Error: The installed SPL version does not support autofinding U-Boot")
-			run_firmware(dev, "flash-bin", "u-boot")
+			run_firmware(sdp_cmd, "flash-bin", "u-boot")
 		else:
-			run_firmware(dev, "u-boot")
+			run_firmware(sdp_cmd, "u-boot")
 
 		print("DONE")
 

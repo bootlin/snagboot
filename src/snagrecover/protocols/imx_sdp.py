@@ -374,3 +374,8 @@ class SDPCommand():
 		if self.is_hid():
 			first = 1
 		return self.dev.read(count + first, timeout=timeout)[first:]
+
+	def close(self):
+		if self.is_hid():
+			return self.dev.close()
+		return None

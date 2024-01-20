@@ -49,7 +49,6 @@
 
 import logging
 logger = logging.getLogger("snagrecover")
-from snagrecover.protocols import imx_sdp
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware import ivt
 from snagrecover.firmware import rom_container
@@ -72,11 +71,10 @@ dcd_addr = {
 "imxrt106x": 0x1000
 }
 
-def imx_run(port, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
+def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 	MAX_DOWNLOAD_SIZE = 0x200000
 	soc_model = recovery_config["soc_model"]
 
-	sdp_cmd = imx_sdp.SDPCommand(port)
 	memops = memory_ops.MemoryOps(sdp_cmd)
 	dcd_cleared = False
 	need_dcd_clear = fw_name in ["u-boot-with-dcd", "SPL"] or (fw_name == "flash-bin" and subfw_name == "spl")
