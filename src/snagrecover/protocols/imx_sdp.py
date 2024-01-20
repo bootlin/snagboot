@@ -117,7 +117,7 @@ class SDPCommand():
 			self._read(0, timeout = 5000)
 
 	def check_hab(self):
-		hab_status = self._read(4, timeout=5000)
+		hab_status = self._read(4, timeout=5)
 		if hab_status != SDPCommand.hab_codes["HAB_OPEN"]:
 			raise ValueError(f"Error: status HAB_CLOSED or unknown: {hab_status} found on address ")
 		return None
@@ -132,7 +132,7 @@ class SDPCommand():
 		logger.debug(f"Sending SDP packet {packet}")
 		self.dev.write(packet)
 		self.check_hab()
-		value = self._read(64, timeout=5000)[:4]
+		value = self._read(64, timeout=5)[:4]
 		self.end_cmd()
 		return int.from_bytes(value, "little")
 
@@ -147,7 +147,7 @@ class SDPCommand():
 		logger.debug(f"Sending SDP packet {packet}")
 		self.dev.write(packet)
 		self.check_hab()
-		complete_status = self._read(64, timeout=5000)[:4]
+		complete_status = self._read(64, timeout=5)[:4]
 		self.end_cmd()
 		return complete_status == b"\x12\x8A\x8A\x12"
 
@@ -269,7 +269,7 @@ class SDPCommand():
 				self.dev.write(packet2)
 
 			self.check_hab()
-			complete_status = self._read(64, timeout=5000)[:4]
+			complete_status = self._read(64, timeout=5)[:4]
 			self.end_cmd()
 		else:
 			self.check_hab()
@@ -280,7 +280,7 @@ class SDPCommand():
 			packet = self.build_packet()
 			self.dev.write(packet)
 
-			complete_status = self._read(64, timeout=5000)[:4]
+			complete_status = self._read(64, timeout=5)[:4]
 
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		if write_dcd:
@@ -304,7 +304,7 @@ class SDPCommand():
 		"""
 		try:
 			self.check_hab()
-			status = self._read(64, timeout = 100)
+			status = self._read(64, timeout = 5)
 			if status != b"":
 				decoded_err = hab_constants.status_codes[int(status[0])] \
 					+ " | " + hab_constants.reason_codes[int(status[1])]\
@@ -322,7 +322,7 @@ class SDPCommand():
 		packet1 = self.build_packet()
 		self.dev.write(packet1)
 		self.check_hab()
-		ack = self._read(64, timeout=5000)[:4]
+		ack = self._read(64, timeout=5)[:4]
 		self.end_cmd()
 		return ack == b"\x09\xd0\x0d\x90"
 
@@ -358,7 +358,7 @@ class SDPCommand():
 			self.dev.write(packet2)
 		"""
 		self.check_hab()
-		complete_status = self._read(64, timeout=5000)[:4]
+		complete_status = self._read(64, timeout=5)[:4]
 		self.end_cmd()
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		return complete_status == b"\x88\x88\x88\x88"
