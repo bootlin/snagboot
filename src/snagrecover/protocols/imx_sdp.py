@@ -114,7 +114,7 @@ class SDPCommand():
 		+ self.data.to_bytes(4, "big") + self.file_type
 
 	def check_hab(self):
-		hab_status = self._read(4, timeout=5)
+		hab_status = self.dev.read(4, timeout=5)
 		if hab_status != SDPCommand.hab_codes["HAB_OPEN"]:
 			raise ValueError(f"Error: status HAB_CLOSED or unknown: {hab_status} found on address ")
 		return None
@@ -129,7 +129,7 @@ class SDPCommand():
 		logger.debug(f"Sending SDP packet {packet}")
 		self.dev.write(packet)
 		self.check_hab()
-		value = self._read(64, timeout=5)[:4]
+		value = self.dev.read(64, timeout=5)[:4]
 		return int.from_bytes(value, "little")
 
 	def write32(self, addr: int, value: int) -> bool:
@@ -143,7 +143,7 @@ class SDPCommand():
 		logger.debug(f"Sending SDP packet {packet}")
 		self.dev.write(packet)
 		self.check_hab()
-		complete_status = self._read(64, timeout=5)[:4]
+		complete_status = self.dev.read(64, timeout=5)[:4]
 		return complete_status == b"\x12\x8A\x8A\x12"
 
 	def write_dcd(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
@@ -264,7 +264,7 @@ class SDPCommand():
 				self.dev.write(packet2)
 
 			self.check_hab()
-			complete_status = self._read(64, timeout=5)[:4]
+			complete_status = self.dev.read(64, timeout=5)[:4]
 		else:
 			self.check_hab()
 			self.dev.write(blob[offset:offset + size])
@@ -274,7 +274,7 @@ class SDPCommand():
 			packet = self.build_packet()
 			self.dev.write(packet)
 
-			complete_status = self._read(64, timeout=5)[:4]
+			complete_status = self.dev.read(64, timeout=5)[:4]
 
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		if write_dcd:
@@ -298,7 +298,7 @@ class SDPCommand():
 		"""
 		try:
 			self.check_hab()
-			status = self._read(64, timeout = 5)
+			status = self.dev.read(64, timeout = 5)
 			if status != b"":
 				decoded_err = hab_constants.status_codes[int(status[0])] \
 					+ " | " + hab_constants.reason_codes[int(status[1])]\
@@ -316,7 +316,7 @@ class SDPCommand():
 		packet1 = self.build_packet()
 		self.dev.write(packet1)
 		self.check_hab()
-		ack = self._read(64, timeout=5)[:4]
+		ack = self.dev.read(64, timeout=5)[:4]
 		return ack == b"\x09\xd0\x0d\x90"
 
 	def sdps_write(self, blob: bytes, size: int) -> bool:
@@ -351,7 +351,7 @@ class SDPCommand():
 			self.dev.write(packet2)
 		"""
 		self.check_hab()
-		complete_status = self._read(64, timeout=5)[:4]
+		complete_status = self.dev.read(64, timeout=5)[:4]
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		return complete_status == b"\x88\x88\x88\x88"
 		"""
@@ -359,9 +359,6 @@ class SDPCommand():
 
 	def is_hid(self):
 		return self.dev.__class__ == HIDDevice
-
-	def _read(self, count, timeout=None):
-		return self.dev.read(count, timeout=timeout)
 
 	def close(self):
 		if self.is_hid():
