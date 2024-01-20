@@ -57,7 +57,8 @@ logger = logging.getLogger("snagrecover")
 from snagrecover import utils
 from snagrecover.protocols import hab_constants
 from snagrecover.config import recovery_config
-import hid
+from snagrecover.protocols.hid import HIDDevice, HIDError
+from usb.core import USBError
 import struct
 
 
@@ -112,10 +113,6 @@ class SDPCommand():
 		+ self.format + self.data_count.to_bytes(4, "big") \
 		+ self.data.to_bytes(4, "big") + self.file_type
 
-	def end_cmd(self):
-		if self.is_hid():
-			self._read(0, timeout = 5000)
-
 	def check_hab(self):
 		hab_status = self._read(4, timeout=5)
 		if hab_status != SDPCommand.hab_codes["HAB_OPEN"]:
@@ -133,7 +130,6 @@ class SDPCommand():
 		self.dev.write(packet)
 		self.check_hab()
 		value = self._read(64, timeout=5)[:4]
-		self.end_cmd()
 		return int.from_bytes(value, "little")
 
 	def write32(self, addr: int, value: int) -> bool:
@@ -148,7 +144,6 @@ class SDPCommand():
 		self.dev.write(packet)
 		self.check_hab()
 		complete_status = self._read(64, timeout=5)[:4]
-		self.end_cmd()
 		return complete_status == b"\x12\x8A\x8A\x12"
 
 	def write_dcd(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
@@ -270,7 +265,6 @@ class SDPCommand():
 
 			self.check_hab()
 			complete_status = self._read(64, timeout=5)[:4]
-			self.end_cmd()
 		else:
 			self.check_hab()
 			self.dev.write(blob[offset:offset + size])
@@ -311,8 +305,8 @@ class SDPCommand():
 					+ " | " + hab_constants.context_codes[int(status[2])]\
 					+ " | " + hab_constants.engine_tags[int(status[3])]
 				logger.warning(f"error status {decoded_err} returned after jump to 0x{addr:x}")
-		except hid.HIDException as err:
-			logger.warning(f"Caught HIDException {str(err)}")
+		except (USBError, HIDError, OSError) as err:
+			logger.warning(f"Caught (USB/HID)Error {str(err)}")
 		return None
 
 	def skip_dcd_header(self):
@@ -323,7 +317,6 @@ class SDPCommand():
 		self.dev.write(packet1)
 		self.check_hab()
 		ack = self._read(64, timeout=5)[:4]
-		self.end_cmd()
 		return ack == b"\x09\xd0\x0d\x90"
 
 	def sdps_write(self, blob: bytes, size: int) -> bool:
@@ -359,21 +352,16 @@ class SDPCommand():
 		"""
 		self.check_hab()
 		complete_status = self._read(64, timeout=5)[:4]
-		self.end_cmd()
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		return complete_status == b"\x88\x88\x88\x88"
 		"""
 		return True
 
 	def is_hid(self):
-		return self.dev.__class__ == hid.Device
+		return self.dev.__class__ == HIDDevice
 
 	def _read(self, count, timeout=None):
-		# In hid mode strip the report id
-		first = 0
-		if self.is_hid():
-			first = 1
-		return self.dev.read(count + first, timeout=timeout)[first:]
+		return self.dev.read(count, timeout=timeout)
 
 	def close(self):
 		if self.is_hid():

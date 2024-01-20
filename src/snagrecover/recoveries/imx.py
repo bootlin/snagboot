@@ -47,12 +47,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import hid
+from snagrecover.protocols.hid import HIDDevice
 import time
 import usb
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error
+from snagrecover.utils import access_error, get_usb
 from snagrecover.protocols.imx_sdp import SDPCommand
 import logging
 logger = logging.getLogger("snagrecover")
@@ -83,17 +83,7 @@ raw_bulk_ep_socs = [
 "imx53",
 ]
 
-def build_hid_dev(vid, pid):
-	try:
-		return hid.Device(vid, pid)
-	except hid.HIDException:
-		access_error("USB HID", f"{vid:04x}:{pid:04x}")
-
-def build_raw_ep_dev(vid, pid):
-	dev = usb.core.find(idVendor=vid, idProduct=pid)
-	if dev is None:
-		access_error("USB RAW", f"{vid:04x}:{pid:04x}")
-
+def build_raw_ep_dev(dev: usb.core.Device):
 	class Adapter:
 		# The protocol code was written to expect a HID device rather
 		# than raw USB.
@@ -134,13 +124,12 @@ def build_raw_ep_dev(vid, pid):
 
 def main():
 	soc_model = recovery_config["soc_model"]
-	vid = recovery_config["rom_usb"][0]
-	pid = recovery_config["rom_usb"][1]
+	usb_dev = get_usb(recovery_config["rom_usb"])
 
 	if soc_model in raw_bulk_ep_socs:
-		sdp_cmd = SDPCommand(build_raw_ep_dev(vid, pid))
+		sdp_cmd = SDPCommand(build_raw_ep_dev(usb_dev))
 	else:
-		sdp_cmd = SDPCommand(build_hid_dev(vid, pid))
+		sdp_cmd = SDPCommand(HIDDevice(usb_dev))
 
 	if soc_model in sdps_socs:
 		run_firmware(sdp_cmd, "flash-bin", "spl-sdps")
@@ -168,17 +157,9 @@ def main():
 			protocol = spl_usb_ids[splid][0]
 			vid = spl_usb_ids[splid][1]
 			pid = spl_usb_ids[splid][2]
-			try:
-				with hid.Device(vid, pid) as dev:
-					bcdVersion = usb.core.find(idVendor=vid, idProduct=pid).bcdDevice
-					spl1_cfg = spl_usb_ids[splid]
-					if spl1_cfg[3] > bcdVersion or spl1_cfg[4] < bcdVersion:
-						raise hid.HIDException("Invalid bcd version")
-					valid_dev = [protocol, vid, pid]
-			except hid.HIDException:
-				continue
-			# check protocol using bcdDevice
-			if valid_dev is not None:
+			dev = usb.core.find(idVendor=vid, idProduct=pid)
+			if dev is not None:
+				valid_dev = [protocol, vid, pid]
 				print(f"Found HID device with config {splid}")
 				break
 		time.sleep(1)
@@ -187,16 +168,16 @@ def main():
 		access_error("SPL USB HID", "")
 
 	protocol = valid_dev[0]
-	with hid.Device(valid_dev[1], valid_dev[2]) as dev:
-		sdp_cmd = SDPCommand(dev)
-		# MX8 boot images are more complicated to generate so we allow everything to be
-		# packaged in a single blob
-		if "imx8" in soc_model:
-			if protocol != "SDPV":
-				raise Exception("Error: The installed SPL version does not support autofinding U-Boot")
-			run_firmware(sdp_cmd, "flash-bin", "u-boot")
-		else:
-			run_firmware(sdp_cmd, "u-boot")
+	sdp_cmd = SDPCommand(HIDDevice(dev))
+	# MX8 boot images are more complicated to generate so we allow everything to be
+	# packaged in a single blob
+	if "imx8" in soc_model:
+		if protocol != "SDPV":
+			raise Exception("Error: The installed SPL version does not support autofinding U-Boot")
+		run_firmware(sdp_cmd, "flash-bin", "u-boot")
+	else:
+		run_firmware(sdp_cmd, "u-boot")
 
-		print("DONE")
+	sdp_cmd.close()
+	print("DONE")
 
