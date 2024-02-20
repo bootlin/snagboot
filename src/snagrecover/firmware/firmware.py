@@ -74,8 +74,7 @@ def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 	print("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	print("Done")
-	if fw_name == "tispl":
-		# run tispl firmware
+	if fw_name == "u-boot":
 		print("Sending detach command...")
 		dfu_cmd.detach(partid)
 

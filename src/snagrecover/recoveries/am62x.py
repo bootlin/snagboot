@@ -18,6 +18,17 @@ def main():
 		usb_addr = parse_usb_addr(recovery_config["firmware"]["tiboot3"]["usb"])
 
 	dev = get_usb(usb_addr)
-	run_firmware(dev, "u-boot")
+
 	run_firmware(dev, "tispl")
+	run_firmware(dev, "u-boot")
+
+	time.sleep(2)
+
+	# For newer versions of U-Boot, only SPL will run from the
+	# previous commands and the u-boot firmware should be sent
+	# one more time.
+
+	dev = get_usb(usb_addr, error_on_fail=False)
+	if dev is not None:
+		run_firmware(dev, "u-boot")
 
