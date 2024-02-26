@@ -16,7 +16,7 @@ ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts:
 </p>
 
 The currently supported SoC families are ST STM32MP1, Microchip SAMA5, NXP
-i.MX6/7/8, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
+i.MX6/7/8/93, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
 [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml) or run `snagrecover
 --list-socs` for a more precise list of supported SoCs.
 
@@ -51,7 +51,7 @@ $ sudo udevadm trigger
 These rules work by adding the "uaccess" tag to the relevant USB devices.
 Systemd will then add an ACL to give access to currently logged in users. More
 info
-[here](https://enotty.pipebreaker.pl/2012/05/23/linux-automatic-user-acl-management/). 
+[here](https://enotty.pipebreaker.pl/2012/05/23/linux-automatic-user-acl-management/).
 
 **Warning:** If your distro does not use systemd, the "uaccess" method could
 possibly not work. In this case, make sure to customize the provided udev rules
@@ -100,5 +100,3 @@ possible. Please consult the [contribution guidelines](https://github.com/bootli
 ## License
 
 Snagboot is released under the [GNU General Public License version 2](https://github.com/bootlin/snagboot/blob/main/LICENSE)
-
-
