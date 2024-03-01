@@ -49,7 +49,7 @@ booting from FEL mode. On some models, this will happen automatically. On
 others, further setup is required. We recommend that you check your board
 vendor's user guide.
 
-## TI AM62x / TI AM62Ax
+## TI AM62x / TI AM62Ax / TI AM62Px
 
 Connect the USB device port to your host PC. Power your board, making sure that
 the SoC is configured to boot from DFU. The SoC can also fall back to DFU if all
