@@ -11,6 +11,8 @@ tested:
         family: am62x
   am62a7:
         family: am62x
+  am62p:
+        family: am62x
   h3:
         family: sunxi
   imx28:
