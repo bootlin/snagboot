@@ -32,6 +32,7 @@ SUBSYSTEM=="hidraw", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0525", ATTRS{idProduct
 SUBSYSTEM=="hidraw", SUBSYSTEMS=="usb", ATTRS{idVendor}=="3016", ATTRS{idProduct}=="1001", MODE="0660", TAG+="uaccess"
 SUBSYSTEM=="hidraw", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0525", ATTRS{idProduct}=="b4a4", MODE="0660", TAG+="uaccess"
 SUBSYSTEM=="hidraw", SUBSYSTEMS=="usb", ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="0151", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="hidraw", SUBSYSTEMS=="usb", ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="0152", MODE="0660", TAG+="uaccess"
 SUBSYSTEM=="hidraw", SUBSYSTEMS=="usb", ATTRS{idVendor}=="3016", ATTRS{idProduct}=="0100", MODE="0660", TAG+="uaccess"
 
 #NXP i.MX rules for libusb backend
@@ -62,6 +63,7 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0525", ATTRS{idProduct}=="b4a4", MODE="0660"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="3016", ATTRS{idProduct}=="1001", MODE="0660", TAG+="uaccess"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0525", ATTRS{idProduct}=="b4a4", MODE="0660", TAG+="uaccess"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="0151", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="0152", MODE="0660", TAG+="uaccess"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="3016", ATTRS{idProduct}=="0100", MODE="0660", TAG+="uaccess"
 
 #Allwinner SUNXI rules
@@ -69,4 +71,3 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="1f3a", ATTRS{idProduct}=="efe8", MODE="0660"
 
 #TI AM62x rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="6165", MODE="0660", TAG+="uaccess"
-
