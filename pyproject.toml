@@ -48,22 +48,10 @@ snagflash = "snagflash.cli:cli"
 [tool.ruff]
 # Enable pycodestyle (`E`), Pyflakes (`F`) codes and flake8-bugbear (`B`) rules
 # by default.
-select = ["E", "F", "B"]
-
 # Never enforce: `E501` (line length violations),
 #                `E402` (Module level import not at top of file).
-ignore = ["E501","E402"]
-
 # Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
-	   "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT",
-	   "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH",
-	   "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP",
-	   "YTT"]
-
 # Avoid trying to fix flake8-bugbear (`B`) violations.
-unfixable = ["B"]
-
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
@@ -89,20 +77,24 @@ exclude = [
     "venv",
     "src/snagflash/bmaptools"
 ]
-per-file-ignores = {}
-
 # Same as Black.
 line-length = 88
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 # Assume Python 3.11.
 target-version = "py311"
 
-[tool.ruff.mccabe]
-# Unlike Flake8, default to a complexity level of 10.
-max-complexity = 10
+[tool.ruff.lint]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
+	   "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT",
+	   "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH",
+	   "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP",
+	   "YTT"]
+ignore = ["E501","E402"]
+select = ["E", "F", "B"]
+unfixable = ["B"]
+mccabe.max-complexity = 10
+flake8-quotes.docstring-quotes = "double"
+per-file-ignores = {}
 
-[tool.ruff.flake8-quotes]
-docstring-quotes = "double"
