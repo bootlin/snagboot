@@ -179,10 +179,9 @@ configuration:
 
 [example](../src/snagrecover/templates/am335x-beaglebone-black.yaml)
 
-**spl:** First stage bootloader. Build the spl/u-boot-spl.bin target for your
-board in U-Boot mainline. If recovering via UART, SPL should be built with
-CONFIG\_SPL\_YMODEM_SUPPORT enabled. If recovering via USB, the USB Ethernet
-gadget should be enabled, which implies the following options:
+**spl:** First stage bootloader. Build the spl/u-boot-spl.bin target for your board in U-Boot
+mainline. If recovering via USB, the USB Ethernet gadget should be enabled, which implies the
+following options:
 
 ```bash
 CONFIG\_SPL\_NET\_SUPPORT=y

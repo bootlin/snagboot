@@ -28,15 +28,3 @@ binaries](fw_binaries.md) section of the docs.
 On some boards, you have to enable `CONFIG_USB_ETHER` in U-Boot for USB gadgets
 to work correctly.
 
-## AM335x UART recovery fails after running SPL
-
-In some cases SPL's standard console output can be confused with xmodem 'C'
-pings. You can set the following U-Boot configuration options to try and silence
-SPL:
-
-```
-CONFIG_SPL_SILENT_CONSOLE=y
-CONFIG_SPL_BANNER_PRINT=n
-CONFIG_SPL_DISPLAY_PRINT=n
-```
-

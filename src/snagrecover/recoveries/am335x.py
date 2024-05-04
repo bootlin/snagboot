@@ -17,7 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import serial
 from snagrecover.config import recovery_config
 from snagrecover.firmware.firmware import run_firmware
 import subprocess
@@ -25,23 +24,17 @@ import os
 import sys
 
 def main():
-	if recovery_config["args"]["uart"]:
-		port = serial.Serial(recovery_config["args"]["uart"], baudrate=recovery_config["args"]["baudrate"])
-		run_firmware(port, "spl")
-		run_firmware(port, "u-boot")
-		port.close()
-	else:
-		# Check that we are running in the expected network namespace
-		netns_name = recovery_config["args"]["netns"]
-		bash_cmd = "ip netns identify " + str(os.getpid())
-		process = subprocess.Popen(bash_cmd.split(), stdout=subprocess.PIPE)
-		output, error = process.communicate()
-		if output.decode("ascii") != f"{netns_name}\n":
-			print(f"This recovery needs to be run in the {netns_name} namespace!\nDid you run sudo am335x_usb_setup.sh?", file=sys.stderr)
-			sys.exit(-1)
+	# Check that we are running in the expected network namespace
+	netns_name = recovery_config["args"]["netns"]
+	bash_cmd = "ip netns identify " + str(os.getpid())
+	process = subprocess.Popen(bash_cmd.split(), stdout=subprocess.PIPE)
+	output, error = process.communicate()
+	if output.decode("ascii") != f"{netns_name}\n":
+		print(f"This recovery needs to be run in the {netns_name} namespace!\nDid you run sudo am335x_usb_setup.sh?", file=sys.stderr)
+		sys.exit(-1)
 
-		# Install and run SPL
-		run_firmware(None, "spl")
-		# Install and run U-Boot
-		run_firmware(None, "u-boot")
+	# Install and run SPL
+	run_firmware(None, "spl")
+	# Install and run U-Boot
+	run_firmware(None, "u-boot")
 

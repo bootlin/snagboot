@@ -6,12 +6,11 @@ boot fuses, removing some external boot media and/or other board-specific
 actions. Referring to your board's user guide can help you find out
 what you need to do here.
 
-The board should be connected to your host PC via USB (except for the special
-case of AM335x UART recovery). The specific USB port to use is board-dependent,
-it is usually the OTG port. We also strongly recommend that you open a UART
-connection to the board so that you can monitor the recovery process as it
-unfolds. On STM32MP1 discovery kits, the default UART is often wired to the
-ST-LINK port.
+The board should be connected to your host PC via USB The specific USB port to
+use is board-dependent, it is usually the OTG port. We also strongly recommend
+that you open a UART connection to the board so that you can monitor the
+recovery process as it unfolds. On STM32MP1 discovery kits, the default UART is
+often wired to the ST-LINK port.
 
 Once your board is in recovery mode, a new USB device should appear on your host
 system. This is the device that snagrecover will communicate with. Below are
@@ -62,24 +61,7 @@ During initialization, the ROM code will set up a boot device list and for each
 device, will try to perform either a memory boot or a peripheral boot.
 Peripheral booting is what interests us for recovering a board. It can be done
 over USB, UART or Ethernet. Out of the 3 possible peripheral boot modes,
-snagrecover supports UART mode, and USB mode.  UART is much simpler to setup but
-is very slow and for this reason is only supported by snagrecover, not
-snagflash.
-
-### TI AM335x UART recovery
-
-Connect a UART to the board, open a serial port and make sure that the ROM code
-boots in UART mode. If that’s the case, it should regularly ping the serial
-console which will result in the character “C” being displayed.
-
-As an example, here is the procedure for the Beaglebone black wireless board :
-
-1. remove all connectors and make sure that the sd card slot is empty
-2. set up the UART cable on the serial header (GND:J1 RX: J4 TX: J5).
-3. hold the S2 button and plug the power cable in. This will change the boot
-	sequence so that the board doesn’t try to boot from eMMC.
-4. open a serial port and press the reset button. You should get pings in your
-	console
+snagrecover only supports USB mode.
 
 ### TI AM335x USB recovery
 
