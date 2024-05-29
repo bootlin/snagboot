@@ -124,7 +124,7 @@ def build_raw_ep_dev(dev: usb.core.Device):
 
 def main():
 	soc_model = recovery_config["soc_model"]
-	usb_dev = get_usb(recovery_config["rom_usb"])
+	usb_dev = get_usb(recovery_config["usb_path"])
 
 	if soc_model in raw_bulk_ep_socs:
 		sdp_cmd = SDPCommand(build_raw_ep_dev(usb_dev))

@@ -20,7 +20,7 @@
 import sys
 import argparse
 from snagrecover import __version__
-from snagrecover.utils import cli_error
+from snagrecover.utils import cli_error, get_recovery
 import snagrecover.config as config
 import yaml
 import os
@@ -50,7 +50,8 @@ Templates:
 	optional.add_argument("--netns", help="network namespace for AM335x USB recovery, defaults to 'snagbootnet'", default="snagbootnet")
 	optional.add_argument("--loglevel", help="set loglevel", choices=["silent","info","debug"], default="silent")
 	optional.add_argument("--logfile", help="set logfile", default="board_recovery.log")
-	optional.add_argument("--rom-usb", help="USB ID used by ROM code", metavar="vid:pid|bus-port1.port2.[...]")
+	optional.add_argument("--rom-usb", help="legacy, please use --usb-path")
+	optional.add_argument("--usb-path", help="address of recovery USB device", metavar="vid:pid|bus-port1.port2.[...]")
 	utilargs = parser.add_argument_group("Utilities")
 	utilargs.add_argument("--list-socs", help="list supported socs", action="store_true")
 	utilargs.add_argument("--version", help="show version", action="store_true")
@@ -125,26 +126,10 @@ Templates:
 	soc_family = config.recovery_config["soc_family"]
 	print(f"Starting recovery of {soc_model} board")
 	logger.info(f"Starting recovery of {soc_model} board")
-	if soc_family == "stm32mp1":
-		from snagrecover.recoveries.stm32mp1 import main as stm32_recovery
-		stm32_recovery()
-	elif soc_family == "sama5":
-		from snagrecover.recoveries.sama5 import main as sama5_recovery
-		sama5_recovery()
-	elif soc_family == "imx":
-		from snagrecover.recoveries.imx import main as imx_recovery
-		imx_recovery()
-	elif soc_family == "am335x":
-		from snagrecover.recoveries.am335x import main as am335x_recovery
-		am335x_recovery()
-	elif soc_family == "sunxi":
-		from snagrecover.recoveries.sunxi import main as sunxi_recovery
-		sunxi_recovery()
-	elif soc_family == "am62x":
-		from snagrecover.recoveries.am62x import main as am62x_recovery
-		am62x_recovery()
-	else:
-		cli_error(f"unsupported board family {soc_family}")
+
+	recovery = get_recovery(soc_family)
+	recovery()
+
 	print(f"Done recovering {soc_model} board")
 	if args.loglevel != "silent":
 		print(f"Logs were appended to {args.logfile}")

@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
-from snagrecover.utils import cli_error, parse_usb_addr
+from snagrecover.utils import cli_error, parse_usb_addr, get_family, access_error
 import logging
 logger = logging.getLogger("snagrecover")
 import os
@@ -55,12 +55,6 @@ default_usb_ids =  {
 
 recovery_config = {} # Global immutable config to be initialized with CLI args
 
-def get_family(soc_model: str) -> str:
-        with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
-                socs = yaml.safe_load(file)
-        family = {**socs["tested"], **socs["untested"]}[soc_model]["family"]
-        return family
-
 def check_soc_model(soc_model: str):
 	with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
 		socs = yaml.safe_load(file)
@@ -76,14 +70,20 @@ def init_config(args: list):
 	recovery_config.update({"soc_model": soc_model})
 	soc_family = get_family(soc_model)
 	recovery_config.update({"soc_family": soc_family})
+
+	if args.rom_usb is not None and args.usb_path is None:
+		args.usb_path = args.rom_usb
+
 	if soc_family != "am335x":
-		if args.rom_usb is None:
+		if args.usb_path is None:
 			if soc_family == "imx":
-				recovery_config["rom_usb"] = default_usb_ids["imx"][soc_model]
+				recovery_config["usb_path"] = default_usb_ids["imx"][soc_model]
 			else:
-				recovery_config["rom_usb"] = default_usb_ids[soc_family]
+				recovery_config["usb_path"] = default_usb_ids[soc_family]
 		else:
-			recovery_config["rom_usb"] = parse_usb_addr(args.rom_usb)
+			recovery_config["usb_path"] = parse_usb_addr(args.usb_path)
+			if recovery_config["usb_path"] is None:
+				access_error("USB", args.usb_path)
 
 	fw_configs = {}
 	if args.firmware:

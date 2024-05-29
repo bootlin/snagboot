@@ -30,7 +30,7 @@ USB_RETRY = 5
 
 def main():
 	# Try to reset device
-	usb_addr = recovery_config["rom_usb"]
+	usb_addr = recovery_config["usb_path"]
 	if is_usb_path(usb_addr):
 		find_usb = functools.partial(usb.core.find,
 				bus=usb_addr[0],

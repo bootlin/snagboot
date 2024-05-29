@@ -97,7 +97,7 @@ def main():
 	print("Connecting to SAM-BA monitor...")
 	soc_model = recovery_config["soc_model"]
 
-	dev = get_usb(recovery_config["rom_usb"])
+	dev = get_usb(recovery_config["usb_path"])
 
 	# SAM-BA monitor needs a reset sometimes
 	dev.reset()

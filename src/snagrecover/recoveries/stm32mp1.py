@@ -24,7 +24,7 @@ from snagrecover.protocols import dfu
 from snagrecover.recoveries import stm32_flashlayout as flashlayout
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import parse_usb_addr, get_usb
+from snagrecover.utils import get_usb
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -33,7 +33,7 @@ USB_TIMEOUT = 10
 def main():
 	soc_model = recovery_config["soc_model"]
 	# USB ENUMERATION
-	usb_addr = recovery_config["rom_usb"]
+	usb_addr = recovery_config["usb_path"]
 	dev = get_usb(usb_addr)
 	cfg = dev.get_active_configuration()
 	logger.debug("USB config:")
@@ -65,15 +65,14 @@ def main():
 	# DOWNLOAD U-BOOT
 	if soc_model == "stm32mp13":
 		time.sleep(1.5)
-	# We need to reset here, in the case where TF-A uses a different USB ID
-	if "usb" in recovery_config["firmware"]["tf-a"]:
-		usb_addr = parse_usb_addr(recovery_config["firmware"]["tf-a"]["usb"])
-		try:
-			dev.reset()
-		except usb.core.USBError:
-			# this should actually fail
-			pass
-		time.sleep(0.5)
+
+	try:
+		dev.reset()
+	except usb.core.USBError:
+		# this should actually fail
+		pass
+	time.sleep(0.5)
+
 	usb.util.dispose_resources(dev)
 	dev = get_usb(usb_addr)
 	cfg = dev.get_active_configuration()

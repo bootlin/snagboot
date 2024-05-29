@@ -39,16 +39,11 @@ when configuring U-Boot.
   after recovery e.g. if you want to get a U-Boot command line.
 - Sometimes U-Boot will try to load an environment from some memory device,
   which can cause issues. Setting `CONFIG_ENV_IS_NOWHERE=y` can help avoid this.
-- If you change USB gadget VID:PID values
-  `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM`, this will also change SPL's gadget id,
-  so make sure to pass the "usb" firmware parameter when relevant. Note that you
-  should not do this with i.MX SoCs! This is due to USB IDs being used by
-  snagrecover to match protocols during i.MX recovery.
 - If you want to use snagflash after recovery, make sure to write down the
-  aforementioned `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM` values so that you can
+  `CONFIG_USB_GADGET_VENDOR/PRODUCT_NUM` values so that you can
   pass them to snagflash and setup proper udev rules so that you have rw access
-  rights to the corresponding USB device. See [snagflash docs](snagflash.md) for more
-  details.
+  rights to the corresponding USB device. See [snagflash docs](snagflash.md)
+  for more details.
 
 ## For ST STM32MP1 devices
 
@@ -66,13 +61,11 @@ configuration:
 
 **tf-a:** Arm-trusted firmware BL2, with an stm32 image header. In typical
 build strategies, you have to pass your U-Boot binary to the tf-a build
-process.  If you change the USB VID/PID values used by tf-a, make sure to pass
-the "usb" firmware parameter. For the secure firmware, use SP_MIN if available.
+process. For the secure firmware, use SP_MIN if available.
 OPTEE can also work.
 
 configuration:
  * path
- * usb vid:pid or bus-port1.port2.[...] (only if you have configured custom USB IDs in TF-A)
 
 ### Example build process for an stm32mp15-based board
 
@@ -253,12 +246,10 @@ Snagrecover and SD Boot defconfig for Snagflash.
 AM62x/AM62Ax/AM62Px SoCs require multiple complex firmware images to boot.
 
 **tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
-container with device tree blobs. If you change U-Boot's USB VID/PID, you should
-specify them with the usb firmware parameter. SPL should support DFU.
+container with device tree blobs. SPL should support DFU.
 
 configuration:
  * path
- * usb vid:pid or bus-port1.port2.[...] (only if you have configured custom USB IDs in TF-A)
 
 **u-boot:** FIT container with U-Boot proper for A53 and device tree blobs
 
