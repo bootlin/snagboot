@@ -139,8 +139,6 @@ def run_recovery(config, soc_family, log_queue, last_log):
 		logger.error(f"Caught exception from snagrecover: {e}")
 		sys.exit(-1)
 
-	time.sleep(3)
-
 	logger.handlers.clear()
 
 def run_flasher(args, soc_family, log_queue, last_log):

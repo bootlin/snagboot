@@ -1,0 +1,186 @@
+#:kivy 2.3.0
+
+<Label>
+    color: 0, 0, 0, 1
+    font_size: 20
+
+<SnagFactoryBoard>
+    size: root.width, 100
+    size_hint_y: None
+    phase_label: phase_label
+
+    BoxLayout:
+        id: board_box
+        pos: root.pos
+        size: root.size
+        orientation: "horizontal"
+        padding: 20
+        spacing: 20
+
+        canvas:
+            Color:
+                rgb: 1, 0.38, 0.10
+            BoxShadow:
+                size: board_box.size
+                pos: board_box.pos
+                border_radius: 10, 10, 10, 10
+            Color:
+            	rgb: 1, 1, 1
+            RoundedRectangle:
+                size: board_box.size
+                pos: board_box.pos
+
+        Label:
+            size_hint_x: 0.1
+            text: root.path
+            halign: "left"
+
+        Label:
+            size_hint_x: 0.1
+            text: root.soc_model
+            halign: "center"
+
+        Label:
+            id: phase_label
+            size_hint_x: 0.1
+            text: root.phase
+            halign: "center"
+            color: 0, 1, 0
+            padding: 20, 0, 0, 0
+
+        Label:
+            text_size: self.width, self.height
+            text: root.status
+            halign: "left"
+            valign: "middle"
+            padding: 20, 0, 0, 0
+            shorten: True
+
+        Button:
+            text: "log"
+            size_hint_x: 0.1
+            on_press: root.ui.verbose_log = root
+            background_color: 0.6, 0.76, 1, 1
+
+<SnagFactorySidebar@BoxLayout>
+    canvas:
+        Color:
+            rgb: 1, 0.38, 0.10
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    Button:
+        size_hint: None, None
+        center_x: 0
+        width: 70
+        height: 100
+        background_normal: "start.png"
+        text: ""
+        on_press: app.root.running = 1;
+
+    Label:
+        text: ""
+
+
+<SnagFactoryLogView@BoxLayout>
+    log_area: log_area
+    log_board_path: log_board_path
+
+    Label:
+        size_hint_y: 0.1
+        text: "Detailed logs"
+        text_size: self.width, None
+
+    Label:
+        id: log_board_path
+        size_hint_y: 0.1
+        text_size: self.width, None
+        text: ""
+
+    ScrollView:
+        id: log_scrollview
+        width: root.width
+        size_hint_y: 0.8
+        do_scroll_x: False
+        scroll_y: 0
+        scroll_type: ["bars"]
+
+        Label:
+            id: log_area
+            text_size: self.width, None
+            size: self.texture_size
+            size_hint_y: None
+            text: ""
+            halign: "left"
+            valign: "top"
+
+
+<SnagFactoryUI>
+    id: snagfactory_ui
+    widget_container: widget_container
+    log_boxlayout: log_boxlayout
+    log_area: log_boxlayout.log_area
+    log_board_path: log_boxlayout.log_board_path
+
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "horizontal"
+
+        SnagFactorySidebar:
+            size_hint_x: None
+            width: 80
+            orientation: "vertical"
+            padding: 5
+            spacing: 5
+
+        BoxLayout:
+            orientation: "vertical"
+
+            BoxLayout:
+                size_hint_y: 0.1
+                orientation: "horizontal"
+                padding: 10
+
+                canvas:
+                    Color:
+                        rgb: 0.90, 0.90, 0.90
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                Label:
+                    font_size: 20
+                    text: root.status
+                    text_size: self.size
+                    valign: "middle"
+
+            ScrollView:
+                id: board_scrollview
+                size_hint_x: 1
+                do_scroll_x: False
+                scroll_type: ["bars"]
+
+                GridLayout:
+                    id: widget_container
+                    pos: board_scrollview.pos
+                    height: self.minimum_height
+                    width: board_scrollview.width
+                    cols: 1
+                    size_hint_y: None
+                    spacing: 20
+                    padding: 5
+
+        SnagFactoryLogView:
+            id: log_boxlayout
+            size_hint_x: 0
+            orientation: "vertical"
+
