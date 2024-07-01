@@ -79,13 +79,22 @@ class DFU():
 		self.dev = dev
 		self.stm32 = stm32 # set when dfu is used to recover stm32mp1 boards
 		# try to find wTransferSize
-		self.transfer_size = 1024
+		bMaxPacketSize0 = dev.bMaxPacketSize0
+		self.transfer_size = bMaxPacketSize0
 		cfg = dev.get_active_configuration()
 		intfs = cfg.interfaces()
 		for intf in intfs:
 			if len(intf.extra_descriptors) >= 9 and (intf.extra_descriptors[1] == DFU.DESC_TYPE_DFU):
 				desc = intf.extra_descriptors
-				self.transfer_size = desc[6] * 0x100  + desc[5]
+				wTransferSize = desc[6] * 0x100  + desc[5]
+				"""
+				Control transfer sizes should be in the range
+				from bMaxPacketSize0 to wTransferSize as per DFU
+				spec. Some sources report issues with transfers
+				transfers that aren't a multiple of
+				bMaxPacketSize0 in size.
+				"""
+				self.transfer_size = bMaxPacketSize0 * (wTransferSize // bMaxPacketSize0)
 				logger.info(f"Found DFU Functional descriptor: wTransferSize = {self.transfer_size}")
 
 

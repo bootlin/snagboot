@@ -23,6 +23,8 @@ from snagrecover import utils
 import logging
 logger = logging.getLogger("snagrecover")
 
+MAX_LIBUSB_TRANSFER_SIZE = 0x8000
+
 """
 See doc/android/fastboot-protocol.rst in the U-Boot sources
 for more information on fastboot support in U-Boot.
@@ -54,16 +56,17 @@ class Fastboot():
 		self.ep_in = ep_in
 		self.ep_out = ep_out
 		self.timeout = timeout
-		# choose max packet size as specified by fastboot spec
-		self.max_size = 64
-		if dev.speed == usb.util.SPEED_HIGH:
-			self.max_size = 512
-		elif dev.speed == usb.util.SPEED_SUPER:
-			self.max_size = 1024
+		# when ep_out.write() is called, lower layers will take care of
+		# splitting up the transfer into appropriately sized packets.
+		# However, writing the entire image in one go causes memory
+		# allocation issues in libusb for very large transfers.
+		# Thus, the transfer is split up into preliminary chunks.
+		# The maximum chunk size is chosen to match upper transfer
+		# limits for some USB kernel syscalls.
+
+		self.max_size = MAX_LIBUSB_TRANSFER_SIZE
 
 	def cmd(self, packet: bytes):
-		if len(packet) > self.max_size:
-			raise ValueError(f"Packet {packet} exceeds the 64-byte length limit.")
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
 		status = ""
 		t0 = time.time()
