@@ -41,9 +41,9 @@ def parse_usb_path(path: str) -> tuple:
 	if match is None:
 		cli_error(f"failed to parse USB device path {path}")
 	groups = match.groups()
-	port_numbers = groups[1]
+	port_numbers = [groups[1]]
 	if groups[2] != "":
-		port_numbers = [port_numbers] + groups[2].split(".")[1:]
+		port_numbers += groups[2].split(".")[1:]
 	# Formatted for usb.core.find
 	port_tuple = tuple([int(x) for x in port_numbers])
 	return (int(groups[0]), port_tuple)
