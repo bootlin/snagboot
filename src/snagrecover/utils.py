@@ -2,6 +2,9 @@ import sys
 import re
 import usb
 import time
+import logging
+logger = logging.getLogger("snagrecover")
+
 import yaml
 import os
 
@@ -73,6 +76,11 @@ def parse_usb_addr(usb_addr: str, find_all=False) -> tuple:
 		if find_all:
 			return usb_paths
 		else:
+			if len(usb_paths) > 1:
+				print(f"Found too many ({len(usb_paths)}) possible results matching {usb_addr}!")
+				logger.error(f"Too many results for address {usb_addr}!\{str(usb_paths)}")
+				access_error("USB", usb_addr)
+
 			return usb_paths[0]
 	else:
 		return parse_usb_path(usb_addr)
@@ -93,7 +101,7 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 
 		nb_devs = len(dev_list)
 
-		if nb_devs > 0:
+		if nb_devs == 1:
 			dev = dev_list[0]
 
 			try:
@@ -101,6 +109,10 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 				return dev
 			except usb.core.USBError:
 				logger.warning(f"Failed to get configuration descriptor for device at {pretty_addr}!")
+
+		elif nb_devs > 1:
+			print(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
+			logger.warning(f"Too many results for address {pretty_addr}!\{str(dev_list)}")
 
 		print(f"USB retry {i + 1}/{USB_RETRIES}")
 		time.sleep(USB_INTERVAL)
