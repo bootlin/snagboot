@@ -49,10 +49,11 @@ class Fastboot():
 						else:
 								ep_out = ep.bEndpointAddress
 				if not ((ep_in is None) or (ep_out is None)):
-						eps_found = True
-						break
+					eps_found = True
+					break
+
 		if not eps_found:
-				raise Exception("No BULK IN/OUT endpoint pair found in device")
+			raise Exception("No BULK IN/OUT endpoint pair found in device")
 		self.ep_in = ep_in
 		self.ep_out = ep_out
 		self.timeout = timeout
