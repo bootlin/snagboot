@@ -2,11 +2,10 @@ import sys
 import re
 import usb
 import time
-import functools
 import yaml
 import os
 
-USB_RETRIES = 5
+USB_RETRIES = 10
 USB_INTERVAL = 1
 
 def get_family(soc_model: str) -> str:
@@ -84,39 +83,34 @@ def prettify_usb_addr(usb_addr) -> str:
 	else:
 		return f"{usb_addr[0]:04x}:{usb_addr[1]:04x}"
 
-def get_usb(addr, error_on_fail=True) -> usb.core.Device:
-	if is_usb_path(addr):
-		# bus-port1.port2.(...)
-		find_usb = functools.partial(usb.core.find,
-					bus=addr[0],
-					port_numbers=addr[1])
-	else:
-		# vid:pid
-		find_usb = functools.partial(usb.core.find,
-					idVendor=addr[0],
-					idProduct=addr[1])
+def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
+	pretty_addr = prettify_usb_addr(usb_path)
 
-	pretty_addr = prettify_usb_addr(addr)
-	dev = find_usb()
-	retry = 0
-	while dev is None:
+	for i in range(USB_RETRIES):
+		dev_list = list(usb.core.find(bus=usb_path[0], \
+					port_numbers=usb_path[1], \
+					find_all=True))
+
+		nb_devs = len(dev_list)
+
+		if nb_devs > 0:
+			dev = dev_list[0]
+
+			try:
+				dev.get_active_configuration()
+				return dev
+			except usb.core.USBError:
+				logger.warning(f"Failed to get configuration descriptor for device at {pretty_addr}!")
+
+		print(f"USB retry {i + 1}/{USB_RETRIES}")
 		time.sleep(USB_INTERVAL)
-		print(f"USB retry {retry}/{USB_RETRIES}")
-		if retry >= USB_RETRIES:
-			if error_on_fail:
-				access_error("USB", pretty_addr)
-			return None
-		dev = find_usb()
-		retry += 1
 
-	try:
-		dev.get_active_configuration()
-	except usb.core.USBError:
-		if error_on_fail:
-			access_error("USB", pretty_addr)
-		return None
 
-	return dev
+	if error_on_fail:
+		access_error("USB", pretty_addr)
+
+	return None
+
 
 def reset_usb(dev: usb.core.Device) -> None:
         try:

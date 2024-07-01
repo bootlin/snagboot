@@ -25,31 +25,31 @@ import os
 
 default_usb_ids =  {
 	# default ROM code USB IDs
-	"stm32mp1": (0x0483,0xdf11),
-	"sama5":    (0x03eb,0x6124),
-	"sunxi":    (0x1f3a,0xefe8),
-	"am62x":     (0x0451,0x6165),
+	"stm32mp1": "0483:df11",
+	"sama5":    "03eb:6124",
+	"sunxi":    "1f3a:efe8",
+	"am62x":     "0451:6165",
 	"imx": {
-		"imx8qxp": (0x1fc9,0x012f),
-		"imx8qm": (0x1fc9,0x0129),
-		"imx8dxl": (0x1fc9,0x0147),
-		"imx28": (0x15a2,0x004f),
-		"imx815": (0x1fc9,0x013e),
-		"imx865": ("SDPS",0x1fc9),
-		"imx93": (0x1fc9,0x014e),
-		"imx7d": (0x15a2,0x0076),
-		"imx6q": (0x15a2,0x0054),
-		"imx6d": (0x15a2,0x0061),
-		"imx6sl": (0x15a2,0x0063),
-		"imx6sx": (0x15a2,0x0071),
-		"imx6ul": (0x15a2,0x007d),
-		"imx6ull": (0x15a2,0x0080),
-		"imx6sll": (0x1fc9,0x0128),
-		"imx7ulp": (0x1fc9,0x0126),
-		"imxrt106x": (0x1fc9,0x0135),
-		"imx8mm": (0x1fc9,0x0134),
-		"imx8mq": (0x1fc9,0x012b),
-		"imx53" : (0x15a2,0x004e),
+		"imx8qxp": "1fc9:012f",
+		"imx8qm": "1fc9:0129",
+		"imx8dxl": "1fc9:0147",
+		"imx28": "15a2:004f",
+		"imx815": "1fc9:013e",
+		"imx865": "1fc9:0146",
+		"imx93": "1fc9:014e",
+		"imx7d": "15a2:0076",
+		"imx6q": "15a2:0054",
+		"imx6d": "15a2:0061",
+		"imx6sl": "15a2:0063",
+		"imx6sx": "15a2:0071",
+		"imx6ul": "15a2:007d",
+		"imx6ull": "15a2:0080",
+		"imx6sll": "1fc9:0128",
+		"imx7ulp": "1fc9:0126",
+		"imxrt106x": "1fc9:0135",
+		"imx8mm": "1fc9:0134",
+		"imx8mq": "1fc9:012b",
+		"imx53" : "15a2:004e",
 	}
 }
 
@@ -77,9 +77,9 @@ def init_config(args: list):
 	if soc_family != "am335x":
 		if args.usb_path is None:
 			if soc_family == "imx":
-				recovery_config["usb_path"] = default_usb_ids["imx"][soc_model]
+				recovery_config["usb_path"] = parse_usb_addr(default_usb_ids["imx"][soc_model])
 			else:
-				recovery_config["usb_path"] = default_usb_ids[soc_family]
+				recovery_config["usb_path"] = parse_usb_addr(default_usb_ids[soc_family])
 		else:
 			recovery_config["usb_path"] = parse_usb_addr(args.usb_path)
 			if recovery_config["usb_path"] is None:
