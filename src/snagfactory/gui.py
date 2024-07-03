@@ -1,23 +1,21 @@
 from kivy.logger import Logger as kivy_logger
 kivy_logger.setLevel("WARNING")
-from kivy.app import App 
+from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.properties import (
-    NumericProperty, ListProperty, ObjectProperty, StringProperty
+    ListProperty, ObjectProperty, StringProperty
 )
 from kivy.clock import Clock
 from kivy.lang import Builder
 import kivy.resources
 
-from snagfactory.board import scan_for_boards, BoardPhase
-from snagfactory.batch import read_config
+from snagfactory.session import SnagFactorySession
 
 import multiprocessing
 import logging
-import random
-import os
+factory_logger = logging.getLogger("snagfactory")
 
-import time
+import os
 
 LOG_VIEW_CAPACITY = 100
 
@@ -38,7 +36,6 @@ class SnagFactoryBoard(Widget):
 		self.ui = ui
 
 	def update(self):
-		self.board.update_state()
 		self.phase = self.board.phase.name
 
 		new_status = self.board.get_status()
@@ -51,19 +48,32 @@ class SnagFactoryUI(Widget):
 	widget_container = ObjectProperty(None)
 	board_widgets = ListProperty([])
 	verbose_log = ObjectProperty(None)
-	running = NumericProperty(0)
 	status = StringProperty("Scanning for boards...")
+	phase_label = StringProperty("")
 
-	def rescan(self):
+	def dismiss_popup(self):
+		self._popup.dismiss()
+
+	def open_log_dialog(self):
+		content = LoadLogDialog(load_log=self.load_log, cancel_load_log=self.dismiss_popup)
+		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
+		self._popup.open()
+
+	def load_log(self, path, filename):
+		print("WIP")
+
+	def cancel_load_log(self):
+		print("WIP")
+
+	def update_board_list(self):
 		for board_widget in self.board_widgets:
 			self.widget_container.remove_widget(board_widget)
-			del board_widget
 
 		self.board_widgets = []
 
-		board_list = scan_for_boards(self.batch)
+		self.session.scan_for_boards()
 
-		for board in board_list:
+		for board in self.session.board_list:
 			board_widget = SnagFactoryBoard()
 			board_widget.attach_board(board, self)
 			self.widget_container.add_widget(board_widget)
@@ -71,55 +81,45 @@ class SnagFactoryUI(Widget):
 
 		self.status = f"{len(self.board_widgets)} boards found"
 
+	def start(self):
+		self.phase_label = "running batch: batch.yaml"
+		self.update_board_list()
+		self.session.start()
+
 	def update(self, dt):
-		self.update_tick += 1
 
-		if self.running > 0:
+		self.session.update()
 
-			nb_recovering = 0
-			nb_flashing = 0
-			nb_done = 0
-			nb_failed = 0
+		if self.session.phase == "scanning":
+			self.update_board_list()
+		elif self.session.phase == "running":
 
 			for board_widget in self.board_widgets:
 				board_widget.update()
-				phase = board_widget.board.phase
-				if phase in [BoardPhase.FLASHING, BoardPhase.FLASHER]:
-					nb_flashing += 1
-				elif phase in [BoardPhase.ROM, BoardPhase.RECOVERING]:
-					nb_recovering += 1
-				elif phase == BoardPhase.DONE:
-					nb_done += 1
-				else:
-					nb_failed += 1
 
-			self.status = f"recovering: {nb_recovering}    flashing: {nb_flashing}    done: {nb_done}    failed: {nb_failed}"
+			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
 
-			if self.verbose_log is not None:
-				self.log_boxlayout.size_hint_x = 0.5
+		elif self.session.phase == "logview":
+			self.phase_label = "viewing session logs: " + os.path.basename(self.session.logfile_path)
+		if self.session.phase != "scanning" and self.verbose_log is not None:
+			self.log_boxlayout.size_hint_x = 0.5
 
-				board_widget = self.verbose_log
-				board = board_widget.board
+			board_widget = self.verbose_log
+			board = board_widget.board
 
-				self.log_board_path.text = board.path
-				self.log_area.text = "\n".join(board.session_log[-LOG_VIEW_CAPACITY:])
-		else:
-			if self.update_tick % 5 == 0:
-				self.rescan()
-
+			self.log_board_path.text = board.path
+			self.log_area.text = "\n".join(board.session_log[-LOG_VIEW_CAPACITY:])
 
 class SnagFactory(App):
 	def build(self):
-		batch = read_config("batch.yaml")
-
 		Builder.load_file(os.path.dirname(__file__) + "/gui.kv")
 
+		session = SnagFactorySession("batch.yaml")
 		ui = SnagFactoryUI()
-		ui.board_list = []
-		ui.update_tick = 0
-		ui.batch = batch
+		ui.session = session
 
-		ui.rescan()
+		ui.session.update()
+		ui.update_board_list()
 
 		Clock.schedule_interval(ui.update, 1.0 / 2)
 		return ui
@@ -127,6 +127,7 @@ class SnagFactory(App):
 
 def main():
 	multiprocessing.set_start_method('spawn')
+	factory_logger.setLevel("INFO")
 	kivy.resources.resource_add_path(os.path.dirname(__file__) + "/assets")
 	SnagFactory().run()
 

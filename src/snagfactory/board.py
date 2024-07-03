@@ -1,16 +1,15 @@
 from snagrecover.utils import get_family
-from multiprocessing import Process, Queue, Lock
+from multiprocessing import Process, Queue
 import uuid
 from snagflash.fastboot import fastboot
 from snagrecover.utils import prettify_usb_addr, parse_usb_path
 import sys
 import os
 import os.path
-import snagrecover
-import time
 import logging
 import logging.handlers
-import random
+factory_logger = logging.getLogger("snagfactory")
+
 from enum import Enum
 
 MAX_LOG_RECORDS = 15000
@@ -46,9 +45,12 @@ class Board():
 			return self.last_log.get()
 		return ""
 
+	def set_phase(self, new_phase: BoardPhase):
+		factory_logger.info(f"board {self.path} phase: {self.phase} -> {new_phase}")
+		self.phase = new_phase
+
 	def update_state(self):
 		phase = self.phase
-		print(self.uid, phase)
 
 		# empty log queues or tasks can deadlock
 		while not self.log_queue.empty():
@@ -56,25 +58,30 @@ class Board():
 
 		if phase == BoardPhase.ROM:
 			config = get_recovery_config(self)
+			factory_logger.debug(f"board {self.path} starting recovery task")
 			self.task = Process(target=run_recovery, args=(config, self.soc_family, self.log_queue, self.last_log))
 			self.task.start()
-			self.phase = BoardPhase.RECOVERING
+			self.set_phase(BoardPhase.RECOVERING)
 		elif phase == BoardPhase.FLASHER:
 			args = get_fastboot_args(self)
+			factory_logger.debug(f"board {self.path} starting flashing task")
 			self.task = Process(target=run_flasher, args=(args, self.soc_family, self.log_queue, self.last_log))
 			self.task.start()
-			self.phase = BoardPhase.FLASHING
+			self.set_phase(BoardPhase.FLASHING)
 		elif phase in [BoardPhase.RECOVERING, BoardPhase.FLASHING]:
 			exitcode = self.task.exitcode
 
 			if exitcode == 0:
 				self.task.join()
 				if self.phase == BoardPhase.RECOVERING:
-					self.phase = BoardPhase.FLASHER
+					factory_logger.debug(f"board {self.path} end of recovery task")
+					self.set_phase(BoardPhase.FLASHER)
 				else:
-					self.phase = BoardPhase.DONE
+					factory_logger.debug(f"board {self.path} end of flashing task")
+					self.set_phase(BoardPhase.DONE)
 			elif (exitcode is not None and exitcode < 0) or not self.task.is_alive():
-				self.phase = BoardPhase.FAILURE
+				factory_logger.error(f"board {self.path} failure: exitcode {exitcode} is_alive {self.task.is_alive()}")
+				self.set_phase(BoardPhase.FAILURE)
 
 		elif phase == BoardPhase.FAILURE:
 			pass
@@ -90,6 +97,7 @@ class FastbootArgs:
 
 def get_fastboot_args(board):
 	images = board.images
+
 	args = {
 		"loglevel": "info",
 		"timeout": 60000,
@@ -126,6 +134,8 @@ def run_recovery(config, soc_family, log_queue, last_log):
 	logger.propagate = False
 	logger.handlers.clear()
 	log_handler = logging.handlers.QueueHandler(log_queue)
+	log_formatter = logging.Formatter(f"%(asctime)s,%(msecs)03d [{prettify_usb_addr(config["usb_path"])}][%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
+	log_handler.setFormatter(log_formatter)
 	status_handler = logging.handlers.QueueHandler(last_log)
 	logger.addHandler(log_handler)
 	logger.addHandler(status_handler)
@@ -152,6 +162,8 @@ def run_flasher(args, soc_family, log_queue, last_log):
 	logger.propagate = False
 	logger.handlers.clear()
 	log_handler = logging.handlers.QueueHandler(log_queue)
+	log_formatter = logging.Formatter(f"%(asctime)s,%(msecs)03d [{args.port}][%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
+	log_handler.setFormatter(log_formatter)
 	status_handler = logging.handlers.QueueHandler(last_log)
 	logger.addHandler(log_handler)
 	logger.addHandler(status_handler)
@@ -164,17 +176,4 @@ def run_flasher(args, soc_family, log_queue, last_log):
 		sys.exit(-1)
 
 	logger.handlers.clear()
-
-def scan_for_boards(batch):
-	board_list = []
-	for (usb_id, soc_model) in batch["boards"].items():
-		paths = snagrecover.utils.parse_usb_addr(usb_id, find_all=True)
-
-		if paths is None:
-			continue
-
-		for path in paths:
-			board_list.append(Board(prettify_usb_addr(path), soc_model, batch["soc_families"][soc_model]))
-
-	return board_list
 

@@ -77,7 +77,7 @@
         height: 100
         background_normal: "start.png"
         text: ""
-        on_press: app.root.running = 1;
+        on_press: app.root.start();
 
     Label:
         text: ""
@@ -140,14 +140,14 @@
             width: 80
             orientation: "vertical"
             padding: 5
-            spacing: 5
+            spacing: 10
 
         BoxLayout:
             orientation: "vertical"
 
             BoxLayout:
                 size_hint_y: 0.1
-                orientation: "horizontal"
+                orientation: "vertical"
                 padding: 10
 
                 canvas:
@@ -156,6 +156,12 @@
                     Rectangle:
                         size: self.size
                         pos: self.pos
+
+                Label:
+                    font_size: 15
+                    text: root.phase_label
+                    text_size: self.size
+                    valign: "middle"
 
                 Label:
                     font_size: 20
