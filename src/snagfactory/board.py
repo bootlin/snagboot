@@ -24,7 +24,7 @@ class BoardPhase(Enum):
 
 class Board():
 
-	def __init__(self, usb_path: str, soc_model: str, config: dict):
+	def __init__(self, usb_path: str, soc_model: str, config: dict, usb_ids: str):
 		self.path = usb_path
 		self.soc_model = soc_model
 		self.soc_family = get_family(soc_model)
@@ -37,8 +37,7 @@ class Board():
 		self.log_queue = Queue(MAX_LOG_RECORDS)
 		self.last_log = Queue(1)
 		self.session_log = []
-
-
+		self.usb_ids = usb_ids
 
 	def get_status(self):
 		if not self.last_log.empty():

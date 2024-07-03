@@ -4,6 +4,26 @@
     color: 0, 0, 0, 1
     font_size: 20
 
+<LoadLogDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            rootpath: app.root.session.snagfactory_logs
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: app.root.dismiss_popup()
+
+            Button:
+                text: "Load"
+                on_release: app.root.load_log(filechooser.selection)
+
 <SnagFactoryBoard>
     size: root.width, 100
     size_hint_y: None
@@ -78,6 +98,15 @@
         background_normal: "start.png"
         text: ""
         on_press: app.root.start();
+
+    Button:
+        size_hint: None, None
+        center_x: 0
+        width: 80
+        height: 61
+        background_normal: "view_logs.png"
+        text: ""
+        on_press: app.root.open_log_dialog();
 
     Label:
         text: ""

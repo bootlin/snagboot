@@ -2,6 +2,8 @@ from kivy.logger import Logger as kivy_logger
 kivy_logger.setLevel("WARNING")
 from kivy.app import App
 from kivy.uix.widget import Widget
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.popup import Popup
 from kivy.properties import (
     ListProperty, ObjectProperty, StringProperty
 )
@@ -18,6 +20,9 @@ factory_logger = logging.getLogger("snagfactory")
 import os
 
 LOG_VIEW_CAPACITY = 100
+
+class LoadLogDialog(FloatLayout):
+	pass
 
 class SnagFactoryBoard(Widget):
 	path = StringProperty("")
@@ -55,15 +60,17 @@ class SnagFactoryUI(Widget):
 		self._popup.dismiss()
 
 	def open_log_dialog(self):
-		content = LoadLogDialog(load_log=self.load_log, cancel_load_log=self.dismiss_popup)
+		if self.session.phase == "running":
+			return
+
+		content = LoadLogDialog()
 		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._popup.open()
 
-	def load_log(self, path, filename):
-		print("WIP")
-
-	def cancel_load_log(self):
-		print("WIP")
+	def load_log(self, filename):
+		self.session.load_log(filename[0])
+		self.dismiss_popup()
+		self.update_board_list()
 
 	def update_board_list(self):
 		for board_widget in self.board_widgets:
@@ -71,7 +78,7 @@ class SnagFactoryUI(Widget):
 
 		self.board_widgets = []
 
-		self.session.scan_for_boards()
+		self.session.update()
 
 		for board in self.session.board_list:
 			board_widget = SnagFactoryBoard()
@@ -79,7 +86,8 @@ class SnagFactoryUI(Widget):
 			self.widget_container.add_widget(board_widget)
 			self.board_widgets.append(board_widget)
 
-		self.status = f"{len(self.board_widgets)} boards found"
+		for board_widget in self.board_widgets:
+			board_widget.update()
 
 	def start(self):
 		self.phase_label = "running batch: batch.yaml"
@@ -92,16 +100,16 @@ class SnagFactoryUI(Widget):
 
 		if self.session.phase == "scanning":
 			self.update_board_list()
+			self.status = f"{len(self.board_widgets)} boards found"
 		elif self.session.phase == "running":
-
-			for board_widget in self.board_widgets:
-				board_widget.update()
-
+			self.phase_label = "runing factory batch..."
 			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
-
 		elif self.session.phase == "logview":
 			self.phase_label = "viewing session logs: " + os.path.basename(self.session.logfile_path)
+			self.status = f"done: {self.session.nb_done}    failed: {self.session.nb_failed}    other: {self.session.nb_other}"
+
 		if self.session.phase != "scanning" and self.verbose_log is not None:
+
 			self.log_boxlayout.size_hint_x = 0.5
 
 			board_widget = self.verbose_log
