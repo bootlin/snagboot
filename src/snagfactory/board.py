@@ -10,6 +10,8 @@ import logging
 import logging.handlers
 factory_logger = logging.getLogger("snagfactory")
 
+from snagfactory.fastboot import get_fastboot_args
+
 from enum import Enum
 
 MAX_LOG_RECORDS = 15000
@@ -30,8 +32,9 @@ class Board():
 		self.soc_family = get_family(soc_model)
 		self.task = None
 		self.phase = BoardPhase.ROM
-		self.firmware = config["firmware"]
-		self.images = config["images"]
+
+		self.config = config
+
 		self.uid = uuid.uuid4()
 
 		self.log_queue = Queue(MAX_LOG_RECORDS)
@@ -89,36 +92,12 @@ class Board():
 		else:
 			pass
 
-class FastbootArgs:
-	def __init__(self, d):
-		for key, value in d.items():
-			setattr(self, key, value)
-
-def get_fastboot_args(board):
-	images = board.images
-
-	args = {
-		"loglevel": "info",
-		"timeout": 60000,
-		"port": board.path,
-		"fastboot_cmd": [],
-	}
-
-	for (target, image) in images.items():
-		print(target, image)
-		args["fastboot_cmd"] += [
-			f"download:{image}",
-			f"flash:{target}",
-		]
-
-	return FastbootArgs(args)
-
 def get_recovery_config(board):
 	return {
 		"soc_model": board.soc_model,
 		"soc_family": board.soc_family,
 		"usb_path": parse_usb_path(board.path),
-		"firmware": board.firmware,
+		"firmware": board.config["firmware"],
 		"loglevel": "info",
 	}
 
