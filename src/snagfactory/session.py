@@ -25,6 +25,11 @@ results:
 {}
 """
 
+default_batch = {
+"boards": {},
+"soc_families": {},
+}
+
 class SnagFactorySession():
 	MAX_LOG_SIZE = 1000
 
@@ -57,9 +62,14 @@ class SnagFactorySession():
 				self.nb_other = len(self.board_list) - self.nb_done - self.nb_failed
 				self.close()
 
-	def __init__(self, batch_path: str):
+	def __init__(self, batch_path):
 		self.start_ts = time.time()
-		self.batch = read_config(batch_path)
+
+		if batch_path is None:
+			self.batch = default_batch
+		else:
+			self.batch = read_config(batch_path)
+
 		self.board_list = self.scan_for_boards()
 		self.phase = "scanning"
 
@@ -71,7 +81,6 @@ class SnagFactorySession():
 		self.snagfactory_logs = snagboot_data + "/snagfactory/logs"
 		if not os.path.exists(self.snagfactory_logs):
 			os.makedirs(self.snagfactory_logs)
-
 
 	def start(self):
 		if self.phase != "scanning":

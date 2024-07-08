@@ -4,14 +4,21 @@
     color: 0, 0, 0, 1
     font_size: 20
 
-<LoadLogDialog>:
+<SnagFactoryFileDialog>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         size: root.size
         pos: root.pos
         orientation: "vertical"
         FileChooserListView:
             id: filechooser
-            rootpath: app.root.session.snagfactory_logs
+            rootpath: root.rootpath
 
         BoxLayout:
             size_hint_y: None
@@ -19,10 +26,14 @@
             Button:
                 text: "Cancel"
                 on_release: app.root.dismiss_popup()
+                background_normal: ""
+                background_color: 1, 0, 0
 
             Button:
                 text: "Load"
-                on_release: app.root.load_log(filechooser.selection)
+                on_release: root.handle_load(filechooser.selection)
+                background_normal: ""
+                background_color: 0.5, 0.5, 1
 
 <SnagFactoryBoard>
     size: root.width, 100
@@ -99,6 +110,43 @@
         text: ""
         on_press: app.root.start();
 
+    ToggleButton:
+        size_hint: None, None
+        center_x: 0
+        width: 70
+        height: 37
+        background_normal: "boards.png"
+        background_down: "boards.png"
+        background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
+        state: "down"
+        text: ""
+        group: "main_tab"
+        on_press: app.root.view_board_list();
+
+    ToggleButton:
+        size_hint: None, None
+        center_x: 0
+        width: 80
+        height: 76
+        background_normal: "config.png"
+        background_down: "config.png"
+        background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
+        text: ""
+        group: "main_tab"
+        on_press: app.root.view_batch_config()
+
+    Label:
+        test: ""
+
+    Button:
+        size_hint: None, None
+        center_x: 0
+        width: 80
+        height: 61
+        background_normal: "load_config.png"
+        text: ""
+        on_press: app.root.open_batch_dialog();
+
     Button:
         size_hint: None, None
         center_x: 0
@@ -107,9 +155,6 @@
         background_normal: "view_logs.png"
         text: ""
         on_press: app.root.open_log_dialog();
-
-    Label:
-        text: ""
 
 
 <SnagFactoryLogView@BoxLayout>
@@ -151,6 +196,8 @@
     log_boxlayout: log_boxlayout
     log_area: log_boxlayout.log_area
     log_board_path: log_boxlayout.log_board_path
+    main_page: main_page
+    batch_config: batch_config
 
     canvas:
         Color:
@@ -169,53 +216,64 @@
             width: 80
             orientation: "vertical"
             padding: 5
-            spacing: 10
+            spacing: 20
 
-        BoxLayout:
-            orientation: "vertical"
+        PageLayout:
+            id: main_page
+            border: 0
+            anim_kwargs: {'d': 0.2, 't': 'in_quad'}
 
             BoxLayout:
-                size_hint_y: 0.1
-                orientation: "vertical"
-                padding: 10
+                orientation: "horizontal"
 
-                canvas:
-                    Color:
-                        rgb: 0.90, 0.90, 0.90
-                    Rectangle:
-                        size: self.size
-                        pos: self.pos
+                BoxLayout:
+                    orientation: "vertical"
 
-                Label:
-                    font_size: 15
-                    text: root.phase_label
-                    text_size: self.size
-                    valign: "middle"
+                    BoxLayout:
+                        size_hint_y: 0.1
+                        orientation: "vertical"
+                        padding: 10
 
-                Label:
-                    font_size: 20
-                    text: root.status
-                    text_size: self.size
-                    valign: "middle"
+                        canvas:
+                            Color:
+                                rgb: 0.90, 0.90, 0.90
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
 
-            ScrollView:
-                id: board_scrollview
-                size_hint_x: 1
-                do_scroll_x: False
-                scroll_type: ["bars"]
+                        Label:
+                            font_size: 15
+                            text: root.phase_label
+                            text_size: self.size
+                            valign: "middle"
 
-                GridLayout:
-                    id: widget_container
-                    pos: board_scrollview.pos
-                    height: self.minimum_height
-                    width: board_scrollview.width
-                    cols: 1
-                    size_hint_y: None
-                    spacing: 20
-                    padding: 5
+                        Label:
+                            font_size: 20
+                            text: root.status
+                            text_size: self.size
+                            valign: "middle"
 
-        SnagFactoryLogView:
-            id: log_boxlayout
-            size_hint_x: 0
-            orientation: "vertical"
+                    ScrollView:
+                        id: board_scrollview
+                        do_scroll_x: False
+                        scroll_type: ["bars"]
+
+                        GridLayout:
+                            id: widget_container
+                            pos: board_scrollview.pos
+                            height: self.minimum_height
+                            width: board_scrollview.width
+                            cols: 1
+                            size_hint_y: None
+                            spacing: 20
+                            padding: 5
+
+                SnagFactoryLogView:
+                    id: log_boxlayout
+                    size_hint_x: 0
+                    orientation: "vertical"
+
+            SnagFactoryBatchConfig:
+                id: batch_config
+
 

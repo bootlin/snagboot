@@ -70,7 +70,7 @@ def flash_image_to_part(board, image: str, part, part_start = None):
 
 	return cmds
 
-def flash_partition_table(partitions: list):
+def flash_partition_table(device_num: int, partitions: list):
 	gpt_patterns = {
 	"name": "^[\w][\w\-]*$",
 	"start": "^(\-|(\d+M?))$",
@@ -97,7 +97,7 @@ def flash_partition_table(partitions: list):
 
 		partitions_env = partitions_env.rstrip(",") + ";"
 
-	return ["oem_run:setenv partitions " + "'" + partitions_env + "'", "oem_format"]
+	return ["oem_run:setenv partitions " + "'" + partitions_env + "'", "oem_format", f"oem_run:part list mmc {device_num}"]
 
 def convert_from_suffix_int(n):
 	return 1048576 * int(n[:-1]) if "M" in n else int(n)
@@ -134,7 +134,7 @@ def get_fastboot_args(board):
 	elif "image" in board.config:
 		args["fastboot_cmd"] += flash_image_to_part(board, board.config["image"], 0, 0)
 	elif "partitions" in board.config:
-		args["fastboot_cmd"] += flash_partition_table(board.config["partitions"])
+		args["fastboot_cmd"] += flash_partition_table(board.config["device-num"], board.config["partitions"])
 		args["fastboot_cmd"] += flash_partition_images(board)
 	else:
 		raise ValueError("Invalid batch configuration file: specify either 'image' or 'partitions' for each soc family!")
