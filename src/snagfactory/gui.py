@@ -120,6 +120,7 @@ class SnagFactoryUI(Widget):
 
 class SnagFactory(App):
 	def build(self):
+		self.icon = os.path.dirname(__file__) + "/assets/lab_penguins.png"
 		Builder.load_file(os.path.dirname(__file__) + "/gui.kv")
 
 		session = SnagFactorySession("batch.yaml")
