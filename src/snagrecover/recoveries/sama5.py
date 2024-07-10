@@ -94,7 +94,7 @@ def get_serial_port_path(dev) -> str:
 
 def main():
 	# CONNECT TO SAM-BA MONITOR
-	print("Connecting to SAM-BA monitor...")
+	logger.info("Connecting to SAM-BA monitor...")
 	soc_model = recovery_config["soc_model"]
 
 	dev = get_usb(recovery_config["usb_path"])
@@ -108,33 +108,33 @@ def main():
 		monitor = sambamon.SambaMon(port)
 		memops = memory_ops.MemoryOps(monitor)
 		logger.info("SAM-BA Monitor version string: " + monitor.get_version())
-		print("Done connecting")
+		logger.info("Done connecting")
 
 		# CHECK BOARD ID
-		print("Checking chip id...")
+		logger.info("Checking chip id...")
 		if not check_id(memops):
 			raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
 
-		print("Done checking")
+		logger.info("Done checking")
 		if soc_model == "sama5d2":
 			# reconfigure L2 cache as SRAM
 			memops.write32(SFR_L2CC_HRAMC, 0x00)
 
 		# INITIALIZE CLOCK TREE
-		print("Initializing clock tree...")
+		logger.info("Initializing clock tree...")
 		run_firmware(port, "lowlevel")
-		print("Done initializing clock tree")
+		logger.info("Done initializing clock tree")
 
 
 		# INITIALIZE EXTRAM
-		print("Initializing external RAM...")
+		logger.info("Initializing external RAM...")
 		run_firmware(port, "extram")
-		print("Done initializing RAM")
+		logger.info("Done initializing RAM")
 
 		# REMAP ROM ADDRESSES
 		memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
 
 		# DOWNLOAD U-BOOT
-		print("Installing U-Boot...")
+		logger.info("Installing U-Boot...")
 		run_firmware(port, "u-boot")
-		print("Done!")
+		logger.info("Done!")

@@ -63,22 +63,26 @@ Templates:
 
 	# setup logging
 	logger = logging.getLogger("snagrecover")
-	if args.loglevel == "silent":
-		logger.addHandler(logging.NullHandler())
-	else:
+	logger.setLevel(logging.DEBUG)
+	log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+
+	stdout_handler = logging.StreamHandler(sys.stdout)
+	stdout_handler.setLevel(logging.INFO)
+	stdout_handler.setFormatter(log_formatter)
+	logger.addHandler(stdout_handler)
+
+	if args.loglevel != "silent":
 		log_handler = logging.FileHandler(args.logfile, encoding="utf-8")
-		log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 		log_handler.setFormatter(log_formatter)
-		logger.addHandler(log_handler)
 		if args.loglevel == "debug":
-			logger.setLevel(logging.DEBUG)
+			log_handler.setLevel(logging.DEBUG)
 		elif args.loglevel == "info":
-			logger.addHandler(log_handler)
-			logger.setLevel(logging.INFO)
+			log_handler.setLevel(logging.INFO)
+		logger.addHandler(log_handler)
 
 	# show version
 	if args.version:
-		print(f"Snagboot v{__version__}")
+		logger.info(f"Snagboot v{__version__}")
 		sys.exit(0)
 
 	# print template
@@ -124,13 +128,12 @@ Templates:
 	# call recovery flow
 	soc_model = config.recovery_config["soc_model"]
 	soc_family = config.recovery_config["soc_family"]
-	print(f"Starting recovery of {soc_model} board")
 	logger.info(f"Starting recovery of {soc_model} board")
 
 	recovery = get_recovery(soc_family)
 	recovery()
 
-	print(f"Done recovering {soc_model} board")
+	logger.info(f"Done recovering {soc_model} board")
 	if args.loglevel != "silent":
-		print(f"Logs were appended to {args.logfile}")
+		logger.info(f"Logs were appended to {args.logfile}")
 	logger.info(f"Done recovering {soc_model} board")

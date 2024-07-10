@@ -45,7 +45,7 @@ def main():
 	dfu_cmd = dfu.DFU(dev)
 	run_firmware(dev, "tf-a")
 	if soc_model == "stm32mp13":
-		print("Sending detach command to SPL...")
+		logger.info("Sending detach command to SPL...")
 		phase_id = dfu_cmd.stm32_get_phase()
 		dfu_cmd.detach(phase_id)
 
@@ -58,7 +58,7 @@ def main():
 		if part0 is None:
 			raise Exception("No DFU altsetting found with iInterface='Partition0*'")
 		if phase_id == part0:
-			print("Downloading flash layout...")
+			logger.info("Downloading flash layout...")
 			layout_blob = flashlayout.build_image()
 			dfu_cmd.download_and_run(layout_blob, part0, offset=0, size=len(layout_blob))
 
@@ -80,7 +80,7 @@ def main():
 	run_firmware(dev, "fip")
 
 	# DETACH DFU DEVICE
-	print("Sending detach command to U-Boot...")
+	logger.info("Sending detach command to U-Boot...")
 	phase_id = dfu_cmd.stm32_get_phase()
 	dfu_cmd.detach(phase_id)
 

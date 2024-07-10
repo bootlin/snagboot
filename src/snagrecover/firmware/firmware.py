@@ -35,7 +35,7 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 		partprefix = "@Partition3"
 	else:
 		cli_error(f"unsupported firmware {fw_name}")
-	print("Searching for partition id...")
+	logger.info("Searching for partition id...")
 	partid = dfu.search_partid(port, partprefix, match_prefix=True)
 	if partid is None and partprefix == "@Partition3":
 		partprefix = "@SSBL"
@@ -43,9 +43,9 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partprefix}*'")
 	dfu_cmd = dfu.DFU(port)
-	print("Downloading file...")
+	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
-	print("Done")
+	logger.info("Done")
 	return None
 
 def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
@@ -62,16 +62,16 @@ def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 		partname = "u-boot.img"
 	else:
 		cli_error(f"unsupported firmware {fw_name}")
-	print("Searching for partition id...")
+	logger.info("Searching for partition id...")
 	partid = dfu.search_partid(dev, partname)
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partname}'")
 	dfu_cmd = dfu.DFU(dev, stm32=False)
-	print("Downloading file...")
+	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
-	print("Done")
+	logger.info("Done")
 	if fw_name == "u-boot":
-		print("Sending detach command...")
+		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
@@ -89,9 +89,9 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
 
-	print(f"Installing firmware {fw_name}")
+	logger.info(f"Installing firmware {fw_name}")
 	if subfw_name != "":
-		print(f"Subfirmware: {subfw_name}")
+		logger.info(f"Subfirmware: {subfw_name}")
 	if soc_family == "sama5":
 		from snagrecover.firmware.sama5_fw import sama5_run
 		sama5_run(port, fw_name, fw_blob)
@@ -110,5 +110,5 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		am62x_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
-	print(f"Done installing firmware {fw_name}")
+	logger.info(f"Done installing firmware {fw_name}")
 

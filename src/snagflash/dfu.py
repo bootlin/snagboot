@@ -24,28 +24,28 @@ from snagrecover.utils import parse_usb_addr, get_usb, cli_error, reset_usb, acc
 from usb.core import Device
 
 def dfu_detach(dev: Device, altsetting: int = 0):
-	print("Sending DFU detach command...")
+	logger.info("Sending DFU detach command...")
 	dfu_cmd = dfu.DFU(dev, stm32=False)
 	dfu_cmd.get_status()
 	dfu_cmd.detach(altsetting)
-	print("Done")
+	logger.info("Done")
 
 def dfu_download(dev: Device, altsetting: int, path: str):
 	with open(path, "rb") as file:
 		blob = file.read(-1)
 	size = len(blob)
-	print(f"Downloading {path} to altsetting {altsetting}...")
+	logger.info(f"Downloading {path} to altsetting {altsetting}...")
 	logger.debug(f"DFU config altsetting:{altsetting} size:0x{size:x} path:{path}")
 	dfu_cmd = dfu.DFU(dev, stm32=False)
 	dfu_cmd.get_status()
 	dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
 	dfu_cmd.get_status()
-	print("Done")
+	logger.info("Done")
 
 def dfu_reset(dev: Device):
-	print("Sending DFU reset command...")
+	logger.info("Sending DFU reset command...")
 	reset_usb(dev)
-	print("Done")
+	logger.info("Done")
 
 def dfu_cli(args):
 	if args.dfu_config is None and not args.dfu_detach and not args.dfu_reset:

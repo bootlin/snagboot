@@ -93,7 +93,7 @@ def init_config(args: list):
 			fw_configs = {**fw_configs, **fw}
 		recovery_config["firmware"] = fw_configs
 		if args.firmware_file:
-			print("Warning: You passed firmware configuration via files AND direct CLI arguments.")
+			logger.warning("You passed firmware configuration via files AND direct CLI arguments!")
 	if args.firmware_file:
 		# get firmware configs
 		for path in args.firmware_file:

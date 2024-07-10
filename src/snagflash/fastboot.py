@@ -25,7 +25,8 @@ logger = logging.getLogger("snagflash")
 
 def fastboot(args):
 	if (args.port is None):
-		print("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
+		logger.info("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
+		logger.error("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
 		sys.exit(-1)
 
 	usb_addr = parse_usb_addr(args.port)
@@ -34,17 +35,17 @@ def fastboot(args):
 
 	dev = get_usb(usb_addr)
 	dev.default_timeout = int(args.timeout)
-	extra_args = args.factory is not None
 	fast = fb.Fastboot(dev)
 	# this is mostly there to dodge a linter error
-	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out} packet size {fast.max_size}")
+	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out}")
+	logger.info(args.fastboot_cmd)
 	for cmd in args.fastboot_cmd:
 		cmd = cmd.split(":", 1)
 		cmd, args = cmd[0], cmd[1:]
 		cmd = cmd.replace("-", "_")
-		print(f"Sending command {cmd} with args {args}")
+		logger.info(f"Sending command {cmd} with args {args}")
 		if cmd == "continue":
 			cmd = "fbcontinue"
 		getattr(fast, cmd)(*args)
-	print("Done")
+	logger.info("Done")
 

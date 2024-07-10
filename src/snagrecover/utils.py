@@ -21,11 +21,11 @@ def is_usb_path(usb_addr) -> bool:
 	return isinstance(usb_addr, tuple) and isinstance(usb_addr[1], tuple)
 
 def access_error(dev_type: str, dev_addr: str):
-	print(f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights", file=sys.stderr)
+	logger.info(f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights", file=sys.stderr)
 	sys.exit(-1)
 
 def cli_error(error: str):
-	print(f"CLI error: {error}", file=sys.stderr)
+	logger.info(f"CLI error: {error}", file=sys.stderr)
 	sys.exit(-1)
 
 def parse_usb_ids(usb_id: str) -> tuple:
@@ -54,7 +54,7 @@ def find_usb_paths(usb_id: tuple) -> list:
 	(vid,pid) = usb_id
 	usb_paths = []
 
-	print(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
+	logger.info(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
 
 	devices = usb.core.find(idVendor=vid, idProduct=pid, find_all=True)
 
@@ -77,7 +77,7 @@ def parse_usb_addr(usb_addr: str, find_all=False) -> tuple:
 			return usb_paths
 		else:
 			if len(usb_paths) > 1:
-				print(f"Found too many ({len(usb_paths)}) possible results matching {usb_addr}!")
+				logger.info(f"Found too many ({len(usb_paths)}) possible results matching {usb_addr}!")
 				logger.error(f"Too many results for address {usb_addr}!\{str(usb_paths)}")
 				access_error("USB", usb_addr)
 
@@ -111,10 +111,10 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 				logger.warning(f"Failed to get configuration descriptor for device at {pretty_addr}!")
 
 		elif nb_devs > 1:
-			print(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
+			logger.info(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
 			logger.warning(f"Too many results for address {pretty_addr}!\{str(dev_list)}")
 
-		print(f"USB retry {i + 1}/{USB_RETRIES}")
+		logger.info(f"USB retry {i + 1}/{USB_RETRIES}")
 		time.sleep(USB_INTERVAL)
 
 

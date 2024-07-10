@@ -218,7 +218,7 @@ class HIDDevice():
 
 		cur_cfg = self.usb_dev.get_active_configuration()
 		if cur_cfg.bConfigurationValue != self.main_cfg.bConfigurationValue:
-			print(f"Expected cfg {self.main_cfg.bConfigurationValue} but device {pretty_addr} has cfg {cur_cfg.bConfigurationValue} instead, attempting to set cfg...")
+			logger.info(f"Expected cfg {self.main_cfg.bConfigurationValue} but device {pretty_addr} has cfg {cur_cfg.bConfigurationValue} instead, attempting to set cfg...")
 			self.usb_dev.set_configuration(self.main_cfg.bConfigurationValue)
 
 		if self.usb_dev.is_kernel_driver_active(self.main_intf.bInterfaceNumber):

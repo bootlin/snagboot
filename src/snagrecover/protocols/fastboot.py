@@ -76,9 +76,9 @@ class Fastboot():
 			ret = self.dev.read(self.ep_in, 256, timeout=self.timeout)
 			status = bytes(ret[:4])
 			if status == b"INFO":
-				print(f"(bootloader) {bytes(ret[4:256])}")
+				logger.info(f"(bootloader) {bytes(ret[4:256])}")
 			elif status == b"TEXT":
-				print(f"(bootloader) {bytes(ret[4:256])}", end="")
+				logger.info(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
 				raise Exception(f"Fastboot fail with message: {bytes(ret[4:256])}")
 			elif status == b"OKAY":
@@ -96,7 +96,7 @@ class Fastboot():
 			ret = self.dev.read(self.ep_in, 256, timeout = self.timeout)
 			status = bytes(ret[:4])
 			if status in [b"INFO", b"TEXT"]:
-				print(f"(bootloader) {bytes(ret[4:256])}", end="")
+				logger.info(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
 				raise Exception(f"Fastboot fail with message: {bytes(ret[4:256])}")
 			elif status == b"OKAY":
@@ -107,7 +107,7 @@ class Fastboot():
 	def getvar(self, var: str):
 		packet = b"getvar:" + var.encode("ascii") + b"\x00"
 		ret = self.cmd(packet)
-		print(f"(bootloader) {var} value {ret}")
+		logger.info(f"(bootloader) {var} value {ret}")
 
 	def download(self, path: str):
 		if self.extra_args and "#" in path:

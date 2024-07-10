@@ -20,6 +20,9 @@
 import usb
 import time
 import functools
+import logging
+logger = logging.getLogger("snagrecover")
+
 from snagrecover.protocols import fel
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
@@ -47,12 +50,12 @@ def main():
 		if dev is None:
 			if i == USB_RETRY - 1:
 				access_error("USB FEL", prettify_usb_addr(usb_addr))
-			print("Failed to find device, retrying...")
+			logger.info("Failed to find device, retrying...")
 			continue
 		try:
 			dev.reset()
 		except usb.core.USBError as err:
-			print("Failed to reset USB device, retrying...")
+			logger.info("Failed to reset USB device, retrying...")
 			if i == USB_RETRY - 1:
 				raise Exception("Maximum retry count exceeded") from err
 			time.sleep(2)
@@ -65,12 +68,12 @@ def main():
 		if dev is None:
 			if i == USB_RETRY - 1:
 				access_error("USB FEL", prettify_usb_addr(usb_addr))
-			print("Failed to find device, retrying...")
+			logger.info("Failed to find device, retrying...")
 			continue
 		try:
 			dev.set_configuration()
 		except usb.core.USBError as err:
-			print("Failed to initialize device, retrying...")
+			logger.info("Failed to initialize device, retrying...")
 			if i == USB_RETRY - 1:
 				raise Exception("Maximum retry count exceeded") from err
 			time.sleep(1)

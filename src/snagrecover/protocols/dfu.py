@@ -144,14 +144,14 @@ class DFU():
 					# this fails on AM625, but is still necessary
 					state = self.get_status()
 				except usb.core.USBError:
-					print("Could not read status after end of manifest phase")
+					logger.info("Could not read status after end of manifest phase")
 					return True
 			elif state == DFU.state_codes["dfuMANIFEST-WAIT-RESET"]:
 				self.detach()
 				return True
 
 		if show_progress:
-			print("")
+			logger.info("")
 		logger.info("Done manifesting firmware")
 		return True
 

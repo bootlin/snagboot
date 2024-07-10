@@ -79,7 +79,7 @@ def test_node_strprop(dt: libfdt.Fdt, node: int, prop: str, value: str) -> bool:
 	return prop != -1 and prop.as_str() == value
 
 def write_node_img(port: fel.FEL, dt: libfdt.Fdt, fw_blob: bytes, node: int, dtb_addr: int = None) -> tuple:
-	print(f"Downloading {dt.get_name(node)}...")
+	logger.info(f"Downloading {dt.get_name(node)}...")
 	logger.info(f"Writing FIT img node {dt.get_name(node)}")
 	data_size = dt.getprop(node, "data-size", [libfdt.FDT_ERR_NOTFOUND])
 	data_offset = dt.getprop(node, "data-offset", [libfdt.FDT_ERR_NOTFOUND])
@@ -106,7 +106,7 @@ def write_node_img(port: fel.FEL, dt: libfdt.Fdt, fw_blob: bytes, node: int, dtb
 		ret_size = len(data)
 	else:
 		logger.warning(f"Empty image {node.name}! skipping...")
-	print("Done")
+	logger.info("Done")
 	return (addr, ret_size)
 
 def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
@@ -158,7 +158,7 @@ def write_legacy(port: fel.FEL, fw_blob: bytes):
 	Write U-Boot image, assuming legacy format described
 	in U-Boot/include/image.h
 	"""
-	print("Checking checksums...")
+	logger.info("Checking checksums...")
 	# check header checksum
 	hdr_size = 64
 	hdr_hchecksum = int.from_bytes(fw_blob[4:8], "big")
@@ -174,9 +174,9 @@ def write_legacy(port: fel.FEL, fw_blob: bytes):
 	size = int.from_bytes(fw_blob[12:16], "big")
 	load = int.from_bytes(fw_blob[16:20], "big")
 	memops = memory_ops.MemoryOps(port)
-	print("Downloading file...")
+	logger.info("Downloading file...")
 	memops.write_blob(fw_blob, load, hdr_size, size)
-	print("Done")
+	logger.info("Done")
 	return load
 
 def region_intersects(start1: int, size1: int, start2: int, size2: int) -> bool:
@@ -285,11 +285,11 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	You can check the linux-sunxi wiki for more details on
 	this subject: https://linux-sunxi.org/FEL/USBBoot
 	"""
-	print("Reading SoC info...")
+	logger.info("Reading SoC info...")
 	with open(os.path.dirname(__file__) + "/soc_info.yaml", "r") as file:
 		soc_info = yaml.safe_load(file)[recovery_config["soc_model"]]
 	# check SPL header magic and checksum
-	print("Checking header and checksum...")
+	logger.info("Checking header and checksum...")
 	if fw_blob[4:12] != b"eGON.BT0":
 		raise ValueError("eGON header not found at beginning of SPL image")
 	hdr_checksum = 2 * int.from_bytes(fw_blob[12:16], "little") - 0x5f0a6c39
@@ -316,7 +316,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	# for A10, A10s, A13, R8: enable L2 cache
 	memops = memory_ops.MemoryOps(port)
 	if recovery_config["soc_model"] in ["a10", "a10s", "a13", "r8"]:
-		print("Enabling L2 cache")
+		logger.info("Enabling L2 cache")
 		logger.info("enabling L2 cache")
 
 		"""
@@ -336,7 +336,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 		memops.jump(soc_info["safe_addr"])
 
 	# configure MMU
-	print("Disabling MMU...")
+	logger.info("Disabling MMU...")
 	ret = mmu.check(port, soc_info)
 	mmu.disable(port, soc_info)
 	must_restore_mmu = False
@@ -353,7 +353,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	if region_intersects(spl_start, spl_len, soc_info["thunk"]["start"], soc_info["thunk"]["size"]):
 		raise ValueError("SRAM area for thunk overlaps with SRAM area for SPL")
 
-	print("Writing SPL fragments...")
+	logger.info("Writing SPL fragments...")
 	overrun_regions = write_spl_fragments(port, fw_blob, spl_len, soc_info)
 
 	# copy spl load address and ROM region info into thunk binary
@@ -363,18 +363,18 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	# assemble and write thunk
 	logger.debug(f"overrun regions: {overrun_regions}")
 	full_thunk = thunk_blob + spl_start.to_bytes(4, "little") + overrun_regions
-	print("Writing Thunk...")
+	logger.info("Writing Thunk...")
 	memops.write_blob(full_thunk, soc_info["thunk"]["start"], 0, len(full_thunk))
 
 	# execute thunk
-	print("Jumping to Thunk...")
+	logger.info("Jumping to Thunk...")
 	memops.jump(soc_info["thunk"]["start"])
 
 	# apparently this delay is sometimes necessary
 	time.sleep(0.5)
 	# restore MMU if necessary
 	if must_restore_mmu:
-		print("Restoring MMU...")
+		logger.info("Restoring MMU...")
 		mmu.restore(port, soc_info, tt, tt_addr)
 
 	# check return code
@@ -395,7 +395,7 @@ def sunxi_uboot(port: fel.FEL, fw_blob: bytes, dt_name: str):
 	else:
 		raise ValueError("Invalid U-Boot image format")
 
-	print("Jumping to U-Boot...")
+	logger.info("Jumping to U-Boot...")
 	if arm64_entry:
 		with open(os.path.dirname(__file__) + "/soc_info.yaml", "r") as file:
 			soc_info = yaml.safe_load(file)[recovery_config["soc_model"]]
@@ -416,10 +416,10 @@ def sunxi_run(port, fw_name: str, fw_blob: bytes):
 		"""
 		sunxi_uboot(port, fw_blob, None)
 	elif fw_name == "u-boot-with-spl":
-		print("Running SPL stage")
+		logger.info("Running SPL stage")
 		logger.info("Running SPL part of image")
 		(spl_len, dt_name) = sunxi_spl(port, fw_blob)
-		print("Running U-Boot stage")
+		logger.info("Running U-Boot stage")
 		logger.info("Running U-Boot part of image")
 		uboot_offset = max(spl_len, UBOOT_MIN_OFFSET)
 		sunxi_uboot(port, fw_blob[uboot_offset:], dt_name)
