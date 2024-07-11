@@ -202,6 +202,10 @@ class SnagFactoryUI(Widget):
 			ts = time.time()
 			self.phase_label = "running factory batch... |" + "  " * int(ts % 3) + "==" + "  " * int(3 - (ts % 3))  + "|"
 			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
+
+			for board_widget in self.board_widgets:
+				board_widget.update()
+
 		elif self.session.phase == "logview":
 			self.phase_label = "viewing session logs: " + os.path.basename(self.session.logfile_path)
 			self.status = f"done: {self.session.nb_done}    failed: {self.session.nb_failed}    other: {self.session.nb_other}"
