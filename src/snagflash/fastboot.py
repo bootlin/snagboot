@@ -35,7 +35,7 @@ def fastboot(args):
 
 	dev = get_usb(usb_addr)
 	dev.default_timeout = int(args.timeout)
-	fast = fb.Fastboot(dev)
+	fast = fb.Fastboot(dev, extra_args = hasattr(args, "factory"))
 	# this is mostly there to dodge a linter error
 	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out}")
 	logger.info(args.fastboot_cmd)
