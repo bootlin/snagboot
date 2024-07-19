@@ -49,18 +49,25 @@ class SnagFactorySoCFamily(BoxLayout):
 
 		self.add_widget(main_grid)
 
+		parts_widget = BoxLayout(orientation="vertical")
+
+		if "boot0" in config:
+			parts_widget.add_widget(Label(text=f"boot part 0: name {config['boot0']['name']} image {config['boot0']['image']}"))
+
+		if "boot1" in config:
+			parts_widget.add_widget(Label(text=f"boot part 1: name {config['boot1']['name']} image {config['boot1']['image']}"))
+
 		if "partitions" in config:
-			parts_widget = BoxLayout(orientation="vertical")
 
 			parts_widget.add_widget(Label(text="Partition table to create:"))
 
 			for partition in config["partitions"]:
 				prop_string = " ".join([f"{key}:{value}" for key,value in partition.items()])
 				parts_widget.add_widget(Label(text=prop_string))
-
-			self.add_widget(parts_widget)
 		else:
-			self.add_widget(Label(text=f"Image to flash to offset 0: {config['image']}"))
+			parts_widget.add_widget(Label(text="WIP"))
+
+		self.add_widget(parts_widget)
 
 class SnagFactoryFileDialog(FloatLayout):
 	rootpath = StringProperty("")

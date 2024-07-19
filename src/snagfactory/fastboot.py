@@ -120,6 +120,9 @@ def flash_partition_images(board):
 
 	return cmds
 
+def emmc_flash_bootpart(board, config: dict):
+	return [f"download:{config['image']}", f"flash:{config['name']}"]
+
 def get_fastboot_args(board):
 	args = {
 		"loglevel": "info",
@@ -128,6 +131,12 @@ def get_fastboot_args(board):
 		"factory": True,
 		"fastboot_cmd": [],
 	}
+
+	if "boot0" in board.config:
+		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot0"])
+
+	if "boot1" in board.config:
+		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot1"])
 
 	if "image" in board.config and "partitions" in board.config:
 		raise ValueError("Invalid batch configuration file: specify either 'image' or 'partitions' for one soc family, not both!")
