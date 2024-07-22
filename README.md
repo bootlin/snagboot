@@ -20,7 +20,7 @@ i.MX6/7/8/93, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
 [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml) or run `snagrecover
 --list-socs` for a more precise list of supported SoCs.
 
-## Installation
+## Installation on Linux
 
 System requirements:
 
@@ -68,9 +68,41 @@ $ ./install.sh
 There is also an [AUR package](https://aur.archlinux.org/packages/snagboot)
 available.
 
+## Installation on Windows 10 or 11
+
+**Note:** Am335x devices are not supported on Windows!
+
+Please install the following software:
+
+- Python 3.8 or later: https://www.python.org/downloads/windows/
+
+- Swig: http://prdownloads.sourceforge.net/swig/swigwin-4.2.1.zip
+
+- Zadig: https://github.com/pbatard/libwdi/releases/download/v1.5.1/zadig-2.9.exe
+
+- libusb-win32: https://github.com/mcuee/libusb-win32/releases/download/release_1.4.0.0/libusb-win32-bin-1.4.0.0.zip
+
+For libusb-win32, you should extract the zip archive and run the executable at bin/amd64/install-filter-win.exe
+
+After installing Python, Swig and libusb, you should add them to your PATH environment variable:
+
+- Open the start menu and type « environment variable » into the search bar
+- click on « Edit environment variables for your account »
+- In « User variables », click on « Path » then « Edit »
+- In the edit window, add four new paths:
+
+```
+C:\Users\path\to\swigwin-4.2.1\swigwin-4.2.1
+C:\users\yourusername\appdata\roaming\python\python312\site-packages\libusb\_platform\_windows\x64
+C:\users\yourusername\appdata\roaming\python\python312\site-packages\libusb\_platform\_windows\x32
+C:\Users\yourusername\AppData\Roaming\Python\Python312\Scripts
+```
+
+setuptools: Run `pip install setuptools` then  `pip install snagboot` in powershell
+
 ## Usage guide
 
-**Note:** Running snagboot as root is not recommended and will typically not
+**Note:** On Linux, running snagboot as root is not recommended and will typically not
 work, since it is probably installed for the current user only
 
 To recover and reflash a board using snagboot:
@@ -80,6 +112,11 @@ To recover and reflash a board using snagboot:
 3. [Build or download the firmware binaries necessary for recovering and reflashing the board.](https://github.com/bootlin/snagboot/blob/main/docs/fw_binaries.md)
 4. [Run snagrecover](https://github.com/bootlin/snagboot/blob/main/docs/snagrecover.md) and check that the recovery was a success i.e. that U-Boot is running properly.
 5. [Run snagflash](https://github.com/bootlin/snagboot/blob/main/docs/snagflash.md) to reflash the board
+
+
+
+For recovering and flashing large batches of boards efficiently, you may use the Snagfactory application which is included in Snagboot. Usage instructions for Snagfactory are available at [snagfactory.md](docs/snagfactory.md).
+
 
 If you encounter issues, please take a look at the
 [troubleshooting](https://github.com/bootlin/snagboot/blob/main/docs/troubleshooting.md) section.

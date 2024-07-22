@@ -1,0 +1,28 @@
+boards:
+  "0451:6165": "am625"
+  "1f3a:efe8": "a64"
+
+soc_families:
+  am625:
+      device-num: 0
+      device-type: mmc
+
+      firmware:
+        tiboot3:
+          path: "tiboot3_evm.bin"
+        tispl:
+          path: "tispl_evm.bin"
+        u-boot:
+          path: "u-boot_evm.img"
+
+      partitions:
+        - name: boot
+          size: 3M
+          bootable: True
+        -
+          name: rootfs
+          size: 1000M
+          image: "./rootfs.ext4"
+
+      fb_buffer_size: 0x7000000
+
