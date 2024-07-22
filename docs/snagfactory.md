@@ -6,13 +6,13 @@ The tool currently supports MMC backends for flashing images (SD card or eMMC). 
 
 There are four main steps involved in using Snagfactory:
 
-1. [Compiling recovery images](#Recovery images)
+1. Compile recovery images
 
-2. [Writing a batch configuration](#Batch configuration)
+2. Write a batch configuration
 
-3. [Binding the libusb-win32 driver to your boards](libusb-win32)
+3. Bind the libusb-win32 driver to your boards
 
-4. [Running Snagfactory](Running the app)
+4. Run Snagfactory
 
 ## Recovery images
 
