@@ -57,13 +57,18 @@ class SnagFactorySoCFamily(BoxLayout):
 		if "boot1" in config:
 			parts_widget.add_widget(Label(text=f"boot part 1: name {config['boot1']['name']} image {config['boot1']['image']}"))
 
+		if "post-flash" in config:
+			parts_widget.add_widget(Label(text="Post-flashing commands"))
+			for cmd in config["post-flash"]:
+				parts_widget.add_widget(Label(text=f"{cmd}", font_size="15"))
+
 		if "partitions" in config:
 
 			parts_widget.add_widget(Label(text="Partition table to create:"))
 
 			for partition in config["partitions"]:
 				prop_string = " ".join([f"{key}:{value}" for key,value in partition.items()])
-				parts_widget.add_widget(Label(text=prop_string))
+				parts_widget.add_widget(Label(text=prop_string, font_size="15"))
 		else:
 			parts_widget.add_widget(Label(text="WIP"))
 

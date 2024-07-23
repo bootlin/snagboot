@@ -148,6 +148,10 @@ def get_fastboot_args(board):
 	else:
 		raise ValueError("Invalid batch configuration file: specify either 'image' or 'partitions' for each soc family!")
 
+	if "post-flash" in board.config:
+		for cmd in board.config["post-flash"]:
+			args["fastboot_cmd"].append(cmd)
+
 	print("\n".join(args["fastboot_cmd"]))
 
 	return FastbootArgs(args)
