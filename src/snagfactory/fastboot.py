@@ -71,14 +71,6 @@ def flash_image_to_part(board, image: str, part, part_start = None):
 	return cmds
 
 def flash_partition_table(device_num: int, partitions: list):
-	gpt_patterns = {
-	"name": "^[\w][\w\-]*$",
-	"start": "^(\-|(\d+M?))$",
-	"size": "^(\-|(\d+M?))$",
-	"bootable": "^[tT]rue$",
-	"uuid": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-	"type": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-	}
 	partitions_env = ""
 
 	for partition in partitions:
@@ -88,10 +80,6 @@ def flash_partition_table(device_num: int, partitions: list):
 		for key, value in partition.items():
 			if key == "image":
 				continue
-
-			pattern = re.compile(gpt_patterns[key])
-			if pattern.match(str(value)) is None:
-				raise ValueError(f"Invalid partition table entry found in batch file, value {value} for parameter '{key}' must follow pattern {gpt_patterns[key]}")
 
 			partitions_env += f"{key}={value},"
 

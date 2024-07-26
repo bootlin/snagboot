@@ -4,6 +4,31 @@
     color: 0, 0, 0, 1
     font_size: 20
 
+<SnagFactoryErrorDialog>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+
+        Label:
+            text: "There is an issue with this batch configuration file:"
+
+        Label:
+            text: root.msg
+
+        Button:
+            text: "Dismiss"
+            on_release: app.root.dismiss_popup()
+            background_normal: ""
+            background_color: 0, 0, 1
+
 <SnagFactoryFileDialog>
     canvas:
         Color:
@@ -36,7 +61,7 @@
                 background_color: 0.5, 0.5, 1
 
 <SnagFactoryBoard>
-    size: root.width, 100
+    size: root.width, 65
     size_hint_y: None
     phase_label: phase_label
 

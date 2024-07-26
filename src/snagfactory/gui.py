@@ -17,6 +17,7 @@ import kivy.resources
 import time
 
 from snagfactory.session import SnagFactorySession
+from snagfactory.batch import SnagFactoryConfigError
 
 import multiprocessing
 import logging
@@ -79,6 +80,10 @@ class SnagFactoryFileDialog(FloatLayout):
 
 	def handle_load(self):
 		pass
+
+class SnagFactoryErrorDialog(FloatLayout):
+	msg = StringProperty("")
+	filepath = StringProperty("")
 
 class SnagFactoryBoard(Widget):
 	path = StringProperty("")
@@ -143,7 +148,16 @@ class SnagFactoryUI(Widget):
 		self._popup.open()
 
 	def load_batch_config(self, filenames):
-		session = SnagFactorySession(filenames[0])
+		try:
+			session = SnagFactorySession(filenames[0])
+		except SnagFactoryConfigError as e:
+			self.dismiss_popup()
+
+			content = SnagFactoryErrorDialog(filepath=filenames[0], msg=str(e))
+			self._popup = Popup(title="Config error", content=content, size_hint=(0.7,0.7))
+			self._popup.open()
+
+			return
 
 		self.session = session
 
