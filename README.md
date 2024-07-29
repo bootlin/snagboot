@@ -80,9 +80,7 @@ Please install the following software:
 
 - Zadig: https://github.com/pbatard/libwdi/releases/download/v1.5.1/zadig-2.9.exe
 
-- libusb-win32: https://github.com/mcuee/libusb-win32/releases/download/release_1.4.0.0/libusb-win32-bin-1.4.0.0.zip
-
-For libusb-win32, you should extract the zip archive and run the executable at bin/amd64/install-filter-win.exe
+- python3-libusb: run `pip install libusb`
 
 After installing Python, Swig and libusb, you should add them to your PATH environment variable:
 
