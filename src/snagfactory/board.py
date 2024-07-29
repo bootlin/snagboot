@@ -112,7 +112,7 @@ def run_recovery(config, soc_family, log_queue, last_log):
 	logger.propagate = False
 	logger.handlers.clear()
 	log_handler = logging.handlers.QueueHandler(log_queue)
-	log_formatter = logging.Formatter(f"%(asctime)s,%(msecs)03d [{prettify_usb_addr(config["usb_path"])}][%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
+	log_formatter = logging.Formatter(f"%(asctime)s,%(msecs)03d [{prettify_usb_addr(config['usb_path'])}][%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
 	log_handler.setFormatter(log_formatter)
 	status_handler = logging.handlers.QueueHandler(last_log)
 	logger.addHandler(log_handler)

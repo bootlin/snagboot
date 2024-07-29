@@ -1,4 +1,3 @@
-import re
 import os
 
 DEFAULT_FB_BUFFER_SIZE = 0x7000000
