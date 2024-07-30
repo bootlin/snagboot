@@ -24,8 +24,11 @@ path_rule = str_rule("[\w\-\/\\]+")
 
 fastboot_cmd_rule = str_rule("\w+(:.+)?")
 
+int_rule = {"type": int}
+
 partition_rule = {
 	"image": path_rule,
+	"image-offset": int_rule,
 	"name": str_rule("^[\w][\w\-]*"),
 	"start": str_rule("(\-|(\d+M?))"),
 	"size": str_rule("(\-|(\d+M?))"),
@@ -33,8 +36,6 @@ partition_rule = {
 	"uuid": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
 	"type": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
 }
-
-int_rule = {"type": int}
 
 soc_model_rule = {
 "type": dict,
@@ -57,12 +58,14 @@ soc_model_rule = {
 	"type": dict,
 	"name": name_rule,
 	"image": path_rule,
+	"image-offset": int_rule,
 },
 
 "boot1": {
 	"type": dict,
 	"name": name_rule,
 	"image": path_rule,
+	"image-offset": int_rule,
 },
 
 "fb_buffer_size": int_rule,
@@ -71,6 +74,10 @@ soc_model_rule = {
 	"type": list,
 	"rule": fastboot_cmd_rule,
 },
+
+"image": path_rule,
+
+"image-offset": int_rule,
 }
 
 config_rules = {

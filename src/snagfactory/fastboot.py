@@ -8,7 +8,7 @@ class FastbootArgs:
 		for key, value in d.items():
 			setattr(self, key, value)
 
-def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, offset):
+def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, part_start: None, image_offset: None):
 	"""
 	Flash an image that doesn't fit inside the Fastboot RAM buffer.
 	This is done by flashing the image in sections. Each section has
@@ -22,13 +22,18 @@ def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, off
 	nchunks = file_size // fb_buffer_size
 	remainder = file_size % fb_buffer_size
 
-	if offset is None:
+	if part_start is None:
 		cmds.append(f'oem_run:gpt setenv mmc {board.config["device-num"]} {part_name} ')
 	else:
-		if offset % MMC_LBA_SIZE != 0:
-			raise ValueError(f"offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
+		if part_start % MMC_LBA_SIZE != 0:
+			raise ValueError(f"partition start {part_start} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
 
-		cmds.append(f'oem_run:setenv gpt_partition_addr {(offset // MMC_LBA_SIZE):x}')
+		cmds.append(f'oem_run:setenv gpt_partition_addr {(part_start // MMC_LBA_SIZE):x}')
+
+	if image_offset is not None:
+		if image_offset % MMC_LBA_SIZE != 0:
+			raise ValueError(f"image offset {image_offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
+		cmds.append('oem_run:setexpr gpt_partition_addr 0x${gpt_partition_addr} + ' + f'0x{(image_offset // MMC_LBA_SIZE):x}')
 
 	for i in range(0, nchunks):
 		# setexpr interprets every number as a hexadecimal value
@@ -46,7 +51,7 @@ def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, off
 
 	return cmds
 
-def flash_image_to_part(board, image: str, part, part_start = None):
+def flash_image_to_part(board, image: str, part, part_start = None, image_offset = None):
 	fb_buffer_size = board.config.get("fb_buffer_size", DEFAULT_FB_BUFFER_SIZE)
 
 	if fb_buffer_size % MMC_LBA_SIZE != 0:
@@ -54,11 +59,8 @@ def flash_image_to_part(board, image: str, part, part_start = None):
 
 	file_size = os.path.getsize(image)
 
-	if file_size % MMC_LBA_SIZE != 0:
-		raise ValueError(f"File {image} has an invalid size! Must be a multiple of {MMC_LBA_SIZE}")
-
-	if file_size > fb_buffer_size:
-		return flash_huge_image(board, part, fb_buffer_size, image, part_start)
+	if file_size > fb_buffer_size or image_offset is not None:
+		return flash_huge_image(board, part, fb_buffer_size, image, part_start, image_offset)
 
 	cmds = [f'download:{image}']
 
@@ -103,12 +105,26 @@ def flash_partition_images(board):
 		else:
 			part_name = part_index
 
-		cmds += flash_image_to_part(board, partition["image"], part_name)
+		image_offset = partition.get("image-offset", None)
+
+		cmds += flash_image_to_part(board, partition["image"], part_name, None, image_offset)
 
 	return cmds
 
-def emmc_flash_bootpart(board, config: dict):
-	return [f"download:{config['image']}", f"flash:{config['name']}"]
+def emmc_flash_bootpart(board, config: dict, part_num: int, image_offset = None):
+	file_size = os.path.getsize(config['image'])
+
+	cmds = [f"download:{config['image']}"]
+
+	if image_offset is not None:
+		cmds += [
+		f"oem_run:setenv fastboot_raw_partition_temp 0x{(image_offset // MMC_LBA_SIZE):x} 0x{file_size :x} mmcpart {part_num + 1}",
+		"flash:temp",
+		]
+	else:
+		cmds.append(f"flash:{config['name']}")
+
+	return cmds
 
 def get_fastboot_args(board):
 	args = {
@@ -120,15 +136,18 @@ def get_fastboot_args(board):
 	}
 
 	if "boot0" in board.config:
-		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot0"])
+		image_offset = board.config["boot0"].get("image-offset", None)
+		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot0"], 0, image_offset)
 
 	if "boot1" in board.config:
-		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot1"])
+		image_offset = board.config["boot1"].get("image-offset", None)
+		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot1"], 1, image_offset)
 
 	if "image" in board.config and "partitions" in board.config:
 		raise ValueError("Invalid batch configuration file: specify either 'image' or 'partitions' for one soc family, not both!")
 	elif "image" in board.config:
-		args["fastboot_cmd"] += flash_image_to_part(board, board.config["image"], 0, 0)
+		image_offset = board.config.get("image-offset", None)
+		args["fastboot_cmd"] += flash_image_to_part(board, board.config["image"], 0, 0, image_offset)
 	elif "partitions" in board.config:
 		args["fastboot_cmd"] += flash_partition_table(board.config["device-num"], board.config["partitions"])
 		args["fastboot_cmd"] += flash_partition_images(board)

@@ -65,6 +65,12 @@ soc_families:
       name: rootfs
       size: 1000M
       image: "./rootfs.ext4" --> image to flash to the rootfs partition
+      image-offset: 0
+
+  boot0:
+    name: mmc0boot1
+    image: ...
+    image-offset: ...
 
   fb_buffer_size: 0x7000000
 ```
