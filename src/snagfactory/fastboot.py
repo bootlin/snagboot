@@ -76,7 +76,7 @@ def flash_partition_table(device_num: int, partitions: list):
 
 	for partition in partitions:
 		if "size" not in partition or "name" not in partition:
-			raise ValueError("Invalid partition table entry found in batch file, partition size and name must be specified!")
+			raise ValueError("Invalid partition table entry found in config file, partition size and name must be specified!")
 
 		for key, value in partition.items():
 			if key == "image":
@@ -144,7 +144,7 @@ def get_fastboot_args(board):
 		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot1"], 1, image_offset)
 
 	if "image" in board.config and "partitions" in board.config:
-		raise ValueError("Invalid batch configuration file: specify either 'image' or 'partitions' for one soc family, not both!")
+		raise ValueError("Invalid configuration file: specify either 'image' or 'partitions' for one soc family, not both!")
 	elif "image" in board.config:
 		image_offset = board.config.get("image-offset", None)
 		args["fastboot_cmd"] += flash_image_to_part(board, board.config["image"], 0, 0, image_offset)
@@ -152,7 +152,7 @@ def get_fastboot_args(board):
 		args["fastboot_cmd"] += flash_partition_table(board.config["device-num"], board.config["partitions"])
 		args["fastboot_cmd"] += flash_partition_images(board)
 	else:
-		raise ValueError("Invalid batch configuration file: specify either 'image' or 'partitions' for each soc family!")
+		raise ValueError("Invalid configuration file: specify either 'image' or 'partitions' for each soc family!")
 
 	if "post-flash" in board.config:
 		for cmd in board.config["post-flash"]:

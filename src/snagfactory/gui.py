@@ -17,7 +17,7 @@ import kivy.resources
 import time
 
 from snagfactory.session import SnagFactorySession
-from snagfactory.batch import SnagFactoryConfigError
+from snagfactory.config import SnagFactoryConfigError
 
 import multiprocessing
 import logging
@@ -121,19 +121,19 @@ class SnagFactoryUI(Widget):
 	def view_board_list(self):
 		self.main_page.page = 0
 
-	def view_batch_config(self):
+	def view_config(self):
 		self.main_page.page = 1
 
 	def dismiss_popup(self):
 		self._popup.dismiss()
 
-	def open_batch_dialog(self):
+	def open_config_dialog(self):
 		if self.session.phase == "running":
 			return
 
 		content = SnagFactoryFileDialog()
 		content.rootpath = os.path.expanduser("~")
-		content.handle_load = self.load_batch_config
+		content.handle_load = self.load_config
 		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._popup.open()
 
@@ -147,7 +147,7 @@ class SnagFactoryUI(Widget):
 		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._popup.open()
 
-	def load_batch_config(self, filenames):
+	def load_config(self, filenames):
 		try:
 			session = SnagFactorySession(filenames[0])
 		except SnagFactoryConfigError as e:
@@ -161,19 +161,19 @@ class SnagFactoryUI(Widget):
 
 		self.session = session
 
-		self.update_batch_view()
+		self.update_config_view()
 
 		self.dismiss_popup()
 
 	def load_log(self, filenames):
 		self.session.load_log(filenames[0])
 		self.update_board_list()
-		self.update_batch_view()
+		self.update_config_view()
 		self.dismiss_popup()
 
-	def update_batch_view(self):
-		soc_families_view = self.batch_config.soc_families_view
-		board_ids_view = self.batch_config.board_ids_view
+	def update_config_view(self):
+		soc_families_view = self.session_config.soc_families_view
+		board_ids_view = self.session_config.board_ids_view
 
 		board_ids_items = [widget for widget in board_ids_view.children if isinstance(widget, SnagFactoryBoardID)]
 		for board_ids_item in board_ids_items:
@@ -183,11 +183,11 @@ class SnagFactoryUI(Widget):
 		for accordion_item in accordion_items:
 			soc_families_view.remove_widget(accordion_item)
 
-		for usb_ids,soc_family in self.session.batch["boards"].items():
+		for usb_ids,soc_family in self.session.config["boards"].items():
 			board_ids_item = SnagFactoryBoardID(usb_ids=usb_ids, soc_family=soc_family)
 			board_ids_view.add_widget(board_ids_item)
 
-		for name,config in self.session.batch["soc_families"].items():
+		for name,config in self.session.config["soc_families"].items():
 			accordion_item = AccordionItem(title=name)
 			soc_family_widget = SnagFactorySoCFamily(name=name)
 			soc_family_widget.set_config(config)
@@ -212,7 +212,7 @@ class SnagFactoryUI(Widget):
 			board_widget.update()
 
 	def start(self):
-		self.phase_label = "running batch: batch.yaml"
+		self.phase_label = "running factory session"
 		self.view_board_list()
 		self.update_board_list()
 		self.session.start()
@@ -226,7 +226,7 @@ class SnagFactoryUI(Widget):
 			self.status = f"{len(self.board_widgets)} boards found"
 		elif self.session.phase == "running":
 			ts = time.time()
-			self.phase_label = "running factory batch... |" + "  " * int(ts % 3) + "==" + "  " * int(3 - (ts % 3))  + "|"
+			self.phase_label = "running factory session... |" + "  " * int(ts % 3) + "==" + "  " * int(3 - (ts % 3))  + "|"
 			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
 
 			for board_widget in self.board_widgets:
@@ -250,7 +250,7 @@ class SnagFactory(App):
 	def build(self):
 		self.icon = os.path.dirname(__file__) + "/assets/lab_penguins.png"
 		Builder.load_file(os.path.dirname(__file__) + "/gui.kv")
-		Builder.load_file(os.path.dirname(__file__) + "/batch.kv")
+		Builder.load_file(os.path.dirname(__file__) + "/config.kv")
 
 		session = SnagFactorySession(None)
 		ui = SnagFactoryUI()

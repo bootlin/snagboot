@@ -100,11 +100,11 @@ config_rule = {
 
 def read_config(path):
 	with open(path, "r") as file:
-		batch = yaml.safe_load(file)
+		config = yaml.safe_load(file)
 
-	check_config(batch)
+	check_config(config)
 
-	return batch
+	return config
 
 def check_entry(entry, rule):
 	entry_type = type(entry)
@@ -148,11 +148,11 @@ def check_entry(entry, rule):
 		for sub_entry in entry:
 			check_entry(sub_entry, rule["rule"])
 
-def check_config(batch):
+def check_config(config):
 	# Check config syntax
-	check_entry(batch, config_rule)
+	check_entry(config, config_rule)
 
-	for soc_family in batch["soc_families"].values():
+	for soc_family in config["soc_families"].values():
 		for firmware in soc_family["firmware"].values():
 			if not os.path.exists(firmware["path"]):
 				raise SnagFactoryConfigError(f"firmware file {firmware['path']} does not exist!")

@@ -18,7 +18,7 @@
         orientation: "vertical"
 
         Label:
-            text: "There is an issue with this batch configuration file:"
+            text: "There is an issue with this configuration file:"
 
         Label:
             text: root.msg
@@ -159,7 +159,7 @@
         background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
         text: ""
         group: "main_tab"
-        on_press: app.root.view_batch_config()
+        on_press: app.root.view_config()
 
     Label:
         test: ""
@@ -171,7 +171,7 @@
         height: 61
         background_normal: "load_config.png"
         text: ""
-        on_press: app.root.open_batch_dialog();
+        on_press: app.root.open_config_dialog();
 
     Button:
         size_hint: None, None
@@ -223,7 +223,7 @@
     log_area: log_boxlayout.log_area
     log_board_path: log_boxlayout.log_board_path
     main_page: main_page
-    batch_config: batch_config
+    session_config: session_config
 
     canvas:
         Color:
@@ -299,7 +299,7 @@
                     size_hint_x: 0
                     orientation: "vertical"
 
-            SnagFactoryBatchConfig:
-                id: batch_config
+            SnagFactoryConfig:
+                id: session_config
 
 

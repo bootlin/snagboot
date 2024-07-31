@@ -8,7 +8,7 @@ There are four main steps involved in using Snagfactory:
 
 1. Compile recovery images
 
-2. Write a batch configuration
+2. Write a configuration file
 
 3. Bind the libusb-win32 driver to your boards
 
@@ -36,9 +36,9 @@ Additionally, you'll need to enable autoboot and set the default boot command to
 
 Please use menuconfig to check that your configuration is coherent, as some of these settings depend on intermediate options, which won’t be apparent if you modify the .config file directly.
 
-## Batch configuration
+## Configuration file
 
-Open the [example batch configuration file](batch-example.yaml) provided by us. Here is a brief visual explanation of the structure of this file:
+Open the [example configuration file](snagfactory-example.yaml) provided by us. Here is a brief visual explanation of the structure of this file:
 
 ```yaml
 boards:
@@ -91,7 +91,7 @@ Power-up one of your boards in recovery mode and plug it into your host PC. Then
 
 ![snagfactory UI](snagfactory.png)
 
-Firstly, you should load your batch configuration file. To do this, click on the load configuration button (4) and select your file. You can check that you loaded the correct configuration by clicking on the view configuration button (3).
+Firstly, you should load your configuration file. To do this, click on the load configuration button (4) and select your file. You can check that you loaded the correct configuration by clicking on the view configuration button (3).
 
 Return to the main view by clicking on the board list button (2). Then, power up your boards in recover mode and plug them into your host PC. You should see a matching number of boards appearing in the Snagfactory UI. You may then click on the start button (1) to launch the factory flashing process.
 

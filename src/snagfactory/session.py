@@ -10,7 +10,7 @@ import logging
 factory_logger = logging.getLogger("snagfactory")
 
 import snagrecover
-from snagfactory.batch import read_config
+from snagfactory.config import read_config
 from snagfactory.board import Board, BoardPhase
 
 import snagrecover.utils
@@ -19,13 +19,13 @@ import snagrecover.utils
 log_header = """
 snagfactory session {}
 summary: {} done {} failed {} other
-batch:
+config:
 {}
 results:
 {}
 """
 
-default_batch = {
+default_config = {
 "boards": {},
 "soc_families": {},
 }
@@ -62,13 +62,13 @@ class SnagFactorySession():
 				self.nb_other = len(self.board_list) - self.nb_done - self.nb_failed
 				self.close()
 
-	def __init__(self, batch_path):
+	def __init__(self, config_path):
 		self.start_ts = time.time()
 
-		if batch_path is None:
-			self.batch = default_batch
+		if config_path is None:
+			self.config = default_config
 		else:
-			self.batch = read_config(batch_path)
+			self.config = read_config(config_path)
 
 		self.board_list = self.scan_for_boards()
 		self.phase = "scanning"
@@ -101,14 +101,14 @@ class SnagFactorySession():
 
 	def scan_for_boards(self):
 		self.board_list = []
-		for (usb_ids, soc_model) in self.batch["boards"].items():
+		for (usb_ids, soc_model) in self.config["boards"].items():
 			paths = snagrecover.utils.parse_usb_addr(usb_ids, find_all=True)
 
 			if paths is None:
 				continue
 
 			for path in paths:
-				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, self.batch["soc_families"][soc_model], usb_ids))
+				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, self.config["soc_families"][soc_model], usb_ids))
 
 	def format_session_logs(self):
 		timestamp = datetime.datetime.fromtimestamp(self.start_ts)
@@ -118,12 +118,12 @@ class SnagFactorySession():
 
 		board_statuses = "\n".join([f"{board.usb_ids} at {board.path}: {board.phase.name}" for board in board_list])
 
-		batch = yaml.dump(self.batch)
+		config = yaml.dump(self.config)
 
 		header = log_header.format( \
 		f"{timestamp.isoformat()} ({timezone})", \
 		self.nb_done, self.nb_failed, self.nb_other, \
-		"\t" + "\n\t".join(batch.splitlines()), \
+		"\t" + "\n\t".join(config.splitlines()), \
 		board_statuses)
 
 		session_log = "\nFACTORY LOG:\n\n"
@@ -146,11 +146,11 @@ class SnagFactorySession():
 			self.nb_done = int(match.groups()[0])
 			self.nb_failed = int(match.groups()[1])
 			self.nb_other = int(match.groups()[2])
-		elif marker == "batch:":
+		elif marker == "config:":
 			# remove leading tab from each line
-			batch_yaml = "\n".join([line[1:] for line in logs[1:]])
-			self.batch = yaml.safe_load(batch_yaml)
-			print(self.batch)
+			config_yaml = "\n".join([line[1:] for line in logs[1:]])
+			self.config = yaml.safe_load(config_yaml)
+			print(self.config)
 		elif marker == "results:":
 			pattern = re.compile("([\w:]+) at ([\d\-\.]+): (\w+)")
 			for log in logs[1:-1]:
@@ -158,8 +158,8 @@ class SnagFactorySession():
 				usb_ids = match.groups()[0]
 				path = match.groups()[1]
 				phase = BoardPhase[match.groups()[2]]
-				soc_model = self.batch["boards"][usb_ids]
-				mock_board = Board(path, soc_model, self.batch["soc_families"][soc_model], usb_ids)
+				soc_model = self.config["boards"][usb_ids]
+				mock_board = Board(path, soc_model, self.config["soc_families"][soc_model], usb_ids)
 				mock_board.phase = phase
 				self.board_dict[path] = mock_board
 		elif marker == "BOARD LOG":
@@ -174,7 +174,7 @@ class SnagFactorySession():
 	def load_log(self, logfile_path):
 		self.phase = "logview"
 		self.logfile_path = logfile_path
-		markers = ["summary:", "batch:", "results:", "FACTORY LOG:", "BOARD LOG"]
+		markers = ["summary:", "config:", "results:", "FACTORY LOG:", "BOARD LOG"]
 
 		self.board_dict = {}
 
