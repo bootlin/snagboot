@@ -20,11 +20,12 @@ def str_rule(pattern: str):
 	}
 
 name_rule = str_rule("[\w\-]+")
-path_rule = str_rule("[\w\-\/\\]+")
+path_rule = str_rule("[\w\-\/\.]+")
 
 fastboot_cmd_rule = str_rule("\w+(:.+)?")
 
 int_rule = {"type": int}
+bool_rule = {"type": bool}
 
 partition_rule = {
 	"image": path_rule,
@@ -32,7 +33,7 @@ partition_rule = {
 	"name": str_rule("^[\w][\w\-]*"),
 	"start": str_rule("(\-|(\d+M?))"),
 	"size": str_rule("(\-|(\d+M?))"),
-	"bootable": str_rule("[tT]rue"),
+	"bootable": bool_rule,
 	"uuid": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
 	"type": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
 }
@@ -46,7 +47,10 @@ soc_model_rule = {
 
 "firmware": {
 	"type": dict,
-	".+": str_rule(".+"),
+	".+": {
+		"type": dict,
+		".+": str_rule(".+"),
+	},
 },
 
 "partitions": {
@@ -80,7 +84,7 @@ soc_model_rule = {
 "image-offset": int_rule,
 }
 
-config_rules = {
+config_rule = {
 	"type": dict,
 
 	"boards": {
@@ -102,50 +106,51 @@ def read_config(path):
 
 	return batch
 
-def check_entry(entry: dict, rules):
-	# check keys
-	entry_keys = set(entry.keys())
-	rules_keys = set(rules.keys())
-	if not entry_keys.issubset(rules_keys):
-		# check for regex matches
-		suspicious_keys = entry_keys - rules_keys
-		matching_keys = set()
-		for key in suspicious_keys:
-			for rules_key in rules_keys:
-				pattern = re.compile(f"^{rules_key}$")
-				if pattern.match(key) is not None:
-					rules[key] = rules[rules_key]
-					matching_keys.add(key)
+def check_entry(entry, rule):
+	entry_type = type(entry)
 
-		if matching_keys != suspicious_keys:
-			raise SnagFactoryConfigError(f"Found unknown parameter(s): {suspicious_keys - matching_keys}")
+	if entry_type is dict:
+		# check keys
+		entry_keys = set(entry.keys())
+		rule_keys = set(rule.keys())
+		if not entry_keys.issubset(rule_keys):
+			# check for regex matches
+			suspicious_keys = entry_keys - rule_keys
+			matching_keys = set()
+			for key in suspicious_keys:
+				for rule_key in rule_keys:
+					pattern = re.compile(f"^{rule_key}$")
+					if pattern.match(key) is not None:
+						rule[key] = rule[rule_key]
+						matching_keys.add(key)
 
-	# check parameter types
-	for key,value in entry.items():
-		entry_type = rules[key]["type"]
-		if not isinstance(value, entry_type):
-			raise SnagFactoryConfigError(f"Parameter {key} has invalid type! {type(value)} instead of {entry_type}")
+			if matching_keys != suspicious_keys:
+				raise SnagFactoryConfigError(f"Found unknown parameter(s): {suspicious_keys - matching_keys}")
 
-	# check parameter values
-	for key,value in entry.items():
-		entry_type = rules[key]["type"]
+		# check parameter types
+		for key,value in entry.items():
+			param_type = rule[key]["type"]
+			if not isinstance(value, param_type):
+				raise SnagFactoryConfigError(f"Parameter {key} has invalid type! {type(value)} instead of {param_type}")
 
-		if entry_type is str:
-			pattern = re.compile(f"^{rules[key]['pattern']}$")
-			match = pattern.match(value)
-			if match is None:
-				raise SnagFactoryConfigError(f"Parameter {key} with pattern {pattern.pattern} has invalid value {value}", {"entry": entry, "rules": rules})
-		elif entry_type is list:
-			for sub_entry in value:
-				check_entry(sub_entry, rules[key]["rule"])
-		elif entry_type is int:
-			return
-		else:
-			check_entry(value, rules[key])
+		# check parameter values
+		for key,value in entry.items():
+			check_entry(value, rule[key])
+			param_type = rule[key]["type"]
+
+	elif entry_type is str:
+		pattern = re.compile(f"^{rule['pattern']}$")
+		match = pattern.match(entry)
+		if match is None:
+			raise SnagFactoryConfigError(f"Parameter with pattern {pattern.pattern} has invalid value {entry}")
+
+	elif entry_type is list:
+		for sub_entry in entry:
+			check_entry(sub_entry, rule["rule"])
 
 def check_config(batch):
 	# Check config syntax
-	check_entry(batch, config_rules)
+	check_entry(batch, config_rule)
 
 	for soc_family in batch["soc_families"].values():
 		for firmware in soc_family["firmware"].values():
