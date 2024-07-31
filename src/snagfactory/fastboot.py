@@ -1,4 +1,10 @@
 import os
+import sys
+import logging
+import logging.handlers
+from multiprocessing import Process
+
+from snagflash.fastboot import fastboot
 
 DEFAULT_FB_BUFFER_SIZE = 0x7000000
 MMC_LBA_SIZE = 512
@@ -7,6 +13,40 @@ class FastbootArgs:
 	def __init__(self, d):
 		for key, value in d.items():
 			setattr(self, key, value)
+
+def run_fastboot_task(args, soc_family, log_queue):
+	sys.stdout = open(os.devnull, 'w')
+	sys.stderr = open(os.devnull, 'w')
+
+	logger = logging.getLogger("snagflash")
+	snagrecover_logger = logging.getLogger("snagrecover")
+	snagrecover_logger.parent = logger
+
+	logger.propagate = False
+	logger.handlers.clear()
+	log_handler = logging.handlers.QueueHandler(log_queue)
+	log_formatter = logging.Formatter(f"%(asctime)s,%(msecs)03d [{args.port}][%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
+	log_handler.setFormatter(log_formatter)
+	logger.addHandler(log_handler)
+	logger.setLevel(logging.INFO)
+
+	try:
+		fastboot(args)
+	except Exception as e:
+		logger.error(f"Caught exception from snagflash: {e}")
+		sys.exit(-1)
+
+	logger.handlers.clear()
+
+class FastbootTask():
+	def __init__(self, board):
+		self.cmds = []
+		self.board = board
+		self.args = get_fastboot_args(board)
+		self.process = Process(target=run_fastboot_task, args=(self.args, self.board.soc_family, self.board.log_queue))
+
+	def get_process(self):
+		return self.process
 
 def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, part_start: None, image_offset: None):
 	"""
