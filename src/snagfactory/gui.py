@@ -99,7 +99,7 @@ class SnagFactoryBoard(Widget):
 		self.path = board.path
 		self.soc_model = board.soc_model
 		self.phase = board.phase.name
-		self.status = "nothing here for now"
+		self.status = ""
 		self.ui = ui
 
 	def update(self):
