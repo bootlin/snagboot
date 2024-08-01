@@ -85,10 +85,10 @@ class Board():
 				self.process.join()
 				if self.phase == BoardPhase.RECOVERING:
 					factory_logger.info(f"board {self.path} end of recovery task")
-					self.set_phase(BoardPhase.FLASHER)
 				else:
 					factory_logger.info(f"board {self.path} end of flashing task #{self.task.num}")
-					self.set_phase(BoardPhase.FLASHING)
+				self.set_phase(BoardPhase.FLASHER)
+
 			elif (exitcode is not None and exitcode < 0) or not self.process.is_alive():
 				subproc_name = "recovery" if phase == BoardPhase.RECOVERING else f"#{self.task.num}"
 				factory_logger.error(f"board {self.path} failure of subprocess {subproc_name}: exitcode {exitcode} is_alive {self.process.is_alive()}")

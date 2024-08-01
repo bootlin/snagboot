@@ -38,49 +38,10 @@ Please use menuconfig to check that your configuration is coherent, as some of t
 
 ## Configuration file
 
-Open the [example configuration file](snagfactory-example.yaml) provided by us. Here is a brief visual explanation of the structure of this file:
-
-```yaml
-boards:
- "0451:6165": "am625" --> scans for USB devices matching this vid:pid pair
- "1f3a:efe8": "a64"
-
-soc-models:
- am625-firmware: --> this section specifies paths to recovery images
-  tiboot3:
-    path: "tiboot3_evm.bin"
-  tispl:
-    path: "tispl_evm.bin"
-  u-boot:
-    path: "u-boot_evm.img"
-
- am625-tasks:
-   device-num: 0
-   device-type: mmc
-
-  partitions:  -> this section describes the GPT partition table to create
-    - name: boot
-      size: 3M
-      bootable: True
-    -
-      name: rootfs
-      size: 1000M
-      image: "./rootfs.ext4" --> image to flash to the rootfs partition
-      image-offset: 0
-
-  boot0:
-    name: mmc0boot1
-    image: ...
-    image-offset: ...
-
-  fb_buffer_size: 0x7000000
-```
-
-You should only have to modify the paths to the recovery firmware and the partitions section. If you wish to flash a raw disk image on the entire device instead of a single partition, you can replace the partitions section by a simpler image section :
-
-```yaml
- image: "./sdcard.img"
-```
+The  [example configuration file](docs/snagfactory-example.yaml) showcases the
+main features of Snagfactory. There is also a
+[full documentation](docs/snagfactory_config.md) for the Snagfactory
+configuration file format.
 
 ## libusb-win32
 

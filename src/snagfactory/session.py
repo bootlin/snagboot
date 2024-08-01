@@ -161,7 +161,9 @@ class SnagFactorySession():
 				path = match.groups()[1]
 				phase = BoardPhase[match.groups()[2]]
 				soc_model = self.config["boards"][usb_ids]
-				mock_board = Board(path, soc_model, self.config["soc-models"][soc_model], usb_ids)
+				fw_config = self.config["soc-models"][f"{soc_model}-firmware"]
+				tasks_config = self.config["soc-models"][f"{soc_model}-tasks"]
+				mock_board = Board(path, soc_model, fw_config, tasks_config, usb_ids, [])
 				mock_board.phase = phase
 				self.board_dict[path] = mock_board
 		elif marker == "BOARD LOG":

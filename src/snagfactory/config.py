@@ -2,7 +2,7 @@ import yaml
 import os
 import re
 
-from snagfactory.fastboot import FastbootTask
+from snagfactory.fastboot import task_table
 from snagfactory.utils import SnagFactoryConfigError
 
 def list_soc_models():
@@ -28,6 +28,7 @@ int_rule = {"type": int}
 bool_rule = {"type": bool}
 
 partition_rule = {
+	"type": dict,
 	"image": path_rule,
 	"image-offset": int_rule,
 	"name": str_rule("^[\w][\w\-]*"),
@@ -35,45 +36,44 @@ partition_rule = {
 	"size": str_rule("(\-|(\d+M?))"),
 	"bootable": bool_rule,
 	"uuid": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
-	"type": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+	"type()": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+}
+
+run_task_rule = {
+	"type": dict,
+	"task": str_rule("run"),
+	"args": {
+		"type": list,
+		"rules": [
+			fastboot_cmd_rule,
+		],
+	}
+}
+
+gpt_task_rule = {
+	"type": dict,
+	"task": str_rule("gpt"),
+	"args": {
+		"type": list,
+		"rules": [
+			partition_rule,
+		],
+	}
+}
+
+globals_rule = {
+	"type": dict,
+	"target-device": str_rule("(mmc\d|nand)"),
+	"fb-buffer-size": int_rule,
 }
 
 tasks_rule = {
-"type": dict,
-
-"device-num": int_rule,
-
-"device-type": str_rule("mmc"),
-
-"partitions": {
 	"type": list,
-	"rule": partition_rule,
-},
-
-"boot0": {
-	"type": dict,
-	"name": name_rule,
-	"image": path_rule,
-	"image-offset": int_rule,
-},
-
-"boot1": {
-	"type": dict,
-	"name": name_rule,
-	"image": path_rule,
-	"image-offset": int_rule,
-},
-
-"fb-buffer-size": int_rule,
-
-"post-flash": {
-	"type": list,
-	"rule": fastboot_cmd_rule,
-},
-
-"image": path_rule,
-
-"image-offset": int_rule,
+	"rules": [
+		globals_rule,
+		gpt_task_rule,
+		run_task_rule,
+	],
 }
 
 config_rule = {
@@ -106,16 +106,25 @@ def read_config(path):
 	check_config(config)
 
 	pipelines = {}
-
-	i = 0
 	for soc_key,soc_config in config["soc-models"].items():
 		soc_model,sep,suffix = soc_key.partition("-")
 
 		if suffix == "firmware":
 			continue
 
-		pipelines[soc_model] = [FastbootTask(soc_config, i)]
-		i += 1
+		# First entry must be global vars
+		globals = soc_config[0]
+		pipelines[soc_model] = []
+
+		i = 0
+		for entry in soc_config[1:]:
+			if "task" not in entry:
+				raise SnagFactoryConfigError(f"Invalid entry {entry}: missing task name")
+			elif (task_object := task_table.get(entry["task"], None)) is None:
+				raise SnagFactoryConfigError(f"Invalid entry {entry}: unknown task {entry['task']}")
+
+			pipelines[soc_model].append(task_object(entry["args"], i, globals))
+			i += 1
 
 	return config, pipelines
 
@@ -159,7 +168,17 @@ def check_entry(entry, rule):
 
 	elif entry_type is list:
 		for sub_entry in entry:
-			check_entry(sub_entry, rule["rule"])
+			matched = False
+			error_msgs = []
+			for entry_rule in rule["rules"]:
+				try:
+					check_entry(sub_entry, entry_rule)
+					matched = True
+				except SnagFactoryConfigError as e:
+					error_msgs.append(e)
+
+			if not matched:
+				raise SnagFactoryConfigError(f"Invalid list item {sub_entry}, all possible matches failed: {error_msgs}")
 
 def check_config(config):
 	# Check config syntax

@@ -37,8 +37,7 @@ class SnagFactorySoCFamily(BoxLayout):
 	def set_config(self, fw_config: dict, tasks_config: dict):
 		main_grid = GridLayout(cols=2, size_hint_y=0.5)
 		main_grid_params = {
-		"device-num": tasks_config["device-num"],
-		"device-type": tasks_config["device-type"]
+		"target-device": tasks_config[0]["target-device"],
 		}
 
 		for key, value in fw_config.items():
