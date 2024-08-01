@@ -327,7 +327,7 @@ class SDPCommand():
 		"""
 		logger.info(f"SDPS write with parameters size:0x{size:x} offset:0x00")
 		soc_model = recovery_config["soc_model"]
-		if soc_model not in ["imx8qm", "imx8qxp","imx815","imx93"]:
+		if soc_model not in ["imx8qm", "imx8qxp", "imx815", "imx865", "imx93"]:
 			# only some mpu models require a preliminary command before the report 2
 			# transfer
 			packet1_arr = bytearray(b"\x01") # report 1
@@ -341,7 +341,7 @@ class SDPCommand():
 			packet1_arr += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" # reserved
 			packet1 = bytes(packet1_arr)
 			self.dev.write(packet1)
-		if soc_model in ["imx815","imx93"]:
+		if soc_model in ["imx815", "imx865", "imx93"]:
 			transfer_size = 1020
 		else:
 			transfer_size = 1024

@@ -25,6 +25,8 @@ tested:
         family: imx
   imx7d:
         family: imx
+  imx865:
+        family: imx
   imx8mm:
         family: imx
   imx8qm:
@@ -97,8 +99,6 @@ untested:
   imx7ulp:
         family: imx
   imx815:
-        family: imx
-  imx865:
         family: imx
   imx8dxl:
         family: imx

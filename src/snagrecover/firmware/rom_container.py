@@ -63,7 +63,7 @@ def get_container_size(boot_blob: bytes) -> int:
 	container for boards socs using the SDPS protocol.
 	"""
 	soc_model = recovery_config["soc_model"]
-	if soc_model in ["imx815","imx93"]:
+	if soc_model in ["imx815", "imx865", "imx93"]:
 		return len(boot_blob)
 	rom_container_tag = boot_blob[CONTAINER_HDR_ALIGNMENT + 3]
 	if rom_container_tag != CONTAINER_TAG:
