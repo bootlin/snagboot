@@ -5,6 +5,7 @@ import logging.handlers
 from multiprocessing import Process
 
 from snagflash.fastboot import fastboot
+from snagfactory.utils import SnagFactoryConfigError
 
 DEFAULT_FB_BUFFER_SIZE = 0x7000000
 MMC_LBA_SIZE = 512
@@ -14,7 +15,10 @@ class FastbootArgs:
 		for key, value in d.items():
 			setattr(self, key, value)
 
-def run_fastboot_task(args, soc_family, log_queue):
+	def set_port(self, port:str):
+		self.port = port
+
+def run_fastboot_task(args, log_queue):
 	sys.stdout = open(os.devnull, 'w')
 	sys.stderr = open(os.devnull, 'w')
 
@@ -39,16 +43,21 @@ def run_fastboot_task(args, soc_family, log_queue):
 	logger.handlers.clear()
 
 class FastbootTask():
-	def __init__(self, board):
+	def __init__(self, config: dict, num: int):
 		self.cmds = []
-		self.board = board
-		self.args = get_fastboot_args(board)
-		self.process = Process(target=run_fastboot_task, args=(self.args, self.board.soc_family, self.board.log_queue))
+		self.args = get_fastboot_args(config)
+		self.log_queue = None
+		self.num = num
+
+	def attach(self, board):
+		self.args.set_port(board.path)
+		self.log_queue = board.log_queue
 
 	def get_process(self):
+		self.process = Process(target=run_fastboot_task, args=(self.args, self.log_queue))
 		return self.process
 
-def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, part_start: None, image_offset: None):
+def flash_huge_image(config, part_name: str, fb_buffer_size: int, image: str, part_start: None, image_offset: None):
 	"""
 	Flash an image that doesn't fit inside the Fastboot RAM buffer.
 	This is done by flashing the image in sections. Each section has
@@ -63,16 +72,16 @@ def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, par
 	remainder = file_size % fb_buffer_size
 
 	if part_start is None:
-		cmds.append(f'oem_run:gpt setenv mmc {board.config["device-num"]} {part_name} ')
+		cmds.append(f'oem_run:gpt setenv mmc {config["device-num"]} {part_name} ')
 	else:
 		if part_start % MMC_LBA_SIZE != 0:
-			raise ValueError(f"partition start {part_start} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
+			raise SnagFactoryConfigError(f"partition start {part_start} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
 
 		cmds.append(f'oem_run:setenv gpt_partition_addr {(part_start // MMC_LBA_SIZE):x}')
 
 	if image_offset is not None:
 		if image_offset % MMC_LBA_SIZE != 0:
-			raise ValueError(f"image offset {image_offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
+			raise SnagFactoryConfigError(f"image offset {image_offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
 		cmds.append('oem_run:setexpr gpt_partition_addr 0x${gpt_partition_addr} + ' + f'0x{(image_offset // MMC_LBA_SIZE):x}')
 
 	for i in range(0, nchunks):
@@ -91,23 +100,23 @@ def flash_huge_image(board, part_name: str, fb_buffer_size: int, image: str, par
 
 	return cmds
 
-def flash_image_to_part(board, image: str, part, part_start = None, image_offset = None):
-	fb_buffer_size = board.config.get("fb_buffer_size", DEFAULT_FB_BUFFER_SIZE)
+def flash_image_to_part(config: dict, image: str, part, part_start = None, image_offset = None):
+	fb_buffer_size = config.get("fb_buffer_size", DEFAULT_FB_BUFFER_SIZE)
 
 	if fb_buffer_size % MMC_LBA_SIZE != 0:
-		raise ValueError(f"Specified fb_buffer_size is invalid! Must be a multiple of {MMC_LBA_SIZE}")
+		raise SnagFactoryConfigError(f"Specified fb_buffer_size is invalid! Must be a multiple of {MMC_LBA_SIZE}")
 
 	file_size = os.path.getsize(image)
 
 	if file_size > fb_buffer_size or image_offset is not None:
-		return flash_huge_image(board, part, fb_buffer_size, image, part_start, image_offset)
+		return flash_huge_image(config, part, fb_buffer_size, image, part_start, image_offset)
 
 	cmds = [f'download:{image}']
 
 	if isinstance(part, str):
 		cmds.append(f"flash:{part}")
 	else:
-		cmds.append(f"flash:{board.config['device-num']}:{part}")
+		cmds.append(f"flash:{config['device-num']}:{part}")
 
 	return cmds
 
@@ -116,7 +125,7 @@ def flash_partition_table(device_num: int, partitions: list):
 
 	for partition in partitions:
 		if "size" not in partition or "name" not in partition:
-			raise ValueError("Invalid partition table entry found in config file, partition size and name must be specified!")
+			raise SnagFactoryConfigError("Invalid partition table entry found in config file, partition size and name must be specified!")
 
 		for key, value in partition.items():
 			if key == "image":
@@ -131,12 +140,12 @@ def flash_partition_table(device_num: int, partitions: list):
 def convert_from_suffix_int(n):
 	return 1048576 * int(n[:-1]) if "M" in n else int(n)
 
-def flash_partition_images(board):
+def flash_partition_images(config):
 	part_index = 1
 
 	cmds = []
 
-	for partition in board.config["partitions"]:
+	for partition in config["partitions"]:
 		if "image" not in partition:
 			continue
 
@@ -147,11 +156,11 @@ def flash_partition_images(board):
 
 		image_offset = partition.get("image-offset", None)
 
-		cmds += flash_image_to_part(board, partition["image"], part_name, None, image_offset)
+		cmds += flash_image_to_part(config, partition["image"], part_name, None, image_offset)
 
 	return cmds
 
-def emmc_flash_bootpart(board, config: dict, part_num: int, image_offset = None):
+def emmc_flash_bootpart(config: dict, part_num: int, image_offset = None):
 	file_size = os.path.getsize(config['image'])
 
 	cmds = [f"download:{config['image']}"]
@@ -166,36 +175,36 @@ def emmc_flash_bootpart(board, config: dict, part_num: int, image_offset = None)
 
 	return cmds
 
-def get_fastboot_args(board):
+def get_fastboot_args(config: dict):
 	args = {
 		"loglevel": "info",
 		"timeout": 60000,
-		"port": board.path,
 		"factory": True,
 		"fastboot_cmd": [],
+		# 'port' is missing, it is added when task.attach() is called
 	}
 
-	if "boot0" in board.config:
-		image_offset = board.config["boot0"].get("image-offset", None)
-		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot0"], 0, image_offset)
+	if "boot0" in config:
+		image_offset = config["boot0"].get("image-offset", None)
+		args["fastboot_cmd"] += emmc_flash_bootpart(config["boot0"], 0, image_offset)
 
-	if "boot1" in board.config:
-		image_offset = board.config["boot1"].get("image-offset", None)
-		args["fastboot_cmd"] += emmc_flash_bootpart(board, board.config["boot1"], 1, image_offset)
+	if "boot1" in config:
+		image_offset = config["boot1"].get("image-offset", None)
+		args["fastboot_cmd"] += emmc_flash_bootpart(config["boot1"], 1, image_offset)
 
-	if "image" in board.config and "partitions" in board.config:
-		raise ValueError("Invalid configuration file: specify either 'image' or 'partitions' for one soc family, not both!")
-	elif "image" in board.config:
-		image_offset = board.config.get("image-offset", None)
-		args["fastboot_cmd"] += flash_image_to_part(board, board.config["image"], 0, 0, image_offset)
-	elif "partitions" in board.config:
-		args["fastboot_cmd"] += flash_partition_table(board.config["device-num"], board.config["partitions"])
-		args["fastboot_cmd"] += flash_partition_images(board)
+	if "image" in config and "partitions" in config:
+		raise SnagFactoryConfigError("Invalid configuration file: specify either 'image' or 'partitions' for one soc family, not both!")
+	elif "image" in config:
+		image_offset = config.get("image-offset", None)
+		args["fastboot_cmd"] += flash_image_to_part(config, config["image"], 0, 0, image_offset)
+	elif "partitions" in config:
+		args["fastboot_cmd"] += flash_partition_table(config["device-num"], config["partitions"])
+		args["fastboot_cmd"] += flash_partition_images(config)
 	else:
-		raise ValueError("Invalid configuration file: specify either 'image' or 'partitions' for each soc family!")
+		raise SnagFactoryConfigError("Invalid configuration file: specify either 'image' or 'partitions' for each soc family!")
 
-	if "post-flash" in board.config:
-		for cmd in board.config["post-flash"]:
+	if "post-flash" in config:
+		for cmd in config["post-flash"]:
 			args["fastboot_cmd"].append(cmd)
 
 	print("\n".join(args["fastboot_cmd"]))

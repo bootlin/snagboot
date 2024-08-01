@@ -9,8 +9,6 @@ import logging
 import logging.handlers
 factory_logger = logging.getLogger("snagfactory")
 
-from snagfactory.fastboot import FastbootTask
-
 from enum import Enum
 
 MAX_LOG_RECORDS = 15000
@@ -24,8 +22,7 @@ class BoardPhase(Enum):
 	DONE=4
 
 class Board():
-
-	def __init__(self, usb_path: str, soc_model: str, config: dict, usb_ids: str):
+	def __init__(self, usb_path: str, soc_model: str, config: dict, usb_ids: str, pipeline: list):
 		self.path = usb_path
 		self.soc_model = soc_model
 		self.soc_family = get_family(soc_model)
@@ -41,7 +38,11 @@ class Board():
 		self.session_log = []
 		self.usb_ids = usb_ids
 
-		self.task = FastbootTask(self)
+		self.pipeline = pipeline
+		for task in self.pipeline:
+			task.attach(self)
+
+		self.task = None
 
 	def get_status(self):
 		if not self.last_log.empty():
@@ -61,28 +62,35 @@ class Board():
 
 		if phase == BoardPhase.ROM:
 			config = get_recovery_config(self)
-			factory_logger.debug(f"board {self.path} starting recovery task")
+			factory_logger.info(f"board {self.path} starting recovery task")
 			self.process = Process(target=run_recovery, args=(config, self.soc_family, self.log_queue, self.last_log))
 			self.process.start()
 			self.set_phase(BoardPhase.RECOVERING)
 		elif phase == BoardPhase.FLASHER:
-			factory_logger.debug(f"board {self.path} starting flashing task")
-			self.process = self.task.get_process()
-			self.process.start()
-			self.set_phase(BoardPhase.FLASHING)
+			if len(self.pipeline) == 0:
+				factory_logger.info(f"board {self.path} all flashing tasks have been processed")
+				self.set_phase(BoardPhase.DONE)
+			else:
+				self.task = self.pipeline.pop(0)
+				factory_logger.info(f"board {self.path} starting flashing task #{self.task.num}")
+				self.process = self.task.get_process()
+				self.process.start()
+				self.set_phase(BoardPhase.FLASHING)
+
 		elif phase in [BoardPhase.RECOVERING, BoardPhase.FLASHING]:
 			exitcode = self.process.exitcode
 
 			if exitcode == 0:
 				self.process.join()
 				if self.phase == BoardPhase.RECOVERING:
-					factory_logger.debug(f"board {self.path} end of recovery task")
+					factory_logger.info(f"board {self.path} end of recovery task")
 					self.set_phase(BoardPhase.FLASHER)
 				else:
-					factory_logger.debug(f"board {self.path} end of flashing task")
-					self.set_phase(BoardPhase.DONE)
+					factory_logger.info(f"board {self.path} end of flashing task #{self.task.num}")
+					self.set_phase(BoardPhase.FLASHING)
 			elif (exitcode is not None and exitcode < 0) or not self.process.is_alive():
-				factory_logger.error(f"board {self.path} failure: exitcode {exitcode} is_alive {self.process.is_alive()}")
+				subproc_name = "recovery" if phase == BoardPhase.RECOVERING else f"#{self.task.num}"
+				factory_logger.error(f"board {self.path} failure of subprocess {subproc_name}: exitcode {exitcode} is_alive {self.process.is_alive()}")
 				self.set_phase(BoardPhase.FAILURE)
 
 		elif phase == BoardPhase.FAILURE:

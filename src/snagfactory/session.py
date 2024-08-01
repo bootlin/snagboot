@@ -68,7 +68,7 @@ class SnagFactorySession():
 		if config_path is None:
 			self.config = default_config
 		else:
-			self.config = read_config(config_path)
+			self.config,self.pipelines = read_config(config_path)
 
 		self.board_list = self.scan_for_boards()
 		self.phase = "scanning"
@@ -108,7 +108,7 @@ class SnagFactorySession():
 				continue
 
 			for path in paths:
-				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, self.config["soc_families"][soc_model], usb_ids))
+				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, self.config["soc_families"][soc_model], usb_ids, self.pipelines[soc_model]))
 
 	def format_session_logs(self):
 		timestamp = datetime.datetime.fromtimestamp(self.start_ts)

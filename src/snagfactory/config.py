@@ -2,8 +2,8 @@ import yaml
 import os
 import re
 
-class SnagFactoryConfigError(Exception):
-	pass
+from snagfactory.fastboot import FastbootTask
+from snagfactory.utils import SnagFactoryConfigError
 
 def list_soc_models():
 	with open(os.path.dirname(__file__) + "/../snagrecover/supported_socs.yaml", "r") as file:
@@ -104,7 +104,14 @@ def read_config(path):
 
 	check_config(config)
 
-	return config
+	pipelines = {}
+
+	i = 0
+	for soc_model,soc_config in config["soc_families"].items():
+		pipelines[soc_model] = [FastbootTask(soc_config, i)]
+		i += 1
+
+	return config, pipelines
 
 def check_entry(entry, rule):
 	entry_type = type(entry)
