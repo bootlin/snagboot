@@ -3,26 +3,25 @@ boards:
   "1f3a:efe8": "a64"
 
 soc_families:
-  am625:
-      device-num: 0
-      device-type: mmc
+  am625-firmware:
+    tiboot3:
+      path: "tiboot3_evm.bin"
+    tispl:
+      path: "tispl_evm.bin"
+    u-boot:
+      path: "u-boot_evm.img"
 
-      firmware:
-        tiboot3:
-          path: "tiboot3_evm.bin"
-        tispl:
-          path: "tispl_evm.bin"
-        u-boot:
-          path: "u-boot_evm.img"
+  am625-tasks:
+    device-num: 0
+    device-type: mmc
 
-      partitions:
-        - name: boot
-          size: 3M
-          bootable: True
-        -
-          name: rootfs
-          size: 1000M
-          image: "./rootfs.ext4"
+    partitions:
+      - name: boot
+        size: 3M
+        bootable: True
+      - name: rootfs
+        size: 1000M
+        image: "./rootfs.ext4"
 
-      fb_buffer_size: 0x7000000
+    fb-buffer-size: 0x7000000
 

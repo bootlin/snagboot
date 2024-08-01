@@ -101,7 +101,7 @@ def flash_huge_image(config, part_name: str, fb_buffer_size: int, image: str, pa
 	return cmds
 
 def flash_image_to_part(config: dict, image: str, part, part_start = None, image_offset = None):
-	fb_buffer_size = config.get("fb_buffer_size", DEFAULT_FB_BUFFER_SIZE)
+	fb_buffer_size = config.get("fb-buffer-size", DEFAULT_FB_BUFFER_SIZE)
 
 	if fb_buffer_size % MMC_LBA_SIZE != 0:
 		raise SnagFactoryConfigError(f"Specified fb_buffer_size is invalid! Must be a multiple of {MMC_LBA_SIZE}")
@@ -201,7 +201,7 @@ def get_fastboot_args(config: dict):
 		args["fastboot_cmd"] += flash_partition_table(config["device-num"], config["partitions"])
 		args["fastboot_cmd"] += flash_partition_images(config)
 	else:
-		raise SnagFactoryConfigError("Invalid configuration file: specify either 'image' or 'partitions' for each soc family!")
+		raise SnagFactoryConfigError("Invalid configuration file: specify either 'image' or 'partitions' for each soc model!")
 
 	if "post-flash" in config:
 		for cmd in config["post-flash"]:

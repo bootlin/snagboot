@@ -29,19 +29,19 @@ LOG_VIEW_CAPACITY = 100
 
 class SnagFactoryBoardID(BoxLayout):
 	usb_ids = StringProperty("")
-	soc_family = StringProperty("")
+	soc_model = StringProperty("")
 
 class SnagFactorySoCFamily(BoxLayout):
 	name = StringProperty("")
 
-	def set_config(self, config: dict):
+	def set_config(self, fw_config: dict, tasks_config: dict):
 		main_grid = GridLayout(cols=2, size_hint_y=0.5)
 		main_grid_params = {
-		"device-num": config["device-num"],
-		"device-type": config["device-type"]
+		"device-num": tasks_config["device-num"],
+		"device-type": tasks_config["device-type"]
 		}
 
-		for key, value in config["firmware"].items():
+		for key, value in fw_config.items():
 			main_grid_params[key] = value
 
 		for key, value in main_grid_params.items():
@@ -52,22 +52,22 @@ class SnagFactorySoCFamily(BoxLayout):
 
 		parts_widget = BoxLayout(orientation="vertical")
 
-		if "boot0" in config:
-			parts_widget.add_widget(Label(text=f"boot part 0: name {config['boot0']['name']} image {config['boot0']['image']}"))
+		if "boot0" in tasks_config:
+			parts_widget.add_widget(Label(text=f"boot part 0: name {tasks_config['boot0']['name']} image {tasks_config['boot0']['image']}"))
 
-		if "boot1" in config:
-			parts_widget.add_widget(Label(text=f"boot part 1: name {config['boot1']['name']} image {config['boot1']['image']}"))
+		if "boot1" in tasks_config:
+			parts_widget.add_widget(Label(text=f"boot part 1: name {tasks_config['boot1']['name']} image {tasks_config['boot1']['image']}"))
 
-		if "post-flash" in config:
+		if "post-flash" in tasks_config:
 			parts_widget.add_widget(Label(text="Post-flashing commands"))
-			for cmd in config["post-flash"]:
+			for cmd in tasks_config["post-flash"]:
 				parts_widget.add_widget(Label(text=f"{cmd}", font_size="15"))
 
-		if "partitions" in config:
+		if "partitions" in tasks_config:
 
 			parts_widget.add_widget(Label(text="Partition table to create:"))
 
-			for partition in config["partitions"]:
+			for partition in tasks_config["partitions"]:
 				prop_string = " ".join([f"{key}:{value}" for key,value in partition.items()])
 				parts_widget.add_widget(Label(text=prop_string, font_size="15"))
 		else:
@@ -183,15 +183,23 @@ class SnagFactoryUI(Widget):
 		for accordion_item in accordion_items:
 			soc_families_view.remove_widget(accordion_item)
 
-		for usb_ids,soc_family in self.session.config["boards"].items():
-			board_ids_item = SnagFactoryBoardID(usb_ids=usb_ids, soc_family=soc_family)
+		for usb_ids,soc_model in self.session.config["boards"].items():
+			board_ids_item = SnagFactoryBoardID(usb_ids=usb_ids, soc_model=soc_model)
 			board_ids_view.add_widget(board_ids_item)
 
-		for name,config in self.session.config["soc_families"].items():
+		for name,config in self.session.config["soc-models"].items():
+			soc_model,sep,suffix = name.partition("-")
+
+			if suffix == "firmware":
+				continue
+
+			fw_config = self.session.config["soc-models"][f"{soc_model}-firmware"]
+			tasks_config = config
+
 			accordion_item = AccordionItem(title=name)
-			soc_family_widget = SnagFactorySoCFamily(name=name)
-			soc_family_widget.set_config(config)
-			accordion_item.add_widget(soc_family_widget)
+			soc_model_widget = SnagFactorySoCFamily(name=name)
+			soc_model_widget.set_config(fw_config, tasks_config)
+			accordion_item.add_widget(soc_model_widget)
 			soc_families_view.add_widget(accordion_item)
 
 	def update_board_list(self):

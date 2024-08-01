@@ -38,20 +38,12 @@ partition_rule = {
 	"type": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
 }
 
-soc_model_rule = {
+tasks_rule = {
 "type": dict,
 
 "device-num": int_rule,
 
 "device-type": str_rule("mmc"),
-
-"firmware": {
-	"type": dict,
-	".+": {
-		"type": dict,
-		".+": str_rule(".+"),
-	},
-},
 
 "partitions": {
 	"type": list,
@@ -72,7 +64,7 @@ soc_model_rule = {
 	"image-offset": int_rule,
 },
 
-"fb_buffer_size": int_rule,
+"fb-buffer-size": int_rule,
 
 "post-flash": {
 	"type": list,
@@ -92,9 +84,18 @@ config_rule = {
 		"[\da-fA-F]{4}:[\da-fA-F]{4}": str_rule(soc_model_pattern),
 	},
 
-	"soc_families": {
+	"soc-models": {
 		"type": dict,
-		soc_model_pattern: soc_model_rule,
+
+		f"{soc_model_pattern}-firmware": {
+			"type": dict,
+			".+": {
+				"type": dict,
+				".+": str_rule(".+"),
+			},
+		},
+
+		f"{soc_model_pattern}-tasks": tasks_rule,
 	},
 }
 
@@ -107,7 +108,12 @@ def read_config(path):
 	pipelines = {}
 
 	i = 0
-	for soc_model,soc_config in config["soc_families"].items():
+	for soc_key,soc_config in config["soc-models"].items():
+		soc_model,sep,suffix = soc_key.partition("-")
+
+		if suffix == "firmware":
+			continue
+
 		pipelines[soc_model] = [FastbootTask(soc_config, i)]
 		i += 1
 
@@ -159,7 +165,20 @@ def check_config(config):
 	# Check config syntax
 	check_entry(config, config_rule)
 
-	for soc_family in config["soc_families"].values():
-		for firmware in soc_family["firmware"].values():
+	for soc_key,soc_config in config["soc-models"].items():
+		# check that each soc has a task section and a firmware section
+		soc_model,sep,suffix = soc_key.partition("-")
+
+		if suffix != "firmware":
+			if f"{soc_model}-tasks" not in config["soc-models"]:
+				raise SnagFactoryConfigError(f"Section {soc_model}-tasks is missing!")
+
+			continue
+
+		if f"{soc_model}-firmware" not in config["soc-models"]:
+			raise SnagFactoryConfigError(f"Section {soc_model}-firmware is missing!")
+
+		for firmware in soc_config.values():
 			if not os.path.exists(firmware["path"]):
 				raise SnagFactoryConfigError(f"firmware file {firmware['path']} does not exist!")
+

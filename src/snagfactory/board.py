@@ -22,14 +22,15 @@ class BoardPhase(Enum):
 	DONE=4
 
 class Board():
-	def __init__(self, usb_path: str, soc_model: str, config: dict, usb_ids: str, pipeline: list):
+	def __init__(self, usb_path: str, soc_model: str, fw_config: dict, tasks_config: dict, usb_ids: str, pipeline: list):
 		self.path = usb_path
 		self.soc_model = soc_model
 		self.soc_family = get_family(soc_model)
 		self.process = None
 		self.phase = BoardPhase.ROM
 
-		self.config = config
+		self.fw_config = fw_config
+		self.tasks_config = tasks_config
 
 		self.uid = uuid.uuid4()
 
@@ -105,7 +106,7 @@ def get_recovery_config(board):
 		"soc_model": board.soc_model,
 		"soc_family": board.soc_family,
 		"usb_path": parse_usb_path(board.path),
-		"firmware": board.config["firmware"],
+		"firmware": board.fw_config,
 		"loglevel": "info",
 	}
 

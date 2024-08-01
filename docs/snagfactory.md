@@ -45,17 +45,18 @@ boards:
  "0451:6165": "am625" --> scans for USB devices matching this vid:pid pair
  "1f3a:efe8": "a64"
 
-soc_families:
- am625:
- device-num: 0
- device-type: mmc
-   firmware:  --> this section specifies paths to recovery images
-    tiboot3:
-      path: "tiboot3_evm.bin"
-    tispl:
-      path: "tispl_evm.bin"
-    u-boot:
-      path: "u-boot_evm.img"
+soc-models:
+ am625-firmware: --> this section specifies paths to recovery images
+  tiboot3:
+    path: "tiboot3_evm.bin"
+  tispl:
+    path: "tispl_evm.bin"
+  u-boot:
+    path: "u-boot_evm.img"
+
+ am625-tasks:
+   device-num: 0
+   device-type: mmc
 
   partitions:  -> this section describes the GPT partition table to create
     - name: boot

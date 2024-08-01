@@ -27,7 +27,7 @@ results:
 
 default_config = {
 "boards": {},
-"soc_families": {},
+"soc-models": {},
 }
 
 class SnagFactorySession():
@@ -108,7 +108,9 @@ class SnagFactorySession():
 				continue
 
 			for path in paths:
-				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, self.config["soc_families"][soc_model], usb_ids, self.pipelines[soc_model]))
+				fw_config = self.config["soc-models"][f"{soc_model}-firmware"]
+				tasks_config = self.config["soc-models"][f"{soc_model}-tasks"]
+				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, fw_config, tasks_config, usb_ids, self.pipelines[soc_model]))
 
 	def format_session_logs(self):
 		timestamp = datetime.datetime.fromtimestamp(self.start_ts)
@@ -159,7 +161,7 @@ class SnagFactorySession():
 				path = match.groups()[1]
 				phase = BoardPhase[match.groups()[2]]
 				soc_model = self.config["boards"][usb_ids]
-				mock_board = Board(path, soc_model, self.config["soc_families"][soc_model], usb_ids)
+				mock_board = Board(path, soc_model, self.config["soc-models"][soc_model], usb_ids)
 				mock_board.phase = phase
 				self.board_dict[path] = mock_board
 		elif marker == "BOARD LOG":
