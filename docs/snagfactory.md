@@ -38,9 +38,9 @@ Please use menuconfig to check that your configuration is coherent, as some of t
 
 ## Configuration file
 
-The  [example configuration file](docs/snagfactory-example.yaml) showcases the
+The  [example configuration file](snagfactory-example.yaml) showcases the
 main features of Snagfactory. There is also a
-[full documentation](docs/snagfactory_config.md) for the Snagfactory
+[full documentation](snagfactory_config.md) for the Snagfactory
 configuration file format.
 
 ## libusb-win32
