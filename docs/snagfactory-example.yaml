@@ -31,3 +31,20 @@ soc-models:
           size: 1G
           image: "./rootfs.ext4"
 
+    - task: virtual-part
+      args:
+         - name: rootfs_lba3
+           start: 0x22000600
+           size: 20M
+         - name: boot1
+           start: 0
+           size: 10M
+           hwpart: 1
+
+    - task: flash
+      args:
+        - part: boot1
+          image: "boot.bin"
+        - part: rootfs
+          image: "rootfs.ext4"
+

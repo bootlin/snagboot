@@ -46,6 +46,24 @@ virtual_part_task_rule = {
 	}
 }
 
+flash_rule = {
+	"type": dict,
+	"part": name_rule,
+	"image": path_rule,
+	"image-offset": int_rule,
+}
+
+flash_task_rule = {
+	"type": dict,
+	"task": str_rule("flash"),
+	"args": {
+		"type": list,
+		"rules": [
+			flash_rule,
+		],
+	}
+}
+
 partition_rule = {
 	"type": dict,
 	"image": path_rule,
@@ -92,6 +110,8 @@ tasks_rule = {
 		globals_rule,
 		gpt_task_rule,
 		run_task_rule,
+		flash_task_rule,
+		virtual_part_task_rule,
 	],
 }
 

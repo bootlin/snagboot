@@ -85,6 +85,9 @@ class FastbootTask():
 		if fb_buffer_size % MMC_LBA_SIZE != 0:
 			raise SnagFactoryConfigError(f"Specified fb_buffer_size is invalid! Must be a multiple of {MMC_LBA_SIZE}")
 
+		if not os.path.exists(image):
+			raise SnagFactoryConfigError(f"Specified image file {image} does not exist!")
+
 		file_size = os.path.getsize(image)
 
 		if file_size > fb_buffer_size or image_offset is not None:
@@ -183,24 +186,44 @@ class FastbootTaskRun(FastbootTask):
 	def get_cmds(self):
 		return self.config
 
+class FastbootTaskFlash(FastbootTask):
+	def get_cmds(self):
+		cmds = []
 
-def emmc_flash_bootpart(config: dict, part_num: int, image_offset = None):
-	file_size = os.path.getsize(config['image'])
+		for entry in self.config:
+			part = entry["part"]
+			image = entry["image"]
+			image_offset = entry.get("image-offset", None)
 
-	cmds = [f"download:{config['image']}"]
+			cmds += self.flash_image_to_part(image, part, image_offset=image_offset)
 
-	if image_offset is not None:
-		cmds += [
-		f"oem_run:setenv fastboot_raw_partition_temp 0x{(image_offset // MMC_LBA_SIZE):x} 0x{file_size :x} mmcpart {part_num + 1}",
-		"flash:temp",
-		]
-	else:
-		cmds.append(f"flash:{config['name']}")
+		return cmds
 
-	return cmds
+class FastbootTaskVirtualPart(FastbootTask):
+	def get_cmds(self):
+		target_device = self.globals["target-device"]
+
+		if not target_device.startswith("mmc"):
+			raise SnagFactoryConfigError("virtual-part task is only supported on mmc backends")
+
+		cmds = []
+		for partition in self.config:
+			name = partition["name"]
+			start = fb_config_bytes_to_lbas(partition["start"])
+			size = fb_config_bytes_to_lbas(partition["size"])
+			cmd = f"oem_run:setenv fastboot_raw_partition_{name} 0x{start:x} 0x{size:x}"
+
+			if target_device.startswith("mmc") and "hwpart" in partition:
+				cmd += f" mmcpart {partition['hwpart']}"
+
+			cmds.append(cmd)
+
+		return cmds
 
 task_table = {
 "gpt": FastbootTaskGPT,
 "run": FastbootTaskRun,
+"flash": FastbootTaskFlash,
+"virtual-part": FastbootTaskVirtualPart,
 }
 
