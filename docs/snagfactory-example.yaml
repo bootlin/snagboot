@@ -28,6 +28,6 @@ soc-models:
           size: 3M
           bootable: True
         - name: rootfs
-          size: 1000M
+          size: 1G
           image: "./rootfs.ext4"
 

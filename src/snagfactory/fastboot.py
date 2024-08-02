@@ -10,9 +10,6 @@ from snagfactory.utils import SnagFactoryConfigError
 DEFAULT_FB_BUFFER_SIZE = 0x7000000
 MMC_LBA_SIZE = 512
 
-def convert_from_suffix_int(n):
-	return 1048576 * int(n[:-1]) if "M" in n else int(n)
-
 class FastbootArgs:
 	def __init__(self, d):
 		for key, value in d.items():

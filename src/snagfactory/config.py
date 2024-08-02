@@ -27,13 +27,32 @@ fastboot_cmd_rule = str_rule("\w+(:.+)?")
 int_rule = {"type": int}
 bool_rule = {"type": bool}
 
+virtual_part_rule = {
+	"name": name_rule,
+	"start": int_rule,
+	"size": int_rule,
+	"hwpart": int_rule,
+}
+
+virtual_part_task_rule = {
+	"type": dict,
+	"task": str_rule("virtual-part"),
+	"args": {
+		"type": list,
+		"rules": [
+			virtual_part_rule,
+		],
+
+	}
+}
+
 partition_rule = {
 	"type": dict,
 	"image": path_rule,
 	"image-offset": int_rule,
 	"name": str_rule("^[\w][\w\-]*"),
-	"start": str_rule("(\-|(\d+M?))"),
-	"size": str_rule("(\-|(\d+M?))"),
+	"start": int_rule,
+	"size": int_rule,
 	"bootable": bool_rule,
 	"uuid": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
 	"type()": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
@@ -99,9 +118,61 @@ config_rule = {
 	},
 }
 
+def map_config(config, modify):
+	if isinstance(config, dict):
+		key_list = list(config.keys())
+		for key in key_list:
+			value = config[key]
+
+			if isinstance(value, dict) or isinstance(value, list):
+				map_config(value, modify)
+			else:
+				config[key] = modify(value)
+
+	elif isinstance(config, list):
+		for i in range(len(config)):
+			value = config[i]
+
+			if isinstance(value, dict) or isinstance(value, list):
+				map_config(value, modify)
+			else:
+				config[i] = modify(value)
+
+def suffixed_num_to_int(param) -> int:
+	pattern = re.compile("^\d+[GMk]?$")
+
+	if not isinstance(param, str) or pattern.match(param) is None:
+		return param
+
+	suffix = param[-1]
+	num = param[:-1]
+
+	if suffix == "k":
+		multiplier = 1024
+	elif suffix == "M":
+		multiplier = 1024 ** 2
+	elif suffix == "G":
+		multiplier = 1024 ** 3
+	else:
+		# This shouldn't happen
+		multiplier = 1
+		num = param
+
+	return int(num) * multiplier
+
+def preprocess_config(config):
+	"""
+	This performs the following transformations on the parsed YAML config file:
+	- find strings of the form "\d+(M|k)?" and convert them to integers
+	"""
+
+	map_config(config, suffixed_num_to_int)
+
 def read_config(path):
 	with open(path, "r") as file:
 		config = yaml.safe_load(file)
+
+	preprocess_config(config)
 
 	check_config(config)
 
