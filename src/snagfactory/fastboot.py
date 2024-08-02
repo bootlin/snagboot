@@ -3,12 +3,19 @@ import sys
 import logging
 import logging.handlers
 from multiprocessing import Process
+from math import ceil
 
 from snagflash.fastboot import fastboot
 from snagfactory.utils import SnagFactoryConfigError
 
 DEFAULT_FB_BUFFER_SIZE = 0x7000000
 MMC_LBA_SIZE = 512
+
+def fb_config_bytes_to_lbas(num: int):
+	if num % MMC_LBA_SIZE != 0:
+		raise SnagFactoryConfigError(f"Value {num} is not a multiple of {MMC_LBA_SIZE} bytes!")
+
+	return num // MMC_LBA_SIZE
 
 class FastbootArgs:
 	def __init__(self, d):
@@ -96,37 +103,32 @@ class FastbootTaskGPT(FastbootTask):
 		"""
 
 		cmds = []
-		fb_buffer_size = self.globals.get("fb-buffer-size", DEFAULT_FB_BUFFER_SIZE)
+		fb_buffer_size = fb_config_bytes_to_lbas(self.globals.get("fb-buffer-size", DEFAULT_FB_BUFFER_SIZE))
 		file_size = os.path.getsize(image)
 
-		nchunks = file_size // fb_buffer_size
-		remainder = file_size % fb_buffer_size
+		nchunks = file_size // (fb_buffer_size * MMC_LBA_SIZE)
+		remainder = file_size % (fb_buffer_size * MMC_LBA_SIZE)
 
 		if part_start is None:
 			cmds.append(f'oem_run:gpt setenv mmc {self.device_num} {part_name} ')
 		else:
-			if part_start % MMC_LBA_SIZE != 0:
-				raise SnagFactoryConfigError(f"partition start {part_start} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
-
-			cmds.append(f'oem_run:setenv gpt_partition_addr {(part_start // MMC_LBA_SIZE):x}')
+			cmds.append(f'oem_run:setenv gpt_partition_addr {fb_config_bytes_to_lbas(part_start):x}')
 
 		if image_offset is not None:
-			if image_offset % MMC_LBA_SIZE != 0:
-				raise SnagFactoryConfigError(f"image offset {image_offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
-			cmds.append('oem_run:setexpr gpt_partition_addr 0x${gpt_partition_addr} + ' + f'0x{(image_offset // MMC_LBA_SIZE):x}')
+			cmds.append('oem_run:setexpr gpt_partition_addr 0x${gpt_partition_addr} + ' + f'0x{fb_config_bytes_to_lbas(image_offset):x}')
 
 		for i in range(0, nchunks):
 			# setexpr interprets every number as a hexadecimal value
 			# I've added '0x' prefixes just in case this changes for some reason
-			cmds.append('oem_run:setexpr snag_offset 0x${gpt_partition_addr} + ' + f'0x{((i * fb_buffer_size) // MMC_LBA_SIZE):x}')
+			cmds.append('oem_run:setexpr snag_offset 0x${gpt_partition_addr} + ' + f'0x{i * fb_buffer_size:x}')
 			cmds.append('oem_run:setenv fastboot_raw_partition_temp 0x${snag_offset}' f' 0x{fb_buffer_size:x}')
-			cmds.append(f'download:{image}#{i * fb_buffer_size}:{fb_buffer_size}')
+			cmds.append(f'download:{image}#{(i * fb_buffer_size) * MMC_LBA_SIZE}:{fb_buffer_size * MMC_LBA_SIZE}')
 			cmds.append("flash:temp")
 
 		if remainder > 0:
-			cmds.append('oem_run:setexpr snag_offset 0x${gpt_partition_addr} + ' + f'0x{((nchunks * fb_buffer_size) // MMC_LBA_SIZE):x}')
-			cmds.append('oem_run:setenv fastboot_raw_partition_temp 0x${snag_offset}' f' 0x{remainder}')
-			cmds.append(f'download:{image}#{nchunks * fb_buffer_size}:{remainder}')
+			cmds.append('oem_run:setexpr snag_offset 0x${gpt_partition_addr} + ' + f'0x{(nchunks * fb_buffer_size):x}')
+			cmds.append('oem_run:setenv fastboot_raw_partition_temp 0x${snag_offset}' f' 0x{ceil(remainder / MMC_LBA_SIZE)}')
+			cmds.append(f'download:{image}#{(nchunks * fb_buffer_size) * MMC_LBA_SIZE}:{remainder}')
 			cmds.append("flash:temp")
 
 		return cmds
