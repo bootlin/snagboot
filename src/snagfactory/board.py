@@ -35,7 +35,6 @@ class Board():
 		self.uid = uuid.uuid4()
 
 		self.log_queue = Queue(MAX_LOG_RECORDS)
-		self.last_log = Queue(1)
 		self.session_log = []
 		self.usb_ids = usb_ids
 
@@ -43,12 +42,9 @@ class Board():
 		for task in self.pipeline:
 			task.attach(self)
 
-		self.task = None
+		self.status = ""
 
-	def get_status(self):
-		if not self.last_log.empty():
-			return self.last_log.get()
-		return ""
+		self.task = None
 
 	def set_phase(self, new_phase: BoardPhase):
 		factory_logger.info(f"board {self.path} phase: {self.phase} -> {new_phase}")
@@ -64,16 +60,19 @@ class Board():
 		if phase == BoardPhase.ROM:
 			config = get_recovery_config(self)
 			factory_logger.info(f"board {self.path} starting recovery task")
-			self.process = Process(target=run_recovery, args=(config, self.soc_family, self.log_queue, self.last_log))
+			self.process = Process(target=run_recovery, args=(config, self.soc_family, self.log_queue))
 			self.process.start()
+			self.status = "recovering board..."
 			self.set_phase(BoardPhase.RECOVERING)
 		elif phase == BoardPhase.FLASHER:
 			if len(self.pipeline) == 0:
 				factory_logger.info(f"board {self.path} all flashing tasks have been processed")
+				self.status = "done!"
 				self.set_phase(BoardPhase.DONE)
 			else:
 				self.task = self.pipeline.pop(0)
 				factory_logger.info(f"board {self.path} starting flashing task #{self.task.num}")
+				self.status = f"running task #{self.task.num} ${str(self.task.config)[:20]}..."
 				self.process = self.task.get_process()
 				self.process.start()
 				self.set_phase(BoardPhase.FLASHING)
@@ -110,7 +109,7 @@ def get_recovery_config(board):
 		"loglevel": "info",
 	}
 
-def run_recovery(config, soc_family, log_queue, last_log):
+def run_recovery(config, soc_family, log_queue):
 	sys.stdout = open(os.devnull, "w")
 	sys.stderr = open(os.devnull, "w")
 
@@ -123,9 +122,7 @@ def run_recovery(config, soc_family, log_queue, last_log):
 	log_handler = logging.handlers.QueueHandler(log_queue)
 	log_formatter = logging.Formatter(f"%(asctime)s,%(msecs)03d [{prettify_usb_addr(config['usb_path'])}][%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
 	log_handler.setFormatter(log_formatter)
-	status_handler = logging.handlers.QueueHandler(last_log)
 	logger.addHandler(log_handler)
-	logger.addHandler(status_handler)
 	logger.setLevel(logging.INFO)
 
 	recovery = snagrecover.utils.get_recovery(soc_family)

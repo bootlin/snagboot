@@ -100,15 +100,15 @@ class SnagFactoryBoard(Widget):
 		self.phase = board.phase.name
 		self.status = ""
 		self.ui = ui
+		self.spinner_symbols = ["\\","-","/","|"]
+		self.spinner_cur = 0
 
 	def update(self):
 		self.phase = self.board.phase.name
 
-		new_status = self.board.get_status()
+		self.status = f"[{self.spinner_symbols[self.spinner_cur]}] {self.board.status}"
 
-		if new_status != "" and new_status.levelno > logging.DEBUG:
-			print(f"status: {new_status}")
-			self.status = new_status.msg
+		self.spinner_cur = (self.spinner_cur + 1) % 4
 
 class SnagFactoryUI(Widget):
 	widget_container = ObjectProperty(None)
@@ -225,7 +225,7 @@ class SnagFactoryUI(Widget):
 		self.session.start()
 
 	def update(self, dt):
-
+		last_phase = self.session.phase
 		self.session.update()
 
 		if self.session.phase == "scanning":
@@ -240,6 +240,10 @@ class SnagFactoryUI(Widget):
 				board_widget.update()
 
 		elif self.session.phase == "logview":
+			if last_phase == "running":
+				for board_widget in self.board_widgets:
+					board_widget.update()
+
 			self.phase_label = "viewing session logs: " + os.path.basename(self.session.logfile_path)
 			self.status = f"done: {self.session.nb_done}    failed: {self.session.nb_failed}    other: {self.session.nb_other}"
 
@@ -252,6 +256,7 @@ class SnagFactoryUI(Widget):
 
 			self.log_board_path.text = board.path
 			self.log_area.text = "\n".join(board.session_log[-LOG_VIEW_CAPACITY:])
+
 
 class SnagFactory(App):
 	def build(self):
