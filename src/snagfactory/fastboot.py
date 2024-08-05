@@ -136,7 +136,7 @@ class FastbootTaskGPT(FastbootTask):
 
 		if remainder > 0:
 			cmds.append('oem_run:setexpr snag_offset 0x${gpt_partition_addr} + ' + f'0x{(nchunks * fb_buffer_size):x}')
-			cmds.append('oem_run:setenv fastboot_raw_partition_temp 0x${snag_offset}' f' 0x{ceil(remainder / MMC_LBA_SIZE)}')
+			cmds.append('oem_run:setenv fastboot_raw_partition_temp 0x${snag_offset}' f' 0x{ceil(remainder / MMC_LBA_SIZE):x}')
 			cmds.append(f'download:{image}#{(nchunks * fb_buffer_size) * MMC_LBA_SIZE}:{remainder}')
 			cmds.append("flash:temp")
 
