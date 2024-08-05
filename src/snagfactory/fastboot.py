@@ -294,7 +294,7 @@ class FastbootTaskEmmcHwpart(FastbootTask):
 		cmds.append(fb_cmd_setenv("hwpart_args", hwpart_args))
 		cmds.append('oem_run:mmc hwpartition ${hwpart_args} check')
 		cmds.append('oem_run:mmc hwpartition ${hwpart_args} set')
-		#cmds.append('oem_run:mmc hwpartition ${hwpart_args} complete')
+		cmds.append('oem_run:mmc hwpartition ${hwpart_args} complete')
 		cmds.append('reset')
 
 		return cmds
