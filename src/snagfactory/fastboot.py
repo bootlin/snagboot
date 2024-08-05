@@ -53,6 +53,9 @@ class FastbootTask():
 		self.args = None
 		self.log_queue = None
 		self.num = num
+		self.resets_board = False
+		self.pauses_board = False
+		self.pause_action = ""
 
 	def get_cmds(self):
 		return []
@@ -220,10 +223,34 @@ class FastbootTaskVirtualPart(FastbootTask):
 
 		return cmds
 
+class FastbootTaskReset(FastbootTask):
+	def __init__(self, config: dict, num: int, globals: dict):
+		super().__init__(config, num, globals)
+		self.resets_board = True
+
+	def get_cmds(self):
+		return ["reset"]
+
+class FastbootTaskPromptOperator(FastbootTask):
+	def __init__(self, config: dict, num: int, globals: dict):
+		super().__init__(config, num, globals)
+		self.resets_board = config.get("reset-before", False)
+		self.pauses_board = True
+
+		if "prompt" not in config:
+			raise SnagFactoryConfigError("Missing parameter 'prompt' for task 'prompt-operator'!")
+
+		self.pause_action = config["prompt"]
+
+	def get_cmds(self):
+		return ["reset"] if self.resets_board else []
+
 task_table = {
 "gpt": FastbootTaskGPT,
 "run": FastbootTaskRun,
 "flash": FastbootTaskFlash,
 "virtual-part": FastbootTaskVirtualPart,
+"reset": FastbootTaskReset,
+"prompt-operator": FastbootTaskPromptOperator,
 }
 

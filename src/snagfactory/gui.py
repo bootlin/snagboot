@@ -7,6 +7,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.accordion import AccordionItem
 from kivy.uix.label import Label
+from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.properties import (
     ListProperty, ObjectProperty, StringProperty
@@ -90,7 +91,11 @@ class SnagFactoryBoard(Widget):
 
 	phase = StringProperty("")
 	status = StringProperty("")
+	status_color = ListProperty([0,0,0])
 	ui = ObjectProperty(None)
+
+	def show_verbose_log(self):
+		self.ui.verbose_log_target = self.board
 
 	def attach_board(self, board, ui):
 		self.board = board
@@ -102,9 +107,22 @@ class SnagFactoryBoard(Widget):
 		self.ui = ui
 		self.spinner_symbols = ["\\","-","/","|"]
 		self.spinner_cur = 0
+		self.resume_btn = None
+
+	def unpause(self, event):
+		self.board.paused = False
+		self.board_box.remove_widget(self.resume_btn)
+		self.resume_btn = None
+		self.status_color = [0, 0, 0]
+
+	def is_paused(self):
+		return hasattr(self, "board") and self.board.paused
 
 	def update(self):
-		self.phase = self.board.phase.name
+		if self.is_paused() and self.resume_btn is None:
+			self.status_color = [0, 1, 0]
+			self.resume_btn = Button(text="resume",on_press=self.unpause, background_normal="", background_color=(0,1,0), size_hint_x=0.2)
+			self.board_box.add_widget(self.resume_btn)
 
 		self.status = f"[{self.spinner_symbols[self.spinner_cur]}] {self.board.status}"
 
@@ -113,7 +131,6 @@ class SnagFactoryBoard(Widget):
 class SnagFactoryUI(Widget):
 	widget_container = ObjectProperty(None)
 	board_widgets = ListProperty([])
-	verbose_log = ObjectProperty(None)
 	status = StringProperty("Scanning for boards...")
 	phase_label = StringProperty("")
 
@@ -234,7 +251,7 @@ class SnagFactoryUI(Widget):
 		elif self.session.phase == "running":
 			ts = time.time()
 			self.phase_label = "running factory session... |" + "  " * int(ts % 3) + "==" + "  " * int(3 - (ts % 3))  + "|"
-			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
+			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    paused: {self.session.nb_paused}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
 
 			for board_widget in self.board_widgets:
 				board_widget.update()
@@ -247,12 +264,11 @@ class SnagFactoryUI(Widget):
 			self.phase_label = "viewing session logs: " + os.path.basename(self.session.logfile_path)
 			self.status = f"done: {self.session.nb_done}    failed: {self.session.nb_failed}    other: {self.session.nb_other}"
 
-		if self.session.phase != "scanning" and self.verbose_log is not None:
+		if self.session.phase != "scanning" and self.verbose_log_target is not None:
 
 			self.log_boxlayout.size_hint_x = 0.5
 
-			board_widget = self.verbose_log
-			board = board_widget.board
+			board = self.verbose_log_target
 
 			self.log_board_path.text = board.path
 			self.log_area.text = "\n".join(board.session_log[-LOG_VIEW_CAPACITY:])
@@ -266,6 +282,7 @@ class SnagFactory(App):
 
 		session = SnagFactorySession(None)
 		ui = SnagFactoryUI()
+		ui.verbose_log_target = None
 		ui.session = session
 
 		ui.session.update()

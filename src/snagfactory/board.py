@@ -20,6 +20,7 @@ class BoardPhase(Enum):
 	FLASHER=2
 	FLASHING=3
 	DONE=4
+	PAUSED=5
 
 class Board():
 	def __init__(self, usb_path: str, soc_model: str, fw_config: dict, tasks_config: dict, usb_ids: str, pipeline: list):
@@ -43,6 +44,7 @@ class Board():
 			task.attach(self)
 
 		self.status = ""
+		self.paused = False
 
 		self.task = None
 
@@ -86,12 +88,38 @@ class Board():
 					factory_logger.info(f"board {self.path} end of recovery task")
 				else:
 					factory_logger.info(f"board {self.path} end of flashing task #{self.task.num}")
+
+					if self.task.pauses_board:
+						factory_logger.info(f"board {self.path} has been paused by task, prompting for operator action")
+						self.status = f"Operator action requested: {self.task.pause_action}"
+						self.paused = True
+						self.set_phase(BoardPhase.PAUSED)
+						return
+
+					if self.task.resets_board:
+						factory_logger.info(f"board {self.path} has been reset by task, returning to ROM state")
+						self.set_phase(BoardPhase.ROM)
+						return
+
 				self.set_phase(BoardPhase.FLASHER)
 
 			elif (exitcode is not None and exitcode < 0) or not self.process.is_alive():
 				subproc_name = "recovery" if phase == BoardPhase.RECOVERING else f"#{self.task.num}"
 				factory_logger.error(f"board {self.path} failure of subprocess {subproc_name}: exitcode {exitcode} is_alive {self.process.is_alive()}")
 				self.set_phase(BoardPhase.FAILURE)
+
+		elif phase == BoardPhase.PAUSED:
+			if self.paused:
+				return
+
+			factory_logger.info(f"board {self.path} has been unpaused, returning to FLASHER state")
+
+			if self.task.resets_board:
+				factory_logger.info(f"board {self.path} has been reset by task, returning to ROM state")
+				self.set_phase(BoardPhase.ROM)
+				return
+
+			self.set_phase(BoardPhase.FLASHER)
 
 		elif phase == BoardPhase.FAILURE:
 			pass

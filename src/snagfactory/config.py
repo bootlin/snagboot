@@ -27,6 +27,21 @@ fastboot_cmd_rule = str_rule("\w+(:.+)?")
 int_rule = {"type": int}
 bool_rule = {"type": bool}
 
+prompt_operator_task_rule = {
+	"type": dict,
+	"task": str_rule("prompt-operator"),
+	"args": {
+		"type": dict,
+		"prompt": str_rule(".+"),
+		"reset-before": bool_rule,
+	}
+}
+
+reset_task_rule = {
+	"type": dict,
+	"task": str_rule("reset"),
+}
+
 virtual_part_rule = {
 	"name": name_rule,
 	"start": int_rule,
@@ -112,6 +127,8 @@ tasks_rule = {
 		run_task_rule,
 		flash_task_rule,
 		virtual_part_task_rule,
+		reset_task_rule,
+		prompt_operator_task_rule,
 	],
 }
 
@@ -214,7 +231,7 @@ def read_config(path):
 			elif (task_object := task_table.get(entry["task"], None)) is None:
 				raise SnagFactoryConfigError(f"Invalid entry {entry}: unknown task {entry['task']}")
 
-			pipelines[soc_model].append(task_object(entry["args"], i, globals))
+			pipelines[soc_model].append(task_object(entry.get("args", None), i, globals))
 			i += 1
 
 	return config, pipelines

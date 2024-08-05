@@ -31,6 +31,8 @@ soc-models:
           size: 1G
           image: "./rootfs.ext4"
 
+    - task: reset
+
     - task: virtual-part
       args:
          - name: rootfs_lba3

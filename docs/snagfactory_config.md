@@ -165,3 +165,38 @@ args:
     hwpart: 1
 ```
 
+## reset
+
+Action:
+
+Runs the U-Boot "reset" command on the target and recovers the board with
+snagrecover afterwards. This can be useful for flashing actions which require a
+reset to become effective.
+
+**Note**: Some flashing tasks, such as "virtual-part", affect the U-Boot
+environment. Resetting the board will clear these changes.
+
+Example:
+
+```
+task: reset
+```
+
+## prompt-operator
+
+Action:
+
+Pauses the task pipeline for this device and displays a message for the operator
+to read. The task pipeline will be resumed once the operator clicks on the
+"resume" button for the board. The "reset-before" flag can be added to run a
+U-Boot reset command before the operator resumes the board and recover it afterwards.
+
+Example:
+
+```
+task: prompt-operator
+args:
+  prompt: "please power-cycle the board"
+  reset-before: True
+```
+

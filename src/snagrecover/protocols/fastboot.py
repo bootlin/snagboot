@@ -205,3 +205,13 @@ class Fastboot():
 		packet = f"oem bootbus:{arg}\x00"
 		self.cmd(packet)
 
+	def reset(self):
+		"""
+		Run the 'reset' U-Boot command.
+		This one requires special handling because
+		getting the Fastboot gadget response will not be possible.
+		"""
+		packet = "oem run:reset\x00"
+
+		self.dev.write(self.ep_out, packet, timeout=self.timeout)
+

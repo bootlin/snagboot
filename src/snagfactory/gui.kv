@@ -62,17 +62,17 @@
                 background_color: 0.5, 0.5, 1
 
 <SnagFactoryBoard>
-    size: root.width, 65
     size_hint_y: None
+    height: 65
     phase_label: phase_label
+    board_box: board_box
 
     BoxLayout:
         id: board_box
         pos: root.pos
         size: root.size
         orientation: "horizontal"
-        padding: 20
-        spacing: 20
+        padding: 10
 
         canvas:
             Color:
@@ -82,42 +82,52 @@
                 pos: board_box.pos
                 border_radius: 10, 10, 10, 10
             Color:
-            	rgb: 1, 1, 1
+                rgb: 1, 1, 1
             RoundedRectangle:
                 size: board_box.size
                 pos: board_box.pos
 
         Label:
-            size_hint_x: 0.1
+            text_size: self.width, self.height
             text: root.path
+            size_hint_x: 0.1
             halign: "left"
-
-        Label:
-            size_hint_x: 0.1
-            text: root.soc_model
-            halign: "center"
-
-        Label:
-            id: phase_label
-            size_hint_x: 0.1
-            text: root.phase
-            halign: "center"
-            color: 0, 1, 0
-            padding: 20, 0, 0, 0
+            valign: "middle"
 
         Label:
             text_size: self.width, self.height
+            text: root.soc_model
+            size_hint_x: 0.1
+            halign: "center"
+            valign: "middle"
+
+        Label:
+            id: phase_label
+            size_hint_x: 0.2
+            text_size: self.width, self.height
+            text: root.phase
+            halign: "center"
+            valign: "middle"
+            color: 0, 1, 0
+
+        Label:
+            text_size: self.width, self.height
+            size_hint_x: 0.4
             text: root.status
+            color: root.status_color
             halign: "left"
             valign: "middle"
-            padding: 20, 0, 0, 0
             shorten: True
 
         Button:
             text: "log"
             size_hint_x: 0.1
-            on_press: root.ui.verbose_log = root
+            text_size: self.width, self.height
+            on_press: root.show_verbose_log()
             background_color: 0.6, 0.76, 1, 1
+            background_normal: ""
+            halign: "center"
+            valign: "middle"
 
 <SnagFactorySidebar@BoxLayout>
     canvas:

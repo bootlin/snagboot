@@ -44,6 +44,7 @@ class SnagFactorySession():
 			self.nb_flashing = 0
 			self.nb_done = 0
 			self.nb_failed = 0
+			self.nb_paused = 0
 
 			for board in self.board_list:
 				board.update_state()
@@ -55,10 +56,12 @@ class SnagFactorySession():
 					self.nb_recovering += 1
 				elif phase == BoardPhase.DONE:
 					self.nb_done += 1
+				elif phase == BoardPhase.PAUSED:
+					self.nb_paused += 1
 				else:
 					self.nb_failed += 1
 
-			if self.nb_recovering == 0 and self.nb_flashing == 0:
+			if self.nb_recovering == 0 and self.nb_flashing == 0 and self.nb_paused == 0:
 				self.nb_other = len(self.board_list) - self.nb_done - self.nb_failed
 				self.close()
 
