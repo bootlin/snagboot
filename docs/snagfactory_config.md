@@ -200,3 +200,35 @@ args:
   reset-before: True
 ```
 
+## emmc-hwpart
+
+/!\
+**WARNING**: This task applies irreversible changes to your devices! Make sure to read the [hardware partitioning guide](hw_partitioning.md) carefully before using it!
+/!\
+
+Action:
+
+Configures hardware partitions on an eMMC device. This is irreversible once
+completed. Please read the [hardware partitioning guide](hw_partitioning.md)
+carefully before using this task!
+
+**Warning**: All start and size arguments are specified in **bytes** and not 512-byte blocks!
+
+Example:
+```
+  euda:
+    start: 0
+    size: 0x258000
+    wrrel: False
+  gp1:
+    size: 0x470000
+    enh: true
+    wrrel: True
+  gp2:
+    size: 0x470000
+    enh: true
+    wrrel: True
+
+  skip-pwr-cycle: False
+```
+

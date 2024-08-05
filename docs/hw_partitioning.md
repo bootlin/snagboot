@@ -143,42 +143,29 @@ U-Boot CLI and running `mmc hwpartition`.
 
 ## Configuring hardware partitions from snagfactory
 
-**Note**: This is not implemented yet.
+The "emmc-hwpart" flashing task can be used for this. The task arguments are of
+the following form:
 
-Draft configuration format:
+```
+  euda:  --> Enhanced User Data Area start, size and write-reliability flag
+    start: ...
+    size: ...
+    wrrel: True/False
 
-```yaml
-am625:
-  hwpartitions:
-    euda:
-      start: 0
-      size: 0x258000
-      wrrel: False
-    gp1:
-      size: 0x470000
-      enh: true
-      wrrel: True
-    gp2:
-      size: 0x470000
-      enh: true
-      wrrel: True
+  gp1: --> first general purpose partition start, size, enhanced flag, and write-reliability flag
+    size: ...
+    enh: ...
+    wrrel: ...
 
-    skip_pwr_cycle: True (optional)
+  gp2:
+    size: 0x470000
+    enh: true
+    wrrel: True
+
+  ...
+
+  skip-pwr-cycle: False --> eMMC hardware partitioning usually requires a power-cycle to be effective. If you want to skip this, you can set this flash to True.
 ```
 
-On detection of a "hwpartitions" section, Snagfactory will recover the board,
-run the "check", "set" and "complete" steps, reset the board, then either:
-
-request that the operator power-cycle the board
-
-OR
-
-immediately continue
-
-then it will recover the board a second time, and flash the images described in
-other configuration sections.
-
-Emergency stop feature: if hardware partitioning fails for one board, Snagfactory should stop
-operations for all boards matching the same SoC family, to avoid incorrect OTP
-configuration of other devices.
+The euda section is mandatory. All other sections are optional.
 

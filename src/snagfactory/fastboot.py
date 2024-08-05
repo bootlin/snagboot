@@ -17,6 +17,9 @@ def fb_config_bytes_to_lbas(num: int):
 
 	return num // MMC_LBA_SIZE
 
+def fb_cmd_setenv(name: str, value: str):
+	return f"oem_run:setenv {name} {value}"
+
 class FastbootArgs:
 	def __init__(self, d):
 		for key, value in d.items():
@@ -245,6 +248,57 @@ class FastbootTaskPromptOperator(FastbootTask):
 	def get_cmds(self):
 		return ["reset"] if self.resets_board else []
 
+class FastbootTaskEmmcHwpart(FastbootTask):
+	def __init__(self, config: dict, num: int, globals: dict):
+		super().__init__(config, num, globals)
+		self.resets_board = True
+		self.pauses_board = not config.get("skip-pwr-cycle", False)
+		self.pause_action = "please power-cycle the board"
+
+		if "euda" not in config:
+			raise SnagFactoryConfigError("Missing 'euda' configuration for emmc-hwpart task!")
+
+		target_device = self.globals["target-device"]
+
+		if not target_device.startswith("mmc"):
+			raise SnagFactoryConfigError("emmc-hwpart task is only supported on mmc backends")
+
+
+	def get_cmds(self):
+		euda = self.config["euda"]
+
+		if "start" not in euda or "size" not in euda:
+			raise SnagFactoryConfigError("Missing start and/or size parameters for emmc-hwpart euda section")
+
+		euda_start = fb_config_bytes_to_lbas(euda["start"])
+		euda_size = fb_config_bytes_to_lbas(euda["size"])
+
+		cmds = [fb_cmd_setenv("hwpart_usr", f"user enh 0x{euda_start:x} 0x{euda_size:x} wrrel {'on' if euda.get('wrrel', False) else 'off'}")]
+
+		hwpart_args = '${hwpart_usr}'
+
+		i = 1
+		while f"gp{i}" in self.config:
+			gp = self.config[f"gp{i}"]
+
+			if "size" not in gp or "enh" not in gp:
+				raise SnagFactoryConfigError(f"Missing size and/or enh parameters for emmc-hwpart gp{i} section")
+			gp_size = fb_config_bytes_to_lbas(gp["size"])
+
+			cmds.append(fb_cmd_setenv(f"hwpart_gp{i}", f"gp{i} 0x{gp_size:x} {'enh' if gp['enh'] else ''} wrrel {'on' if gp.get('wrrel', False) else 'off'}"))
+
+			hwpart_args += ' ${' + f"hwpart_gp{i}" + '}'
+
+			i += 1
+
+		cmds.append(fb_cmd_setenv("hwpart_args", hwpart_args))
+		cmds.append('oem_run:mmc hwpartition ${hwpart_args} check')
+		cmds.append('oem_run:mmc hwpartition ${hwpart_args} set')
+		#cmds.append('oem_run:mmc hwpartition ${hwpart_args} complete')
+		cmds.append('reset')
+
+		return cmds
+
 task_table = {
 "gpt": FastbootTaskGPT,
 "run": FastbootTaskRun,
@@ -252,5 +306,6 @@ task_table = {
 "virtual-part": FastbootTaskVirtualPart,
 "reset": FastbootTaskReset,
 "prompt-operator": FastbootTaskPromptOperator,
+"emmc-hwpart": FastbootTaskEmmcHwpart,
 }
 

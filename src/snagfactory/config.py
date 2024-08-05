@@ -27,6 +27,31 @@ fastboot_cmd_rule = str_rule("\w+(:.+)?")
 int_rule = {"type": int}
 bool_rule = {"type": bool}
 
+euda_rule = {
+	"type": dict,
+	"start": int_rule,
+	"size": int_rule,
+	"wrrel": bool_rule,
+}
+
+gp_rule = {
+	"type": dict,
+	"size": int_rule,
+	"enh": bool_rule,
+	"wrrel": bool_rule,
+}
+
+emmc_hwpart_task_rule = {
+	"type": dict,
+	"task": str_rule("emmc-hwpart"),
+	"args": {
+		"type": dict,
+		"euda": euda_rule,
+		"gp\d": gp_rule,
+		"skip-pwr-cycle": bool_rule,
+	}
+}
+
 prompt_operator_task_rule = {
 	"type": dict,
 	"task": str_rule("prompt-operator"),
@@ -129,6 +154,7 @@ tasks_rule = {
 		virtual_part_task_rule,
 		reset_task_rule,
 		prompt_operator_task_rule,
+		emmc_hwpart_task_rule,
 	],
 }
 
