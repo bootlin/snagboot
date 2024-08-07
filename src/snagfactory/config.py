@@ -88,7 +88,7 @@ virtual_part_task_rule = {
 
 flash_rule = {
 	"type": dict,
-	"part": name_rule,
+	"part": str_rule("[\w\-\.]+"),
 	"image": path_rule,
 	"image-offset": int_rule,
 }
@@ -140,7 +140,7 @@ gpt_task_rule = {
 
 globals_rule = {
 	"type": dict,
-	"target-device": str_rule("(mmc\d|nand)"),
+	"target-device": str_rule("[\w\-]+"),
 	"fb-buffer-size": int_rule,
 }
 

@@ -59,6 +59,7 @@ class FastbootTask():
 		self.resets_board = False
 		self.pauses_board = False
 		self.pause_action = ""
+		self.cmds = self.get_cmds()
 
 	def get_cmds(self):
 		return []
@@ -74,7 +75,9 @@ class FastbootTask():
 			"port": self.port,
 		}
 
-		args["fastboot_cmd"] = self.get_cmds()
+		cmds = self.cmds
+
+		args["fastboot_cmd"] = cmds
 
 		self.args = FastbootArgs(args)
 

@@ -2,7 +2,7 @@
 
 Snagfactory is a tool for simultaneous and efficient recovery and flashing of multiple embedded devices. It leverages the support range of Snagboot along with the multithreading capabilities of the host machine.
 
-The tool currently supports MMC backends for flashing images (SD card or eMMC). It has been tested on AM625x and A64 SoCs.
+The tool currently supports MMC and MTD backends for flashing images. It has been tested on AM625x and A64 SoCs.
 
 There are four main steps involved in using Snagfactory:
 
