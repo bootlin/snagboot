@@ -257,7 +257,9 @@ def read_config(path):
 			elif (task_object := task_table.get(entry["task"], None)) is None:
 				raise SnagFactoryConfigError(f"Invalid entry {entry}: unknown task {entry['task']}")
 
-			pipelines[soc_model].append(task_object(entry.get("args", None), i, globals))
+			task = task_object(entry.get("args", None), i, globals)
+			task.get_cmds()
+			pipelines[soc_model].append(task)
 			i += 1
 
 	return config, pipelines

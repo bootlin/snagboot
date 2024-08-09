@@ -17,9 +17,6 @@ def fb_config_bytes_to_lbas(num: int):
 
 	return num // MMC_LBA_SIZE
 
-def fb_cmd_setenv(name: str, value: str):
-	return f"oem_run:setenv {name} {value}"
-
 class FastbootArgs:
 	def __init__(self, d):
 		for key, value in d.items():
@@ -51,6 +48,7 @@ def run_fastboot_task(args, log_queue):
 
 class FastbootTask():
 	def __init__(self, config: dict, num: int, globals: dict):
+		self.name = type(self).__name__[12:].lower()
 		self.config = config
 		self.globals = globals
 		self.args = None
@@ -59,10 +57,37 @@ class FastbootTask():
 		self.resets_board = False
 		self.pauses_board = False
 		self.pause_action = ""
-		self.cmds = self.get_cmds()
+		self.cmds = []
 
 	def get_cmds(self):
-		return []
+		pass
+
+	def cmd_reset(self):
+		self.cmds.append("reset")
+
+	def cmd_run(self, cmd: str):
+		self.cmds.append(f"oem_run:{cmd}")
+
+	def cmd_setenv(self, name: str, value: str):
+		self.cmd_run(f"setenv {name} {value}")
+
+	def cmd_setexpr(self, name: str, expr: str):
+		self.cmd_run(f"setexpr {name} {expr}")
+
+	def cmd_download(self, image: str, section: tuple = None):
+		cmd = f"download:{image}"
+
+		if section is not None:
+			offset,size = section
+			cmd += f"#{offset}:{size}"
+
+		self.cmds.append(cmd)
+
+	def cmd_flash(self, target: str):
+		self.cmds.append(f"flash:{target}")
+
+	def cmd_format(self):
+		self.cmds.append("oem_format")
 
 	def attach(self, board):
 		self.port = board.path
@@ -73,11 +98,8 @@ class FastbootTask():
 			"timeout": 60000,
 			"factory": True,
 			"port": self.port,
+			"fastboot_cmd": self.cmds,
 		}
-
-		cmds = self.cmds
-
-		args["fastboot_cmd"] = cmds
 
 		self.args = FastbootArgs(args)
 
@@ -85,8 +107,11 @@ class FastbootTask():
 		self.process = Process(target=run_fastboot_task, args=(self.args, self.log_queue))
 		return self.process
 
-	def flash_huge_image(self, image: str, part_name: str, part_start: None, image_offset: None):
-		raise SnagFactoryConfigError(f"Image file {image} is larger than Fastboot buffer! Huge image flashing is not supported for this backend")
+	def flash_huge_image(self, image: str, part_name: str, part_start: int = None, image_offset: int = None):
+		raise SnagFactoryConfigError(f"Image file {image} is larger than Fastboot buffer! Huge image flashing is not supported for the '{self.name}' task")
+
+	def flash_to_part_offset(self, image: str, offset: int, part_name: str, part_start: int = None):
+		raise SnagFactoryConfigError(f"Flashing to partition offsets is not supported for the '{self.name}' task!")
 
 	def flash_image_to_part(self, image: str, part, part_start = None, image_offset = None):
 		fb_buffer_size = self.globals.get("fb-buffer-size", DEFAULT_FB_BUFFER_SIZE)
@@ -99,14 +124,43 @@ class FastbootTask():
 
 		file_size = os.path.getsize(image)
 
-		if file_size > fb_buffer_size or image_offset is not None:
-			return self.flash_huge_image(image, part, part_start, image_offset)
+		if file_size > fb_buffer_size:
+			self.flash_huge_image(image, part, part_start, image_offset)
+		elif image_offset is not None:
+			self.flash_to_part_offset(image, image_offset, part, part_start)
+		else:
+			self.cmd_download(image)
+			self.cmd_flash(part)
 
-		return [f'download:{image}', f"flash:{part}"]
+class FastbootMMCTask(FastbootTask):
+	def __init__(self, config: dict, num: int, globals: dict):
+		super().__init__(config, num, globals)
 
-class FastbootTaskGPT(FastbootTask):
+		target_device = self.globals["target-device"]
+		if not target_device.startswith("mmc"):
+			raise SnagFactoryConfigError(f"the '{self.name}' task is only supported on mmc backends")
 
-	def flash_huge_image(self, image: str, part_name: str, part_start: None, image_offset: None):
+		self.device_num = int(target_device[-1])
+
+	def flash_to_part_offset(self, image: str, offset: int, part_name: str, part_start: int = None):
+		"""
+		Flash an image to an offset inside a partition. To achieve
+		this, temporary Fastboot partition aliases are used.
+		"""
+		file_size = os.path.getsize(image)
+
+		if part_start is None:
+			self.cmd_run(f"gpt setenv mmc {self.device_num} {part_name}")
+		else:
+			self.cmd_setenv("gpt_partition_addr", f"0x{fb_config_bytes_to_lbas(part_start):x}")
+
+		self.cmd_setexpr("snag_offset", '0x${gpt_partition_addr} + ' + f"0x{fb_config_bytes_to_lbas(offset):x}")
+
+		self.cmd_setenv("fastboot_raw_partition_temp", '0x${snag_offset}' + f" 0x{ceil(file_size / MMC_LBA_SIZE):x}")
+		self.cmd_download(image)
+		self.cmd_flash("temp")
+
+	def flash_huge_image(self, image: str, part_name: str, part_start: int = None, image_offset: int = None):
 		"""
 		Flash an image that doesn't fit inside the Fastboot RAM buffer.
 		This is done by flashing the image in sections. Each section has
@@ -114,7 +168,6 @@ class FastbootTaskGPT(FastbootTask):
 		achieve this, temporary Fastboot partition aliases are used.
 		"""
 
-		cmds = []
 		fb_buffer_size = fb_config_bytes_to_lbas(self.globals.get("fb-buffer-size", DEFAULT_FB_BUFFER_SIZE))
 		file_size = os.path.getsize(image)
 
@@ -122,33 +175,34 @@ class FastbootTaskGPT(FastbootTask):
 		remainder = file_size % (fb_buffer_size * MMC_LBA_SIZE)
 
 		if part_start is None:
-			cmds.append(f'oem_run:gpt setenv mmc {self.device_num} {part_name} ')
+			self.cmd_run(f"gpt setenv mmc {self.device_num} {part_name}")
 		else:
-			cmds.append(f'oem_run:setenv gpt_partition_addr {fb_config_bytes_to_lbas(part_start):x}')
+			self.cmd_setenv("gpt_partition_addr", f"0x{fb_config_bytes_to_lbas(part_start):x}")
 
 		if image_offset is not None:
-			cmds.append('oem_run:setexpr gpt_partition_addr 0x${gpt_partition_addr} + ' + f'0x{fb_config_bytes_to_lbas(image_offset):x}')
+			self.cmd_setexpr("gpt_partition_addr", '0x${gpt_partition_addr} + ' + f"0x{fb_config_bytes_to_lbas(image_offset):x}")
 
 		for i in range(0, nchunks):
 			# setexpr interprets every number as a hexadecimal value
 			# I've added '0x' prefixes just in case this changes for some reason
-			cmds.append('oem_run:setexpr snag_offset 0x${gpt_partition_addr} + ' + f'0x{i * fb_buffer_size:x}')
-			cmds.append('oem_run:setenv fastboot_raw_partition_temp 0x${snag_offset}' f' 0x{fb_buffer_size:x}')
-			cmds.append(f'download:{image}#{(i * fb_buffer_size) * MMC_LBA_SIZE}:{fb_buffer_size * MMC_LBA_SIZE}')
-			cmds.append("flash:temp")
+			self.cmd_setexpr("snag_offset", '0x${gpt_partition_addr} + ' + f"0x{i * fb_buffer_size:x}")
+			self.cmd_setenv("fastboot_raw_partition_temp", '0x${snag_offset}' + f" 0x{fb_buffer_size:x}")
+			offset = i * fb_buffer_size * MMC_LBA_SIZE
+			size = fb_buffer_size * MMC_LBA_SIZE
+			self.cmd_download(image, section=(offset, size))
+			self.cmd_flash("temp")
 
 		if remainder > 0:
-			cmds.append('oem_run:setexpr snag_offset 0x${gpt_partition_addr} + ' + f'0x{(nchunks * fb_buffer_size):x}')
-			cmds.append('oem_run:setenv fastboot_raw_partition_temp 0x${snag_offset}' f' 0x{ceil(remainder / MMC_LBA_SIZE):x}')
-			cmds.append(f'download:{image}#{(nchunks * fb_buffer_size) * MMC_LBA_SIZE}:{remainder}')
-			cmds.append("flash:temp")
+			self.cmd_setexpr("snag_offset", '0x${gpt_partition_addr} + ' + f"0x{(nchunks * fb_buffer_size):x}")
+			self.cmd_setenv("fastboot_raw_partition_temp", '0x${snag_offset}' + f" 0x{ceil(remainder / MMC_LBA_SIZE):x}")
+			offset = nchunks * fb_buffer_size * MMC_LBA_SIZE
+			self.cmd_download(image, section=(offset, remainder))
+			self.cmd_flash("temp")
 
-		return cmds
 
+class FastbootTaskGPT(FastbootMMCTask):
 	def flash_partition_images(self):
 		part_index = 1
-
-		cmds = []
 
 		for partition in self.config:
 			if "image" not in partition:
@@ -161,9 +215,7 @@ class FastbootTaskGPT(FastbootTask):
 
 			image_offset = partition.get("image-offset", None)
 
-			cmds += self.flash_image_to_part(partition["image"], part_name, image_offset=image_offset)
-
-		return cmds
+			self.flash_image_to_part(partition["image"], part_name, image_offset=image_offset)
 
 	def flash_partition_table(self):
 		partitions_env = ""
@@ -180,16 +232,13 @@ class FastbootTaskGPT(FastbootTask):
 
 			partitions_env = partitions_env.rstrip(",") + ";"
 
-		return ["oem_run:setenv partitions " + "'" + partitions_env + "'", "oem_format", f"oem_run:part list mmc {self.device_num}"]
+		self.cmd_setenv("partitions", f"'{partitions_env}'")
+		self.cmd_format()
+		self.cmd_run(f"part list mmc {self.device_num}")
 
 	def get_cmds(self):
-		target_device = self.globals["target-device"]
-		if not target_device.startswith("mmc"):
-			raise SnagFactoryConfigError("The GPT task is only supported for MMC targets")
-
-		self.device_num = int(target_device[-1])
-
-		return self.flash_partition_table() + self.flash_partition_images()
+		self.flash_partition_table()
+		self.flash_partition_images()
 
 class FastbootTaskRun(FastbootTask):
 	def get_cmds(self):
@@ -197,37 +246,25 @@ class FastbootTaskRun(FastbootTask):
 
 class FastbootTaskFlash(FastbootTask):
 	def get_cmds(self):
-		cmds = []
-
 		for entry in self.config:
 			part = entry["part"]
 			image = entry["image"]
 			image_offset = entry.get("image-offset", None)
 
-			cmds += self.flash_image_to_part(image, part, image_offset=image_offset)
+			self.flash_image_to_part(image, part, image_offset=image_offset)
 
-		return cmds
-
-class FastbootTaskVirtualPart(FastbootTask):
+class FastbootTaskVirtualPart(FastbootMMCTask):
 	def get_cmds(self):
-		target_device = self.globals["target-device"]
-
-		if not target_device.startswith("mmc"):
-			raise SnagFactoryConfigError("virtual-part task is only supported on mmc backends")
-
-		cmds = []
 		for partition in self.config:
 			name = partition["name"]
 			start = fb_config_bytes_to_lbas(partition["start"])
 			size = fb_config_bytes_to_lbas(partition["size"])
-			cmd = f"oem_run:setenv fastboot_raw_partition_{name} 0x{start:x} 0x{size:x}"
+			raw_part = f"0x{start:x} 0x{size:x}"
 
-			if target_device.startswith("mmc") and "hwpart" in partition:
-				cmd += f" mmcpart {partition['hwpart']}"
+			if "hwpart" in partition:
+				raw_part += f" mmcpart {partition['hwpart']}"
 
-			cmds.append(cmd)
-
-		return cmds
+			self.cmd_setenv(f"fastboot_raw_partition_{name}", raw_part)
 
 class FastbootTaskReset(FastbootTask):
 	def __init__(self, config: dict, num: int, globals: dict):
@@ -235,7 +272,7 @@ class FastbootTaskReset(FastbootTask):
 		self.resets_board = True
 
 	def get_cmds(self):
-		return ["reset"]
+		self.cmd_reset()
 
 class FastbootTaskPromptOperator(FastbootTask):
 	def __init__(self, config: dict, num: int, globals: dict):
@@ -249,9 +286,10 @@ class FastbootTaskPromptOperator(FastbootTask):
 		self.pause_action = config["prompt"]
 
 	def get_cmds(self):
-		return ["reset"] if self.resets_board else []
+		if self.resets_board:
+			self.cmd_reset()
 
-class FastbootTaskEmmcHwpart(FastbootTask):
+class FastbootTaskEmmcHwpart(FastbootMMCTask):
 	def __init__(self, config: dict, num: int, globals: dict):
 		super().__init__(config, num, globals)
 		self.resets_board = True
@@ -260,12 +298,6 @@ class FastbootTaskEmmcHwpart(FastbootTask):
 
 		if "euda" not in config:
 			raise SnagFactoryConfigError("Missing 'euda' configuration for emmc-hwpart task!")
-
-		target_device = self.globals["target-device"]
-
-		if not target_device.startswith("mmc"):
-			raise SnagFactoryConfigError("emmc-hwpart task is only supported on mmc backends")
-
 
 	def get_cmds(self):
 		euda = self.config["euda"]
@@ -276,7 +308,7 @@ class FastbootTaskEmmcHwpart(FastbootTask):
 		euda_start = fb_config_bytes_to_lbas(euda["start"])
 		euda_size = fb_config_bytes_to_lbas(euda["size"])
 
-		cmds = [fb_cmd_setenv("hwpart_usr", f"user enh 0x{euda_start:x} 0x{euda_size:x} wrrel {'on' if euda.get('wrrel', False) else 'off'}")]
+		self.cmd_setenv("hwpart_usr", f"user enh 0x{euda_start:x} 0x{euda_size:x} wrrel {'on' if euda.get('wrrel', False) else 'off'}")
 
 		hwpart_args = '${hwpart_usr}'
 
@@ -288,19 +320,17 @@ class FastbootTaskEmmcHwpart(FastbootTask):
 				raise SnagFactoryConfigError(f"Missing size and/or enh parameters for emmc-hwpart gp{i} section")
 			gp_size = fb_config_bytes_to_lbas(gp["size"])
 
-			cmds.append(fb_cmd_setenv(f"hwpart_gp{i}", f"gp{i} 0x{gp_size:x} {'enh' if gp['enh'] else ''} wrrel {'on' if gp.get('wrrel', False) else 'off'}"))
+			self.cmd_setenv(f"hwpart_gp{i}", f"gp{i} 0x{gp_size:x} {'enh' if gp['enh'] else ''} wrrel {'on' if gp.get('wrrel', False) else 'off'}")
 
 			hwpart_args += ' ${' + f"hwpart_gp{i}" + '}'
 
 			i += 1
 
-		cmds.append(fb_cmd_setenv("hwpart_args", hwpart_args))
-		cmds.append('oem_run:mmc hwpartition ${hwpart_args} check')
-		cmds.append('oem_run:mmc hwpartition ${hwpart_args} set')
-		#cmds.append('oem_run:mmc hwpartition ${hwpart_args} complete')
-		cmds.append('reset')
-
-		return cmds
+		self.cmd_setenv("hwpart_args", hwpart_args)
+		self.cmd_run('mmc hwpartition ${hwpart_args} check')
+		self.cmd_run('mmc hwpartition ${hwpart_args} set')
+		self.cmd_run('mmc hwpartition ${hwpart_args} complete')
+		self.cmd_reset()
 
 task_table = {
 "gpt": FastbootTaskGPT,

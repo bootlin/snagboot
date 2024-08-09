@@ -134,7 +134,6 @@ args:
     image: "boot.bin"
   - part: rootfs
     image: "rootfs.ext4"
-    image-offset: 1M
 ```
 
 ## virtual-part
