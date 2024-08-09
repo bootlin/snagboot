@@ -242,7 +242,7 @@ class FastbootTaskGPT(FastbootMMCTask):
 
 class FastbootTaskRun(FastbootTask):
 	def get_cmds(self):
-		return self.config
+		self.cmds = self.config
 
 class FastbootTaskFlash(FastbootTask):
 	def get_cmds(self):
