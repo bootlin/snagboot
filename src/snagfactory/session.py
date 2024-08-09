@@ -65,6 +65,31 @@ class SnagFactorySession():
 				self.nb_other = len(self.board_list) - self.nb_done - self.nb_failed
 				self.close()
 
+	def read_session_store(self, key: str):
+		snagfactory_sessionstore = self.snagboot_data + "/snagfactory/sessionstore.yaml"
+
+		if not os.path.exists(snagfactory_sessionstore):
+			return None
+
+		with open(snagfactory_sessionstore, "r") as file:
+			session_store = yaml.safe_load(file)
+
+		return session_store.get(key, None)
+
+	def write_session_store(self, key: str, value):
+		snagfactory_sessionstore = self.snagboot_data + "/snagfactory/sessionstore.yaml"
+
+		session_store = {}
+
+		if os.path.exists(snagfactory_sessionstore):
+			with open(snagfactory_sessionstore, "r") as file:
+				session_store = yaml.safe_load(file)
+
+		session_store[key] = value
+
+		with open(snagfactory_sessionstore, "w") as file:
+			yaml.dump(session_store, file, default_flow_style=False)
+
 	def __init__(self, config_path):
 		self.start_ts = time.time()
 
@@ -81,7 +106,8 @@ class SnagFactorySession():
 		else:
 			snagboot_data = os.getenv('HOME') + "/.snagboot}"
 
-		self.snagfactory_logs = snagboot_data + "/snagfactory/logs"
+		self.snagboot_data = snagboot_data
+		self.snagfactory_logs = self.snagboot_data + "/snagfactory/logs"
 		if not os.path.exists(self.snagfactory_logs):
 			os.makedirs(self.snagfactory_logs)
 

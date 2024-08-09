@@ -77,6 +77,8 @@ class SnagFactorySoCFamily(BoxLayout):
 
 class SnagFactoryFileDialog(FloatLayout):
 	rootpath = StringProperty("")
+	path = StringProperty("")
+	sort_func = ObjectProperty(lambda files,fs_class: sorted(files))
 
 	def handle_load(self):
 		pass
@@ -147,8 +149,11 @@ class SnagFactoryUI(Widget):
 		if self.session.phase == "running":
 			return
 
+		last_dir = self.session.read_session_store("last_config_dir")
+
 		content = SnagFactoryFileDialog()
 		content.rootpath = os.path.expanduser("~")
+		content.path = last_dir if last_dir is not None else content.rootpath
 		content.handle_load = self.load_config
 		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._popup.open()
@@ -160,12 +165,14 @@ class SnagFactoryUI(Widget):
 		content = SnagFactoryFileDialog()
 		content.rootpath = self.session.snagfactory_logs
 		content.handle_load = self.load_log
+		content.sort_func = lambda files,fs_class: sorted(files, reverse=True)
 		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._popup.open()
 
 	def load_config(self, filenames):
 		try:
 			session = SnagFactorySession(filenames[0])
+			session.write_session_store("last_config_dir", os.path.dirname(filenames[0]))
 		except SnagFactoryConfigError as e:
 			self.dismiss_popup()
 
