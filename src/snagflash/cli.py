@@ -51,6 +51,8 @@ def cli():
 	dfuargs.add_argument("--dfu-reset", help="Reset USB device after download and reboot the board", action="store_true")
 	fbargs = parser.add_argument_group("Fastboot")
 	fbargs.add_argument("-f", "--fastboot-cmd", help="A fastboot command.", action="append", metavar="cmd:args")
+	fbargs.add_argument("-i", "--interactive", help="Start interactive mode", action="store_true")
+	fbargs.add_argument("-I", "--interactive-cmdfile", help="Read interactive mode commands from file")
 	umsargs = parser.add_argument_group("UMS")
 	umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
 	umsargs.add_argument("-d", "--dest", help="mounted transfer: set destination file name")
@@ -94,7 +96,7 @@ def cli():
 			cli_error("missing an UMS config!")
 	elif args.protocol == "fastboot":
 		if args.fastboot_cmd is None:
-			cli_error("missing at least one fastboot command!")
+			args.fastboot_cmd = []
 		fastboot(args)
 	else:
 		cli_error(f"unrecognized protocol {args.protocol}")
