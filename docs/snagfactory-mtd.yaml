@@ -1,0 +1,44 @@
+boards:
+  "0451:6165": "am625"
+
+soc-models:
+  am625-firmware:
+      tiboot3:
+        path: "tiboot3.bin"
+      tispl:
+        path: "tispl_nand.bin"
+      u-boot:
+        path: "u-boot_nand.img"
+
+  am625-tasks:
+    - target-device: spi-nand0
+      fb-buffer-size: 0x7000000
+      fb-buffer-addr: 0xd0000000
+      eraseblk-size: 0x40000
+
+    # this is necessary for Fastboot to find spi-nand0
+    - task: run
+      args:
+        - "oem_run:mtd list"
+
+    - task: mtd-parts
+      args:
+        - name: "ospi.tiboot3"
+          size: 512k
+        - name: "ospi.tispl"
+          size: 2m
+        - name: "ospi.u-boot"
+          size: 4m
+        - name: "ospi.env"
+          size: 256k
+        - name: "ospi.rootfs"
+          image: "big_nand_image"
+          size: 98048k
+          start: 32m
+
+    - task: flash
+      args:
+        - image: "MANIFEST.in"
+        - image: "LICENSE"
+          image-offset: 0x40000
+          part: "ospi.u-boot"

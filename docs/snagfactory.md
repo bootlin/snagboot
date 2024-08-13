@@ -37,10 +37,10 @@ Please use menuconfig to check that your configuration is coherent, as some of t
 
 ## Configuration file
 
-The  [example configuration file](snagfactory-example.yaml) showcases the
-main features of Snagfactory. There is also a
-[full documentation](snagfactory_config.md) for the Snagfactory
-configuration file format.
+The  example configuration files for [emmc](snagfactory-emmc.yaml) and
+[spi-nand](snagfactory-mtd.yaml) backends showcase the main features of
+Snagfactory. There is also a [full documentation](snagfactory_config.md) for
+the Snagfactory configuration file format.
 
 ## libusb-win32
 
