@@ -24,12 +24,11 @@ Moreover, you should make sure that the following config options are enabled whe
 • CONFIG_CMD_FASTBOOT
 • CONFIG_FASTBOOT
 • CONFIG_USB_FUNCTION_FASTBOOT
-• CONFIG_FASTBOOT_FLASH
 • CONFIG_FASTBOOT_UUU_SUPPORT
-• CONFIG_FASTBOOT_FLASH_MMC
 • CONFIG_FASTBOOT_OEM_RUN
 • CONFIG_CMD_PART
 • CONFIG_CMD_GPT
+• CONFIG_CMD_MTDPARTS
 ```
 
 Additionally, you'll need to enable autoboot and set the default boot command to `fastboot usb 0`

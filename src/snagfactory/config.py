@@ -67,28 +67,9 @@ reset_task_rule = {
 	"task": str_rule("reset"),
 }
 
-virtual_part_rule = {
-	"name": name_rule,
-	"start": int_rule,
-	"size": int_rule,
-	"hwpart": int_rule,
-}
-
-virtual_part_task_rule = {
-	"type": dict,
-	"task": str_rule("virtual-part"),
-	"args": {
-		"type": list,
-		"rules": [
-			virtual_part_rule,
-		],
-
-	}
-}
-
 flash_rule = {
 	"type": dict,
-	"part": str_rule("[\w\-\.]+"),
+	"part": str_rule("([\w\-\.]+|hwpart \d)"),
 	"image": path_rule,
 	"image-offset": int_rule,
 }
@@ -142,6 +123,8 @@ globals_rule = {
 	"type": dict,
 	"target-device": str_rule("[\w\-]+"),
 	"fb-buffer-size": int_rule,
+	"fb-buffer-addr": int_rule,
+	"eraseblk-size": int_rule,
 }
 
 tasks_rule = {
@@ -151,7 +134,6 @@ tasks_rule = {
 		gpt_task_rule,
 		run_task_rule,
 		flash_task_rule,
-		virtual_part_task_rule,
 		reset_task_rule,
 		prompt_operator_task_rule,
 		emmc_hwpart_task_rule,

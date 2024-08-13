@@ -49,6 +49,8 @@ following values:
 ```yaml
 target-device: The device configured as the Fastboot flashing backend in U-Boot. Either 'mmc<num>' or 'nand'.
 fb-buffer-size: The size in bytes of the Fastboot buffer.
+fb-buffer-addr: The size in bytes of the Fastboot buffer.
+eraseblk-size: The size in bytes of an erase block for MTD targets
 ```
 
 The following elements are standard Factory flashing tasks. They all have the
@@ -122,18 +124,24 @@ args:
 Action:
 
 Flashes a binary image to a partition. The partition name can be an index, the
-name of a GPT partition on the backend device, or the name of a virtual
-partition (see virtual-part task).
+name of a GPT partition on the backend device, or the name of an MTD device or
+partition. The "hwpart <hwpart_num>" syntax can be used with the "part" parameter
+to target a hardware partition on an MMC device.
+
+**Note**: the "part: hwpart <part_num>" syntax can only be used with an eMMC backend
+**Note**: "part: hwpart 0" targets the user area, "part: hwpart 1" targets the first eMMC boot partition, and so on...
+
 
 Example:
 
 ```
 task: flash
 args:
-  - part: boot1
-    image: "boot.bin"
   - part: rootfs
     image: "rootfs.ext4"
+  - part: "hwpart 1"
+    image: "boot.bin"
+    image-offset: 0x200
 ```
 
 ## virtual-part
@@ -145,9 +153,6 @@ start and size. This can be used as a way to target a specific offset inside the
 backend device. It can also be used to target eMMC boot or GP partitions by
 specifying the "hwpart" argument. Once the virtual partition is created, it can
 be passed to the "flash" task as if it were a regular partition.
-
-**Note**: the "hwpart" parameter can only be used with an eMMC backend
-**Note**: "hwpart: 0" targets the user area, "hwpart: 1" targets the first eMMC boot partition, and so on...
 
 Example:
 
