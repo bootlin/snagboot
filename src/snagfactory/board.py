@@ -86,6 +86,9 @@ class Board():
 
 			if exitcode == 0:
 				self.progress += self.progress_inc
+				if self.progress > 100:
+					self.progress = 100
+
 				self.process.join()
 				if self.phase == BoardPhase.RECOVERING:
 					factory_logger.info(f"board {self.path} end of recovery task")
