@@ -123,11 +123,13 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		self.cmd_run(f"oem_run:part list mmc {device_num}")
 
 	def cmd_flash(self, args: str):
-		path, rest = args.split(" ")
+		path, sep, rest = args.partition(" ")
 		path = path.strip('"').strip('"')
+		rest = rest.strip(" ")
 
 		if " " in rest:
-			offset, part = rest.split(" ")
+			offset, sep, part = rest.partition(" ")
+			part = part.strip(" ")
 		else:
 			offset = rest
 			part = None
