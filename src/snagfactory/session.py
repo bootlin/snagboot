@@ -5,6 +5,7 @@ import os
 import platform
 import queue
 import re
+import copy
 
 import logging
 factory_logger = logging.getLogger("snagfactory")
@@ -139,7 +140,8 @@ class SnagFactorySession():
 			for path in paths:
 				fw_config = self.config["soc-models"][f"{soc_model}-firmware"]
 				tasks_config = self.config["soc-models"][f"{soc_model}-tasks"]
-				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, fw_config, tasks_config, usb_ids, self.pipelines[soc_model]))
+				board_pipeline = copy.deepcopy(self.pipelines[soc_model])
+				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, fw_config, tasks_config, usb_ids, board_pipeline))
 
 	def format_session_logs(self):
 		timestamp = datetime.datetime.fromtimestamp(self.start_ts)
