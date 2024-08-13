@@ -167,7 +167,7 @@ class FastbootTaskGPT(FastbootMMCTask):
 
 class FastbootTaskRun(FastbootTask):
 	def get_cmds(self):
-		self.cmds.append(f"run {cmd}" for cmd in self.config)
+		self.cmds += [f"run {cmd}" for cmd in self.config]
 
 class FastbootTaskFlash(FastbootTask):
 	def get_cmds(self):

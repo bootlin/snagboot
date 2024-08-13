@@ -1,7 +1,6 @@
 import yaml
 import os
 import re
-import copy
 
 from snagfactory.fastboot import task_table
 from snagfactory.utils import SnagFactoryConfigError
