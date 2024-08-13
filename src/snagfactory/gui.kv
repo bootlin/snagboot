@@ -105,16 +105,24 @@
 
         Label:
             id: phase_label
-            size_hint_x: 0.2
+            size_hint_x: 0.1
             text_size: self.width, self.height
             text: root.phase
             halign: "center"
             valign: "middle"
-            color: 0, 1, 0
+            color: root.phase_color
+
+        Label:
+            size_hint_x: 0.25
+            text_size: self.width, self.height
+            text: root.progbar
+            halign: "center"
+            valign: "middle"
+            shorten: True
 
         Label:
             text_size: self.width, self.height
-            size_hint_x: 0.4
+            size_hint_x: 0.25
             text: root.status
             color: root.status_color
             halign: "left"

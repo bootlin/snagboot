@@ -16,6 +16,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 import kivy.resources
 import time
+from math import ceil
 
 from snagfactory.session import SnagFactorySession
 from snagfactory.config import SnagFactoryConfigError
@@ -27,6 +28,7 @@ factory_logger = logging.getLogger("snagfactory")
 import os
 
 LOG_VIEW_CAPACITY = 100
+PROGBAR_TICKS = 20
 
 class SnagFactoryBoardID(BoxLayout):
 	usb_ids = StringProperty("")
@@ -92,9 +94,21 @@ class SnagFactoryBoard(Widget):
 	soc_model = StringProperty("")
 
 	phase = StringProperty("")
+	phase_color = ListProperty([0,1,0])
+	progbar = StringProperty("|" + PROGBAR_TICKS * "-" + "|")
 	status = StringProperty("")
 	status_color = ListProperty([0,0,0])
 	ui = ObjectProperty(None)
+
+	phase_colors = {
+		"ROM": [0.8,0.8,0.8],
+		"RECOVERING": [0,0.2,0.8],
+		"FLASHER": [0,0,1],
+		"FLASHING": [0,0,1],
+		"DONE": [0,1,0],
+		"FAILURE": [1,0,0],
+		"PAUSED": [1,0.5,0.5],
+	}
 
 	def show_verbose_log(self):
 		self.ui.verbose_log_target = self.board
@@ -122,13 +136,19 @@ class SnagFactoryBoard(Widget):
 
 	def update(self):
 		if self.is_paused() and self.resume_btn is None:
-			self.status_color = [0, 1, 0]
+			self.status_color = [1, 0.5, 0.5]
 			self.resume_btn = Button(text="resume",on_press=self.unpause, background_normal="", background_color=(0,1,0), size_hint_x=0.2)
 			self.board_box.add_widget(self.resume_btn)
 
 		self.status = f"[{self.spinner_symbols[self.spinner_cur]}] {self.board.status}"
 
 		self.spinner_cur = (self.spinner_cur + 1) % 4
+		self.phase = self.board.phase.name
+		self.phase_color = __class__.phase_colors[self.phase]
+
+		progress = self.board.progress
+		num_prog_ticks = ceil(PROGBAR_TICKS * progress / 100)
+		self.progbar = f"{ceil(progress)}% |" + num_prog_ticks * "#" + (PROGBAR_TICKS - num_prog_ticks) * "—" + "|"
 
 class SnagFactoryUI(Widget):
 	widget_container = ObjectProperty(None)
