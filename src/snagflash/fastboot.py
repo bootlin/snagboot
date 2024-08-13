@@ -44,6 +44,11 @@ def fastboot(args):
 	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out}")
 	logger.info(args.fastboot_cmd)
 
+	if args.factory is not None:
+		session = SnagflashInteractive(fast)
+		session.run(args.interactive_cmds)
+		return
+
 	for cmd in args.fastboot_cmd:
 		cmd = cmd.split(":", 1)
 		cmd, args = cmd[0], cmd[1:]

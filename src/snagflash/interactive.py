@@ -22,17 +22,20 @@ help : show this help text
 set <var> <value>: set the value of an environment variable
 print <var>: print the value of an environment variable
 run <fastboot_cmd>: run a Fastboot command given in Snagflash format
-gpt <device num> <partitions>: write a GPT partition table to the specified mmc device
-flash-mmc <device_num> <image_path> <image_offset> [<partition_name>]
-	Write the file at <image_path> to an MMC device or partition.
-	The "fb-addr" and "fb-size" environment variables are required.
-flash-mtd <device_name|partition_name> <image_path> <image_offset>:
+gpt <partitions>: write a GPT partition table to the specified mmc device
+flash <image_path> <image_offset> [<partition_name>]
 	Write the file at <image_path> to an MTD device or partition.
-	The "fb-addr", "fb-size" and "eraseblk-size" environment
-	variables are required.
+	The "fb-addr", "fb-size", and "target" environment
+	variables are required. For MTD targets, the "eraseblk-size" variable
+	is also required.
+	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
+	by "hwpart <number>"
 
 environment:
 
+target: target device for flashing commands
+	must be an mmc or mtd device identifier
+	e.g. mmc0, mmc1, etc. or spi-nand0, nand0, etc.
 fb-addr: address in memory of the Fastboot buffer
 fb-size: size in bytes of the Fastboot buffer
 eraseblk-size: size in bytes of an erase block on the target Flash device
@@ -101,26 +104,49 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		ret = getattr(self.fast, cmd)(*args)
 		print(f"ret: {ret}")
 
-	def cmd_gpt(self, args: str):
-		device_num,sep,partitions = args.partition(" ")
-
-		if not device_num.isnumeric():
-			raise SnagflashCmdError("Invalid MMC device number!")
-
-		device_num = int(device_num)
-		self.cmd_run(f"oem_run:gpt write mmc {device_num} {partitions}")
-		self.cmd_run(f"part list mmc {device_num}")
-
 	def request_env(self, var: str):
 		if var not in self.env:
 			raise SnagflashCmdError(f"please set the '{var}' environment variable")
 
 		return self.env[var]
 
-	def cmd_flash_mtd(self, args: str):
-		fast = self.fast
-		part, path, offset = args.split(" ")
+	def cmd_gpt(self, args: str):
+		partitions = args
+
+		target = self.request_env("target")
+
+		if not target.startswith("mmc"):
+			raise SnagflashCmdError("GPT partitioning not supported for MTD targets")
+
+		device_num = int(target[-1])
+		self.cmd_run(f"oem_run:gpt write mmc {device_num} '{partitions}'")
+		self.cmd_run(f"oem_run:part list mmc {device_num}")
+
+	def cmd_flash(self, args: str):
+		path, rest = args.split(" ")
+		path = path.strip('"').strip('"')
+
+		if " " in rest:
+			offset, part = rest.split(" ")
+		else:
+			offset = rest
+			part = None
+
 		offset = int(offset, 0)
+
+		target = self.request_env("target")
+
+		if target.startswith("mmc"):
+			device_num = int(target[-1])
+			self.flash_mmc(path, offset, device_num, part)
+		else:
+			if part is None:
+				part = target
+
+			self.flash_mtd(path, offset, part)
+
+	def flash_mtd(self, path: str, offset: int, part: str):
+		fast = self.fast
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
 		fb_size = int(self.request_env("fb-size"), 0)
@@ -171,22 +197,16 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			fast.oem_run(f"mtd erase {part} {file_offset:x} {remainder:x}")
 			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{file_offset:x} 0x{remainder:x}")
 
-	def cmd_flash_mmc(self, args: str):
+	def flash_mmc(self, path: str, offset: int, device_num: int, part: str = None):
 		fast = self.fast
-		device_num, path, offset, part = args.split(" ")
-		path = path.strip('"').strip('"')
-		device_num = int(device_num)
-		offset = int(offset, 0)
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
 		fb_size = int(self.request_env("fb-size"), 0)
+
 		file_size = os.path.getsize(path)
 
 		if offset % MMC_LBA_SIZE != 0:
 			raise ValueError(f"Given offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
-
-		logger.info("setting MMC device")
-		fast.oem_run(f"mmc dev {device_num}")
 
 		fb_size_lba = fb_size // MMC_LBA_SIZE
 		file_size_lba = ceil(file_size / MMC_LBA_SIZE)
@@ -194,12 +214,22 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 		fb_size_aligned = fb_size_lba * MMC_LBA_SIZE
 
-		if part is not None:
+		if part is None:
+			logger.info(f"setting MMC device to {device_num}")
+			fast.oem_run(f"mmc dev {device_num}")
+			part_start = 0
+		elif "hwpart" in part:
+			hwpart,sep,hwpart_num = part.partition(" ")
+			hwpart_num = int(hwpart_num.strip(" "))
+			logger.info(f"setting MMC device to {device_num}")
+			fast.oem_run(f"mmc dev {device_num} {hwpart_num}")
+			part_start = 0
+		else:
+			logger.info(f"setting MMC device to {device_num}")
+			fast.oem_run(f"mmc dev {device_num}; part list mmc {device_num}")
 			logger.info("fetching partition start")
 			fast.oem_run(f"gpt setenv mmc {device_num} {part};setenv fastboot.part_start $" + "{gpt_partition_addr}")
 			part_start = int(fast.getvar("part_start"), 16)
-		else:
-			part_start = 0
 
 		if file_size <= fb_size:
 			logger.info(f"flashing file {path}")
@@ -228,6 +258,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 	def run(self, cmds: list):
 		for cmd in cmds:
+			logger.info(f"running command {cmd}")
 			match = __class__.cmd_pattern.match(cmd)
 			if match is None:
 				raise ValueError("Invalid input syntax")
@@ -236,7 +267,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			if not hasattr(self, f"cmd_{cur_cmd.replace('-','_')}"):
 				raise ValueError("Invalid command {cmd}")
 
-			args = match.groups()[1].strip("\t ")
+			args = match.groups()[1].strip(" ")
 			if args is None:
 				args = ""
 
@@ -258,7 +289,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 				self.err(f"Invalid command {cur_cmd}, type 'help' for help")
 				continue
 
-			args = match.groups()[1].strip("\t ")
+			args = match.groups()[1].strip(" ")
 			if args is None:
 				args = ""
 
