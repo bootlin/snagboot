@@ -47,6 +47,8 @@ class Board():
 		self.paused = False
 
 		self.task = None
+		self.progress = 0
+		self.progress_inc = 100 / (len(self.pipeline) + 1)
 
 	def set_phase(self, new_phase: BoardPhase):
 		factory_logger.info(f"board {self.path} phase: {self.phase} -> {new_phase}")
@@ -73,8 +75,8 @@ class Board():
 				self.set_phase(BoardPhase.DONE)
 			else:
 				self.task = self.pipeline.pop(0)
-				factory_logger.info(f"board {self.path} starting flashing task #{self.task.num}")
-				self.status = f"running task #{self.task.num} ${str(self.task.config)[:20]}..."
+				factory_logger.info(f"board {self.path} starting flashing task #{self.task.num} {self.task.name}")
+				self.status = f"running task #{self.task.num}: {self.task.name} {str(self.task.config)[:20]}..."
 				self.process = self.task.get_process()
 				self.process.start()
 				self.set_phase(BoardPhase.FLASHING)
@@ -83,6 +85,10 @@ class Board():
 			exitcode = self.process.exitcode
 
 			if exitcode == 0:
+				self.progress += self.progress_inc
+				if self.progress > 100:
+					self.progress = 100
+
 				self.process.join()
 				if self.phase == BoardPhase.RECOVERING:
 					factory_logger.info(f"board {self.path} end of recovery task")

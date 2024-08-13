@@ -31,7 +31,7 @@ for more information on fastboot support in U-Boot.
 """
 
 class Fastboot():
-	def __init__(self, dev: usb.core.Device, timeout: int = 10000, extra_args: bool = False):
+	def __init__(self, dev: usb.core.Device, timeout: int = 10000):
 		self.dev = dev
 		cfg = dev.get_active_configuration()
 		# select the first interface we find with a bulk in ep and a bulk out ep
@@ -66,7 +66,6 @@ class Fastboot():
 		# limits for some USB kernel syscalls.
 
 		self.max_size = MAX_LIBUSB_TRANSFER_SIZE
-		self.extra_args = extra_args
 
 	def cmd(self, packet: bytes):
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
@@ -108,22 +107,22 @@ class Fastboot():
 		packet = b"getvar:" + var.encode("ascii") + b"\x00"
 		ret = self.cmd(packet)
 		logger.info(f"(bootloader) {var} value {ret}")
+		return ret
 
-	def download(self, path: str):
-		if self.extra_args and "#" in path:
-			path, sep, extra_args = path.partition("#")
-			file_offset, sep, file_size  = extra_args.partition(":")
-		else:
-			file_offset = 0
-			file_size = -1
+	def download(self, path: str, padding: int = None):
+		self.download_section(path, 0, -1, padding)
 
+	def download_section(self, path: str, offset: int, size: int, padding: int = None):
 		with open(path, "rb") as file:
-			file.seek(int(file_offset))
-			blob = file.read(int(file_size))
+			file.seek(offset)
+			blob = file.read(size)
 
-		packet = f"download:{len(blob):08x}".encode()
+		if padding is None:
+			padding = 0
+
+		packet = f"download:{len(blob) + padding:08x}".encode()
 		self.cmd(packet)
-		for chunk in utils.dnload_iter(blob, self.max_size):
+		for chunk in utils.dnload_iter(blob + b"\x00" * padding, self.max_size):
 			self.dev.write(self.ep_out, chunk, timeout=self.timeout)
 		self.response()
 
@@ -214,4 +213,5 @@ class Fastboot():
 		packet = "oem run:reset\x00"
 
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
+
 

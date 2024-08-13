@@ -5,6 +5,7 @@ import os
 import platform
 import queue
 import re
+import copy
 
 import logging
 factory_logger = logging.getLogger("snagfactory")
@@ -65,6 +66,31 @@ class SnagFactorySession():
 				self.nb_other = len(self.board_list) - self.nb_done - self.nb_failed
 				self.close()
 
+	def read_session_store(self, key: str):
+		snagfactory_sessionstore = self.snagboot_data + "/snagfactory/sessionstore.yaml"
+
+		if not os.path.exists(snagfactory_sessionstore):
+			return None
+
+		with open(snagfactory_sessionstore, "r") as file:
+			session_store = yaml.safe_load(file)
+
+		return session_store.get(key, None)
+
+	def write_session_store(self, key: str, value):
+		snagfactory_sessionstore = self.snagboot_data + "/snagfactory/sessionstore.yaml"
+
+		session_store = {}
+
+		if os.path.exists(snagfactory_sessionstore):
+			with open(snagfactory_sessionstore, "r") as file:
+				session_store = yaml.safe_load(file)
+
+		session_store[key] = value
+
+		with open(snagfactory_sessionstore, "w") as file:
+			yaml.dump(session_store, file, default_flow_style=False)
+
 	def __init__(self, config_path):
 		self.start_ts = time.time()
 
@@ -81,7 +107,8 @@ class SnagFactorySession():
 		else:
 			snagboot_data = os.getenv('HOME') + "/.snagboot}"
 
-		self.snagfactory_logs = snagboot_data + "/snagfactory/logs"
+		self.snagboot_data = snagboot_data
+		self.snagfactory_logs = self.snagboot_data + "/snagfactory/logs"
 		if not os.path.exists(self.snagfactory_logs):
 			os.makedirs(self.snagfactory_logs)
 
@@ -113,7 +140,8 @@ class SnagFactorySession():
 			for path in paths:
 				fw_config = self.config["soc-models"][f"{soc_model}-firmware"]
 				tasks_config = self.config["soc-models"][f"{soc_model}-tasks"]
-				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, fw_config, tasks_config, usb_ids, self.pipelines[soc_model]))
+				board_pipeline = copy.deepcopy(self.pipelines[soc_model])
+				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, fw_config, tasks_config, usb_ids, board_pipeline))
 
 	def format_session_logs(self):
 		timestamp = datetime.datetime.fromtimestamp(self.start_ts)

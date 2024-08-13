@@ -2,7 +2,7 @@
 
 Snagfactory is a tool for simultaneous and efficient recovery and flashing of multiple embedded devices. It leverages the support range of Snagboot along with the multithreading capabilities of the host machine.
 
-The tool currently supports MMC backends for flashing images (SD card or eMMC). It has been tested on AM625x and A64 SoCs.
+The tool currently supports MMC and MTD backends for flashing images. It has been tested on AM625x and A64 SoCs.
 
 There are four main steps involved in using Snagfactory:
 
@@ -24,12 +24,11 @@ Moreover, you should make sure that the following config options are enabled whe
 • CONFIG_CMD_FASTBOOT
 • CONFIG_FASTBOOT
 • CONFIG_USB_FUNCTION_FASTBOOT
-• CONFIG_FASTBOOT_FLASH
 • CONFIG_FASTBOOT_UUU_SUPPORT
-• CONFIG_FASTBOOT_FLASH_MMC
 • CONFIG_FASTBOOT_OEM_RUN
 • CONFIG_CMD_PART
 • CONFIG_CMD_GPT
+• CONFIG_CMD_MTDPARTS
 ```
 
 Additionally, you'll need to enable autoboot and set the default boot command to `fastboot usb 0`
@@ -38,10 +37,10 @@ Please use menuconfig to check that your configuration is coherent, as some of t
 
 ## Configuration file
 
-The  [example configuration file](snagfactory-example.yaml) showcases the
-main features of Snagfactory. There is also a
-[full documentation](snagfactory_config.md) for the Snagfactory
-configuration file format.
+The  example configuration files for [emmc](snagfactory-emmc.yaml) and
+[spi-nand](snagfactory-mtd.yaml) backends showcase the main features of
+Snagfactory. There is also a [full documentation](snagfactory_config.md) for
+the Snagfactory configuration file format.
 
 ## libusb-win32
 

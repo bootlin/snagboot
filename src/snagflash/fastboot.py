@@ -23,6 +23,8 @@ import sys
 import logging
 logger = logging.getLogger("snagflash")
 
+from snagflash.interactive import SnagflashInteractive
+
 def fastboot(args):
 	if (args.port is None):
 		logger.info("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
@@ -35,10 +37,18 @@ def fastboot(args):
 
 	dev = get_usb(usb_addr)
 	dev.default_timeout = int(args.timeout)
-	fast = fb.Fastboot(dev, extra_args = hasattr(args, "factory"))
+
+	fast = fb.Fastboot(dev, timeout = dev.default_timeout)
+
 	# this is mostly there to dodge a linter error
 	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out}")
 	logger.info(args.fastboot_cmd)
+
+	if hasattr(args, "factory"):
+		session = SnagflashInteractive(fast)
+		session.run(args.interactive_cmds)
+		return
+
 	for cmd in args.fastboot_cmd:
 		cmd = cmd.split(":", 1)
 		cmd, args = cmd[0], cmd[1:]
@@ -47,5 +57,22 @@ def fastboot(args):
 		if cmd == "continue":
 			cmd = "fbcontinue"
 		getattr(fast, cmd)(*args)
+
 	logger.info("Done")
+
+	session = None
+
+	if args.interactive_cmdfile is not None:
+		session = SnagflashInteractive(fast)
+		logger.info(f"running commands from file {args.interactive_cmdfile}")
+		with open(args.interactive_cmdfile, "r") as file:
+			cmds = file.read(-1).splitlines()
+
+		session.run(cmds)
+
+	if args.interactive:
+		if session is None:
+			session = SnagflashInteractive(fast)
+
+		session.start()
 

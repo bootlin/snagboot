@@ -129,3 +129,45 @@ specification](https://android.googlesource.com/platform/system/core/+/refs/head
 and the [U-Boot
 docs](https://elixir.bootlin.com/u-boot/v2023.04/source/doc/android/fastboot.rst).
 
+### Interactive Fastboot mode
+
+Interactive mode provides a set of more complex commands that leverage
+basic Fastboot commands to perform various flashing tasks. Interactive
+commands can be passed to a CLI prompt with the "-i" flag, and
+can also be read from a file using the "-I" option.
+
+Interactive mode flashing commands handle writing files larger than the
+Fastboot memory buffer by slicing them up into sections.
+
+The following command set is supported:
+
+```
+help_text = """snagflash interactive mode
+syntax: <cmd> <arg1> <arg2> ...
+commands:
+
+exit : exit snagflash
+quit : exit snagflash
+help : show this help text
+set <var> <value>: set the value of an environment variable
+print <var>: print the value of an environment variable
+run <fastboot_cmd>: run a Fastboot command given in Snagflash format
+gpt <partitions>: write a GPT partition table to the specified mmc device
+flash <image_path> <image_offset> [<partition_name>]
+	Write the file at <image_path> to an MTD device or partition.
+	The "fb-addr", "fb-size", and "target" environment
+	variables are required. For MTD targets, the "eraseblk-size" variable
+	is also required.
+	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
+	by "hwpart <number>"
+
+environment:
+
+target: target device for flashing commands
+	must be an mmc or mtd device identifier
+	e.g. mmc0, mmc1, etc. or spi-nand0, nand0, etc.
+fb-addr: address in memory of the Fastboot buffer
+fb-size: size in bytes of the Fastboot buffer
+eraseblk-size: size in bytes of an erase block on the target Flash device
+
+```

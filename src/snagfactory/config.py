@@ -67,28 +67,9 @@ reset_task_rule = {
 	"task": str_rule("reset"),
 }
 
-virtual_part_rule = {
-	"name": name_rule,
-	"start": int_rule,
-	"size": int_rule,
-	"hwpart": int_rule,
-}
-
-virtual_part_task_rule = {
-	"type": dict,
-	"task": str_rule("virtual-part"),
-	"args": {
-		"type": list,
-		"rules": [
-			virtual_part_rule,
-		],
-
-	}
-}
-
 flash_rule = {
 	"type": dict,
-	"part": name_rule,
+	"part": str_rule("([\w\-\.]+|hwpart \d)"),
 	"image": path_rule,
 	"image-offset": int_rule,
 }
@@ -104,11 +85,21 @@ flash_task_rule = {
 	}
 }
 
+mtd_part_rule = {
+	"type": dict,
+	"image": path_rule,
+	"image-offset": int_rule,
+	"name": str_rule("[\w][\w\-\.]*"),
+	"start": int_rule,
+	"size": int_rule,
+	"ro": bool_rule,
+}
+
 partition_rule = {
 	"type": dict,
 	"image": path_rule,
 	"image-offset": int_rule,
-	"name": str_rule("^[\w][\w\-]*"),
+	"name": str_rule("[\w][\w\-]*"),
 	"start": int_rule,
 	"size": int_rule,
 	"bootable": bool_rule,
@@ -127,6 +118,17 @@ run_task_rule = {
 	}
 }
 
+mtd_parts_task_rule = {
+	"type": dict,
+	"task": str_rule("mtd-parts"),
+	"args": {
+		"type": list,
+		"rules": [
+			mtd_part_rule,
+		],
+	}
+}
+
 gpt_task_rule = {
 	"type": dict,
 	"task": str_rule("gpt"),
@@ -140,8 +142,10 @@ gpt_task_rule = {
 
 globals_rule = {
 	"type": dict,
-	"target-device": str_rule("(mmc\d|nand)"),
+	"target-device": str_rule("[\w\-]+"),
 	"fb-buffer-size": int_rule,
+	"fb-buffer-addr": int_rule,
+	"eraseblk-size": int_rule,
 }
 
 tasks_rule = {
@@ -149,9 +153,9 @@ tasks_rule = {
 	"rules": [
 		globals_rule,
 		gpt_task_rule,
+		mtd_parts_task_rule,
 		run_task_rule,
 		flash_task_rule,
-		virtual_part_task_rule,
 		reset_task_rule,
 		prompt_operator_task_rule,
 		emmc_hwpart_task_rule,
@@ -202,7 +206,7 @@ def map_config(config, modify):
 				config[i] = modify(value)
 
 def suffixed_num_to_int(param) -> int:
-	pattern = re.compile("^\d+[GMk]?$")
+	pattern = re.compile("^\d+[GMKgmk]?$")
 
 	if not isinstance(param, str) or pattern.match(param) is None:
 		return param
@@ -210,16 +214,14 @@ def suffixed_num_to_int(param) -> int:
 	suffix = param[-1]
 	num = param[:-1]
 
-	if suffix == "k":
+	if suffix in ["k","K"]:
 		multiplier = 1024
-	elif suffix == "M":
+	elif suffix in ["m","M"]:
 		multiplier = 1024 ** 2
-	elif suffix == "G":
+	elif suffix in ["g","G"]:
 		multiplier = 1024 ** 3
 	else:
-		# This shouldn't happen
-		multiplier = 1
-		num = param
+		raise SnagFactoryConfigError(f"Invalid suffix {suffix}")
 
 	return int(num) * multiplier
 
@@ -257,7 +259,9 @@ def read_config(path):
 			elif (task_object := task_table.get(entry["task"], None)) is None:
 				raise SnagFactoryConfigError(f"Invalid entry {entry}: unknown task {entry['task']}")
 
-			pipelines[soc_model].append(task_object(entry.get("args", None), i, globals))
+			task = task_object(entry.get("args", None), i, globals)
+			task.get_cmds()
+			pipelines[soc_model].append(task)
 			i += 1
 
 	return config, pipelines
