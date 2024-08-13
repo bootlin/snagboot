@@ -167,8 +167,8 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			flash_size = file_size
 
 		if flash_size <= fb_size:
-			logger.info(f"erasing flash area offset 0x{offset:x} size 0x{flash_size:x}...")
-			fast.oem_run(f"mtd erase {part} {offset:x} {flash_size:x}")
+			logger.info(f"erasing flash area part {part} offset 0x{offset:x} size 0x{flash_size:x}...")
+			fast.oem_run(f"mtd erase {part} 0x{offset:x} 0x{flash_size:x}")
 
 			logger.info(f"flashing file {path}")
 			fast.download(path, padding=padding)

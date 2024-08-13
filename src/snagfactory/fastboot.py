@@ -68,8 +68,8 @@ class FastbootTask():
 		]
 
 		if not self.target_device.startswith("mmc"):
-			eraseblk_size = self.require_global("eraseblk-size")
-			self.cmds.append(f"set eraseblk-size {eraseblk_size}")
+			self.eraseblk_size = self.require_global("eraseblk-size")
+			self.cmds.append(f"set eraseblk-size {self.eraseblk_size}")
 
 	def require_global(self, var: str):
 		if var not in self.globals:
@@ -117,16 +117,6 @@ class FastbootTask():
 		self.process = Process(target=run_fastboot_task, args=(self.args, self.log_queue))
 		return self.process
 
-class FastbootMMCTask(FastbootTask):
-	def __init__(self, config: dict, num: int, globals: dict):
-		super().__init__(config, num, globals)
-
-		if not self.target_device.startswith("mmc"):
-			raise SnagFactoryConfigError(f"the '{self.name}' task is only supported on mmc backends")
-
-		self.device_num = int(self.target_device[-1])
-
-class FastbootTaskGPT(FastbootMMCTask):
 	def flash_partition_images(self):
 		part_index = 1
 
@@ -144,6 +134,54 @@ class FastbootTaskGPT(FastbootMMCTask):
 
 			self.cmds.append(f"flash {image} {image_offset} {part_name}")
 
+
+class FastbootMTDTask(FastbootTask):
+	def __init__(self, config: dict, num: int, globals: dict):
+		super().__init__(config, num, globals)
+
+		if self.target_device.startswith("mmc"):
+			raise SnagFactoryConfigError(f"the '{self.name}' task is only supported on mtd backends")
+
+class FastbootTaskMTDParts(FastbootMTDTask):
+	def set_partition_table(self):
+		partitions_env = f"mtdparts={self.target_device}:"
+
+		for partition in self.config:
+			if "size" not in partition or "name" not in partition:
+				raise SnagFactoryConfigError("Invalid partition table entry found in config file, partition size and name must be specified!")
+
+			size = int(partition["size"])
+			name = partition["name"]
+
+			if "start" in partition:
+				start = int(partition["start"])
+				partition_env = f"0x{size:x}@0x{start:x}({name})"
+			else:
+				partition_env = f"0x{size:x}({name})"
+
+			if "ro" in partition and partition["ro"]:
+				partition_env += "ro"
+
+			partitions_env += partition_env + ","
+
+		self.cmd_setenv("mtdparts", partitions_env.rstrip(",") + ";")
+		# This does a quick check of the partition layout
+		self.cmd_run("mtdparts")
+
+	def get_cmds(self):
+		self.set_partition_table()
+		self.flash_partition_images()
+
+class FastbootMMCTask(FastbootTask):
+	def __init__(self, config: dict, num: int, globals: dict):
+		super().__init__(config, num, globals)
+
+		if not self.target_device.startswith("mmc"):
+			raise SnagFactoryConfigError(f"the '{self.name}' task is only supported on mmc backends")
+
+		self.device_num = int(self.target_device[-1])
+
+class FastbootTaskGPT(FastbootMMCTask):
 	def flash_partition_table(self):
 		partitions_env = ""
 
@@ -259,6 +297,7 @@ class FastbootTaskEmmcHwpart(FastbootMMCTask):
 
 task_table = {
 "gpt": FastbootTaskGPT,
+"mtd-parts": FastbootTaskMTDParts,
 "run": FastbootTaskRun,
 "flash": FastbootTaskFlash,
 "reset": FastbootTaskReset,

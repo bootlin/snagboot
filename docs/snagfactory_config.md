@@ -83,11 +83,6 @@ args:
 
 ## gpt
 
-Requires:
-
- - CONFIG_CMD_PART
- - CONFIG_CMD_GPT
-
 Action:
 
 Writes a GPT partition table to the Fastboot backend device and
@@ -118,6 +113,45 @@ args:
     size: 1000M
     image: "./rootfs.ext4"
 ```
+
+## mtd-parts
+
+Action:
+
+Sets the "mtdparts" U-Boot environment variable, which describes a fixed
+partition layout on an MTD device. Please note that this will be cleared when
+the board is reset. Images can optionally be flashed to the newly created
+partitions.For each partition, you must specify at least its name and size. The
+following additional parameters can also be specified:
+
+Unless otherwise specified, all values are in bytes.
+
+```
+image: path of an image to flash to the partition
+image-offset: offset to which the image must be flashed inside the partition
+start: offset of the partition from the start of the MTD device.
+ro: indicates if the "read-only" flag is set for this partition. Defaults to False.
+```
+
+Example:
+
+```
+- task: mtd-parts
+  args:
+    - name: "ospi.tiboot3"
+      size: 512k
+    - name: "ospi.tispl"
+      size: 2m
+    - name: "ospi.u-boot"
+      size: 4m
+    - name: "ospi.env"
+      size: 256k
+    - name: "ospi.rootfs"
+      image: "big_nand_image"
+      size: 98048k
+      start: 32m
+```
+
 
 ## flash
 
