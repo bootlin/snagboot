@@ -20,6 +20,7 @@
 import argparse
 from snagrecover import __version__
 from snagflash.dfu import dfu_cli
+from snagflash.ums import ums
 from snagflash.fastboot import fastboot
 from snagrecover.utils import cli_error
 import logging
@@ -88,12 +89,12 @@ def cli():
 	recovery_logger.parent = logger
 
 	logger.info("Running snagflash using protocol {args.protocol}")
-
 	if args.protocol == "dfu":
 		dfu_cli(args)
 	elif args.protocol == "ums":
 		if args.src is None or (args.blockdev is None and args.dest is None):
 			cli_error("missing an UMS config!")
+		ums(args)
 	elif args.protocol == "fastboot":
 		if args.fastboot_cmd is None:
 			args.fastboot_cmd = []
