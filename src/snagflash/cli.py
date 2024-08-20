@@ -20,11 +20,17 @@
 import argparse
 from snagrecover import __version__
 from snagflash.dfu import dfu_cli
-from snagflash.ums import ums
 from snagflash.fastboot import fastboot
 from snagrecover.utils import cli_error
+import platform
 import logging
 import sys
+
+if platform.system() == "Linux":
+	from snagflash.ums import ums
+	protocols = ["dfu", "ums", "fastboot"]
+else:
+	protocols = ["dfu", "fastboot"]
 
 def cli():
 	example = '''Examples:
@@ -42,7 +48,7 @@ def cli():
 	common.add_argument("--loglevel", help="set loglevel", choices=["silent","info","debug"], default="silent")
 	common.add_argument("--logfile", help="set logfile", default="board_flashing.log")
 	common.add_argument("--version", help="show version", action="store_true")
-	common.add_argument("-P", "--protocol", help="Protocol to use for flashing", choices=["dfu","ums","fastboot"])
+	common.add_argument("-P", "--protocol", help="Protocol to use for flashing", choices=protocols)
 	common.add_argument("-p", "--port", help="USB device address for DFU and Fastboot commands", metavar="vid:pid|bus-port1.port2.[...]")
 	common.add_argument("--timeout", help="USB timeout, sometimes increasing this is necessary when downloading large files", default=60000)
 	dfuargs = parser.add_argument_group("DFU")
@@ -54,10 +60,12 @@ def cli():
 	fbargs.add_argument("-f", "--fastboot-cmd", help="A fastboot command.", action="append", metavar="cmd:args")
 	fbargs.add_argument("-i", "--interactive", help="Start interactive mode", action="store_true")
 	fbargs.add_argument("-I", "--interactive-cmdfile", help="Read interactive mode commands from file")
-	umsargs = parser.add_argument_group("UMS")
-	umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
-	umsargs.add_argument("-d", "--dest", help="mounted transfer: set destination file name")
-	umsargs.add_argument("-b", "--blockdev", help="raw transfer: set destination block device", metavar="device")
+	if platform.system() == "Linux":
+		umsargs = parser.add_argument_group("UMS")
+		umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
+		umsargs.add_argument("-d", "--dest", help="mounted transfer: set destination file name")
+		umsargs.add_argument("-b", "--blockdev", help="raw transfer: set destination block device", metavar="device")
+
 	args = parser.parse_args()
 
 	# show version
