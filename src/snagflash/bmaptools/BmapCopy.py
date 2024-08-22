@@ -65,9 +65,6 @@ import sys
 import hashlib
 import logging
 import datetime
-from six import reraise
-from six.moves import queue as Queue
-from six.moves import _thread as thread
 from typing import Optional
 from xml.etree import ElementTree
 from snagflash.bmaptools.BmapHelpers import human_size
@@ -173,9 +170,7 @@ class Bmap(object):
         self._xml = None
 
         self._batch_blocks = None
-        self._batch_queue = None
         self._batch_bytes = 1024 * 1024
-        self._batch_queue_len = 6
 
         self.bmap_version = None
         self.bmap_version_major = None
@@ -444,56 +439,41 @@ class Bmap(object):
         """
 
         _log.debug("the reader thread has started")
-        try:
-            for (first, last, chksum) in self._get_block_ranges():
-                if verify and chksum:
-                    hash_obj = hashlib.new(self._cs_type)
+        for (first, last, chksum) in self._get_block_ranges():
+            if verify and chksum:
+                hash_obj = hashlib.new(self._cs_type)
 
-                self._f_image.seek(first * self.block_size)
+            self._f_image.seek(first * self.block_size)
 
-                iterator = self._get_batches(first, last)
-                for (start, end, length) in iterator:
-                    try:
-                        buf = self._f_image.read(length * self.block_size)
-                    except IOError as err:
-                        raise Error(
-                            "error while reading blocks %d-%d of the "
-                            "image file '%s': %s" % (start, end, self._image_path, err)
-                        )
-
-                    if not buf:
-                        _log.debug(
-                            "no more data to read from file '%s'", self._image_path
-                        )
-                        self._batch_queue.put(None)
-                        return
-
-                    if verify and chksum:
-                        hash_obj.update(buf)
-
-                    blocks = (len(buf) + self.block_size - 1) // self.block_size
-                    _log.debug(
-                        "queueing %d blocks, queue length is %d"
-                        % (blocks, self._batch_queue.qsize())
-                    )
-
-                    self._batch_queue.put(("range", start, start + blocks - 1, buf))
-
-                if verify and chksum and hash_obj.hexdigest() != chksum:
+            iterator = self._get_batches(first, last)
+            for (start, end, length) in iterator:
+                try:
+                    buf = self._f_image.read(length * self.block_size)
+                except IOError as err:
                     raise Error(
-                        "checksum mismatch for blocks range %d-%d: "
-                        "calculated %s, should be %s (image file %s)"
-                        % (first, last, hash_obj.hexdigest(), chksum, self._image_path)
+                        "error while reading blocks %d-%d of the "
+                        "image file '%s': %s" % (start, end, self._image_path, err)
                     )
-        # Silence pylint warning about catching too general exception
-        # pylint: disable=W0703
-        except Exception:
-            # pylint: enable=W0703
-            # In case of any exception - just pass it to the main thread
-            # through the queue.
-            self._batch_queue.put(("error", sys.exc_info()))
 
-        self._batch_queue.put(None)
+                if not buf:
+                    _log.debug(
+                        "no more data to read from file '%s'", self._image_path
+                    )
+                    return
+
+                if verify and chksum:
+                    hash_obj.update(buf)
+
+                blocks = (len(buf) + self.block_size - 1) // self.block_size
+
+                yield (start, start + blocks - 1, buf)
+
+            if verify and chksum and hash_obj.hexdigest() != chksum:
+                raise Error(
+                    "checksum mismatch for blocks range %d-%d: "
+                    "calculated %s, should be %s (image file %s)"
+                    % (first, last, hash_obj.hexdigest(), chksum, self._image_path)
+                )
 
 class BmapCopy(Bmap):
     """
@@ -578,11 +558,6 @@ class BmapCopy(Bmap):
         verified while copying.
         """
 
-        # Create the queue for block batches and start the reader thread, which
-        # will read the image in batches and put the results to '_batch_queue'.
-        self._batch_queue = Queue.Queue(self._batch_queue_len)
-        thread.start_new_thread(self._get_data, (verify,))
-
         blocks_written = 0
         bytes_written = 0
         fsync_last = 0
@@ -597,18 +572,8 @@ class BmapCopy(Bmap):
 
         # Read the image in '_batch_blocks' chunks and write them to the
         # destination file
-        while True:
-            batch = self._batch_queue.get()
-            if batch is None:
-                # No more data, the image is written
-                break
-            elif batch[0] == "error":
-                # The reader thread encountered an error and passed us the
-                # exception.
-                exc_info = batch[1]
-                reraise(exc_info[0], exc_info[1], exc_info[2])
-
-            (start, end, buf) = batch[1:4]
+        for image_section in self._get_data(verify):
+            (start, end, buf) = image_section
 
             assert len(buf) <= (end - start + 1) * self.block_size
             assert len(buf) > (end - start) * self.block_size
@@ -629,7 +594,6 @@ class BmapCopy(Bmap):
                     % (start, end, self._dest_path, err)
                 )
 
-            self._batch_queue.task_done()
             blocks_written += end - start + 1
             bytes_written += len(buf)
 
