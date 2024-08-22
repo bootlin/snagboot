@@ -158,6 +158,8 @@ flash <image_path> <image_offset> [<partition_name>]
 	The "fb-addr", "fb-size", and "target" environment
 	variables are required. For MTD targets, the "eraseblk-size" variable
 	is also required.
+	If a file named "<image_path>.bmap" exists, snagflash will automatically
+	parse it and flash only the block ranges described.
 	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
 	by "hwpart <number>"
 

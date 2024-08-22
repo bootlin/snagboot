@@ -1,10 +1,13 @@
 import re
 import yaml
 import logging
+import functools
 import os
 logger = logging.getLogger("snagflash")
 
 from math import ceil
+
+from snagflash.bmaptools.BmapCopy import Bmap
 
 MMC_LBA_SIZE = 512
 
@@ -142,12 +145,41 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 		if target.startswith("mmc"):
 			device_num = int(target[-1])
-			self.flash_mmc(path, offset, device_num, file_size, 0, part)
+			flash_func = functools.partial(self.flash_mmc,
+							path=path, offset=offset,
+							device_num=device_num, part=part)
 		else:
 			if part is None:
 				part = target
 
-			self.flash_mtd(path, offset, part, file_size, 0)
+			flash_func = functools.partial(self.flash_mtd,
+							path=path, offset=offset,
+							part=part)
+
+		bmap_path = path + ".bmap"
+		if os.path.exists(bmap_path):
+			logger.info("Found a bmap file, flashing in sparse mode")
+
+			# Verify bmap checksums and get list of ranges
+			with open(path, "rb") as image_file:
+				with open(bmap_path, "r") as bmap_file:
+					bmap = Bmap(image_file, bmap_file)
+					list(bmap._get_data(verify=True))
+
+					ranges = []
+					for (start, end, _) in bmap._get_block_ranges():
+						offset = bmap.block_size * start
+						size = (end - start + 1) * bmap.block_size
+						ranges.append((size, offset))
+
+			i = 0
+			for (size, offset) in ranges:
+				logger.info(f"Flashing sparse range {i}/{len(ranges)}")
+				flash_func(file_size=size, file_offset=offset)
+				i += 1
+		else:
+			logger.info("No bmap file found, flashing in non-sparse mode")
+			flash_func(file_size=file_size, file_offset=0)
 
 	def flash_mtd(self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0):
 		fast = self.fast
