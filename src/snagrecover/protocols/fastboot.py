@@ -75,17 +75,17 @@ class Fastboot():
 			ret = self.dev.read(self.ep_in, 256, timeout=self.timeout)
 			status = bytes(ret[:4])
 			if status == b"INFO":
-				logger.info(f"(bootloader) {bytes(ret[4:256])}")
+				logger.debug(f"(bootloader) {bytes(ret[4:256])}")
 			elif status == b"TEXT":
-				logger.info(f"(bootloader) {bytes(ret[4:256])}", end="")
+				logger.debug(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
 				raise Exception(f"Fastboot fail with message: {bytes(ret[4:256])}")
 			elif status == b"OKAY":
-				logger.info("fastboot OKAY")
+				logger.debug("fastboot OKAY")
 				return bytes(ret[4:])
 			elif status == b"DATA":
 				length = int("0x" + (bytes(ret[4:12]).decode("ascii")), base=16)
-				logger.info(f"fastboot DATA length: {length}")
+				logger.debug(f"fastboot DATA length: {length}")
 				return length
 		raise Exception("Timeout while completing fastboot transaction")
 

@@ -168,16 +168,16 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			flash_size = file_size
 
 		if flash_size <= fb_size:
-			logger.info(f"erasing flash area part {part} offset 0x{offset:x} size 0x{flash_size:x}...")
+			logger.debug(f"erasing flash area part {part} offset 0x{offset:x} size 0x{flash_size:x}...")
 			fast.oem_run(f"mtd erase {part} 0x{offset:x} 0x{flash_size:x}")
 
-			logger.info(f"flashing file {path}")
+			logger.info(f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size}")
 			fast.download_section(path, file_offset, file_size, padding=padding)
 			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{offset:x} 0x{flash_size:x}")
 			return
 
 		if fb_size % eraseblk_size != 0:
-			logger.info("clipping fastboot buffer size to align it with an eraseblock...")
+			logger.debug("clipping fastboot buffer size to align it with an eraseblock...")
 			fb_size = eraseblk_size * (fb_size // eraseblk_size)
 
 		nchunks = flash_size // fb_size
@@ -215,24 +215,24 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		fb_size_aligned = fb_size_lba * MMC_LBA_SIZE
 
 		if part is None:
-			logger.info(f"setting MMC device to {device_num}")
+			logger.debug(f"setting MMC device to {device_num}")
 			fast.oem_run(f"mmc dev {device_num}")
 			part_start = 0
 		elif "hwpart" in part:
 			hwpart,sep,hwpart_num = part.partition(" ")
 			hwpart_num = int(hwpart_num.strip(" "))
-			logger.info(f"setting MMC device to {device_num}")
+			logger.debug(f"setting MMC device to {device_num} {hwpart_num}")
 			fast.oem_run(f"mmc dev {device_num} {hwpart_num}")
 			part_start = 0
 		else:
-			logger.info(f"setting MMC device to {device_num}")
+			logger.debug(f"setting MMC device to {device_num}")
 			fast.oem_run(f"mmc dev {device_num}; part list mmc {device_num}")
-			logger.info("fetching partition start")
+			logger.debug("fetching partition start")
 			fast.oem_run(f"gpt setenv mmc {device_num} {part};setenv fastboot.part_start $" + "{gpt_partition_addr}")
 			part_start = int(fast.getvar("part_start"), 16)
 
 		if file_size <= fb_size:
-			logger.info(f"flashing file {path}")
+			logger.info(f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size:x}")
 			fast.download_section(path, file_offset, file_size)
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{part_start + offset_lba:x} 0x{file_size_lba:x}")
 			return

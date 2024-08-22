@@ -438,7 +438,6 @@ class Bmap(object):
           * 'buf' a buffer containing the batch data.
         """
 
-        logger.debug("the reader thread has started")
         for (first, last, chksum) in self._get_block_ranges():
             if verify and chksum:
                 hash_obj = hashlib.new(self._cs_type)
