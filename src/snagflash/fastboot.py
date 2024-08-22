@@ -51,12 +51,12 @@ def fastboot(args):
 
 	for cmd in args.fastboot_cmd:
 		cmd = cmd.split(":", 1)
-		cmd, args = cmd[0], cmd[1:]
+		cmd, cmd_args = cmd[0], cmd[1:]
 		cmd = cmd.replace("-", "_")
-		logger.info(f"Sending command {cmd} with args {args}")
+		logger.info(f"Sending command {cmd} with args {cmd_args}")
 		if cmd == "continue":
 			cmd = "fbcontinue"
-		getattr(fast, cmd)(*args)
+		getattr(fast, cmd)(*cmd_args)
 
 	logger.info("Done")
 
