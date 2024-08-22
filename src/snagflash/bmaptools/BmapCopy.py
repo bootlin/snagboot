@@ -512,8 +512,7 @@ class BmapCopy(Bmap):
 
     When the bmap is provided, it is not necessary to specify image size,
     because the size is contained in the bmap. Otherwise, it is benefitial to
-    specify the size because it enables extra sanity checks and makes it
-    possible to provide the progress bar.
+    specify the size because it enables extra sanity checks.
 
     When the image size is known either from the bmap or the caller specified
     it to the class constructor, all the image geometry description attributes
@@ -534,9 +533,6 @@ class BmapCopy(Bmap):
 
     This class supports all the bmap format versions up version
     'SUPPORTED_BMAP_VERSION'.
-
-    It is possible to have a simple progress indicator while copying the image.
-    Use the 'set_progress_indicator()' method.
 
     You can copy only once with an instance of this class. This means that in
     order to copy the image for the second time, you have to create a new class
@@ -559,14 +555,6 @@ class BmapCopy(Bmap):
 
         self._dest_fsync_watermark = None
 
-        self._progress_started = None
-        self._progress_index = None
-        self._progress_time = None
-        self._progress_file = None
-        self._progress_format = None
-        self.set_progress_indicator(None, None)
-        self._psplash_pipe = None
-
         self._f_dest = dest
         self._dest_path = dest.name
         st_data = os.fstat(self._f_dest.fileno())
@@ -581,105 +569,6 @@ class BmapCopy(Bmap):
             self._dest_supports_fsync = False
         else:
             self._dest_supports_fsync = True
-
-    def set_psplash_pipe(self, path):
-        """
-        Set the psplash named pipe file path to be used when updating the
-        progress - best effort.
-
-        The 'path' argument is the named pipe used by the psplash process to get
-        progress bar commands. When the path argument doesn't exist or is not a
-        pipe, the function will ignore with a warning. This behavior is
-        considered as such because the progress is considered a decoration
-        functionality which might or might not be available even if requested.
-        When used as a boot service, the unavailability of the psplash service
-        (due to various reasons: no screen, racing issues etc.) should not
-        break the writting process. This is why this implementation is done as
-        a best effort.
-        """
-
-        if os.path.exists(path) and stat.S_ISFIFO(os.stat(path).st_mode):
-            self._psplash_pipe = path
-        else:
-            _log.warning(
-                "'%s' is not a pipe, so psplash progress will not be " "updated" % path
-            )
-
-    def set_progress_indicator(self, file_obj, format_string):
-        """
-        Setup the progress indicator which shows how much data has been copied
-        in percent.
-
-        The 'file_obj' argument is the console file object where the progress
-        has to be printed to. Pass 'None' to disable the progress indicator.
-
-        The 'format_string' argument is the format string for the progress
-        indicator. It has to contain a single '%d' placeholder which will be
-        substitutes with copied data in percent.
-        """
-
-        self._progress_file = file_obj
-        if format_string:
-            self._progress_format = format_string
-        else:
-            self._progress_format = "Copied %d%%"
-
-    def _update_progress(self, blocks_written):
-        """
-        Print the progress indicator if the mapped area size is known and if
-        the indicator has been enabled by assigning a console file object to
-        the 'progress_file' attribute.
-        """
-
-        if self.mapped_cnt:
-            assert blocks_written <= self.mapped_cnt
-            percent = int((float(blocks_written) / self.mapped_cnt) * 100)
-            _log.debug(
-                "wrote %d blocks out of %d (%d%%)"
-                % (blocks_written, self.mapped_cnt, percent)
-            )
-        else:
-            _log.debug("wrote %d blocks" % blocks_written)
-
-        if self._progress_file:
-            if self.mapped_cnt:
-                progress = "\r" + self._progress_format % percent + "\n"
-            else:
-                # Do not rotate the wheel too fast
-                now = datetime.datetime.now()
-                min_delta = datetime.timedelta(milliseconds=250)
-                if now - self._progress_time < min_delta:
-                    return
-                self._progress_time = now
-
-                progress_wheel = ("-", "\\", "|", "/")
-                progress = "\r" + progress_wheel[self._progress_index % 4] + "\n"
-                self._progress_index += 1
-
-            # This is a little trick we do in order to make sure that the next
-            # message will always start from a new line - we switch to the new
-            # line after each progress update and move the cursor up. As an
-            # example, this is useful when the copying is interrupted by an
-            # exception - the error message will start form new line.
-            if self._progress_started:
-                # The "move cursor up" escape sequence
-                self._progress_file.write("\033[1A")  # pylint: disable=W1401
-            else:
-                self._progress_started = True
-
-            self._progress_file.write(progress)
-            self._progress_file.flush()
-
-        # Update psplash progress when configured. This is using a best effort
-        # strategy to not affect the writing process when psplash breaks, is
-        # not available early enough or screen is not available.
-        if self._psplash_pipe and self.mapped_cnt:
-            try:
-                mode = os.O_WRONLY | os.O_NONBLOCK
-                with os.fdopen(os.open(self._psplash_pipe, mode), "w") as p_fo:
-                    p_fo.write("PROGRESS %d\n" % percent)
-            except:
-                pass
 
     def copy(self, sync=True, verify=True):
         """
@@ -697,10 +586,6 @@ class BmapCopy(Bmap):
         blocks_written = 0
         bytes_written = 0
         fsync_last = 0
-
-        self._progress_started = False
-        self._progress_index = 0
-        self._progress_time = datetime.datetime.now()
 
         if self.image_size and self._dest_is_regfile:
             # If we already know image size, make sure that destination file
@@ -748,7 +633,6 @@ class BmapCopy(Bmap):
             blocks_written += end - start + 1
             bytes_written += len(buf)
 
-            self._update_progress(blocks_written)
 
         if not self.image_size:
             # The image size was unknown up until now, set it
