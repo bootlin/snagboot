@@ -55,6 +55,28 @@ class Error(Exception):
     pass
 
 
+def get_block_size(file_obj):
+    """
+    Return block size for file object 'file_obj'. Errors are indicated by the
+    'IOError' exception.
+    """
+
+    # Get the block size of the host file-system for the image file by calling
+    # the FIGETBSZ ioctl (number 2).
+    try:
+        binary_data = fcntl.ioctl(file_obj, 2, struct.pack("I", 0))
+        bsize = struct.unpack("I", binary_data)[0]
+        if not bsize:
+            raise IOError("get 0 bsize by FIGETBSZ ioctl")
+    except IOError as err:
+        stat = os.fstat(file_obj.fileno())
+        if hasattr(stat, "st_blksize"):
+            bsize = stat.st_blksize
+        else:
+            raise IOError("Unable to determine block size")
+    return bsize
+
+
 class _FilemapBase(object):
     """
     This is a base class for a couple of other classes in this module. This
@@ -85,7 +107,7 @@ class _FilemapBase(object):
             )
 
         try:
-            self.block_size = BmapHelpers.get_block_size(self._f_image)
+            self.block_size = get_block_size(self._f_image)
         except IOError as err:
             raise Error("cannot get block size for '%s': %s" % (self._image_path, err))
 
