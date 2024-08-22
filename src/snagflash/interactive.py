@@ -136,18 +136,20 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 		offset = int(offset, 0)
 
+		file_size = os.path.getsize(path)
+
 		target = self.request_env("target")
 
 		if target.startswith("mmc"):
 			device_num = int(target[-1])
-			self.flash_mmc(path, offset, device_num, part)
+			self.flash_mmc(path, offset, device_num, file_size, 0, part)
 		else:
 			if part is None:
 				part = target
 
-			self.flash_mtd(path, offset, part)
+			self.flash_mtd(path, offset, part, file_size, 0)
 
-	def flash_mtd(self, path: str, offset: int, part: str):
+	def flash_mtd(self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0):
 		fast = self.fast
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
@@ -157,7 +159,6 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		if offset % eraseblk_size != 0:
 			raise SnagflashCmdError(f"offset 0x{offset:x} is not aligned with an eraseblock")
 
-		file_size = os.path.getsize(path)
 		if file_size % eraseblk_size != 0:
 			logger.info("padding file size to align it with an eraseblock...")
 			padding = eraseblk_size - (file_size % eraseblk_size)
@@ -171,7 +172,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			fast.oem_run(f"mtd erase {part} 0x{offset:x} 0x{flash_size:x}")
 
 			logger.info(f"flashing file {path}")
-			fast.download(path, padding=padding)
+			fast.download_section(path, file_offset, file_size, padding=padding)
 			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{offset:x} 0x{flash_size:x}")
 			return
 
@@ -183,29 +184,26 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		remainder = flash_size % fb_size
 
 		for i in range(nchunks):
-			file_offset = i * fb_size
 			logger.info(f"downloading section {i + 1}/{nchunks}")
 			fast.download_section(path, file_offset, fb_size)
 			logger.info(f"erasing flash area offset 0x{file_offset:x} size 0x{fb_size:x}...")
 			fast.oem_run(f"mtd erase {part} {file_offset:x} {fb_size:x}")
 			logger.info(f"writing section {i + 1}/{nchunks}")
 			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{file_offset:x} 0x{fb_size:x}")
+			file_offset += fb_size
 
 		if remainder > 0:
-			file_offset = nchunks * fb_size
 			logger.info("downloading remainder")
 			fast.download_section(path, file_offset, remainder)
 			logger.info(f"erasing flash area offset 0x{file_offset:x} size 0x{remainder:x}...")
 			fast.oem_run(f"mtd erase {part} {file_offset:x} {remainder:x}")
 			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{file_offset:x} 0x{remainder:x}")
 
-	def flash_mmc(self, path: str, offset: int, device_num: int, part: str = None):
+	def flash_mmc(self, path: str, offset: int, device_num: int, file_size: int, file_offset: int = 0, part: str = None):
 		fast = self.fast
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
 		fb_size = int(self.request_env("fb-size"), 0)
-
-		file_size = os.path.getsize(path)
 
 		if offset % MMC_LBA_SIZE != 0:
 			raise ValueError(f"Given offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
@@ -235,7 +233,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 		if file_size <= fb_size:
 			logger.info(f"flashing file {path}")
-			fast.download(path)
+			fast.download_section(path, file_offset, file_size)
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{part_start + offset_lba:x} 0x{file_size_lba:x}")
 			return
 
@@ -246,14 +244,13 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 		for i in range(nchunks):
 			logger.info(f"flashing section {i + 1}/{nchunks}")
-			file_offset = i * fb_size_aligned
 			target_offset = part_start + i * fb_size_lba
 			fast.download_section(path, file_offset, fb_size_aligned)
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size_lba:x}")
+			file_offset += fb_size_aligned
 
 		if remainder > 0:
 			logger.info("flashing remainder")
-			file_offset = nchunks * fb_size
 			target_offset = part_start + nchunks * fb_size_lba
 			fast.download_section(path, file_offset, remainder)
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder_lba:x}")
