@@ -42,7 +42,7 @@ def wait_filepath(path: str):
 	logger.info("Done")
 
 def bmap_copy(filepath: str, dev, src_size: int):
-	mappath = os.path.splitext(filepath)[0] + ".bmap"
+	mappath = filepath + ".bmap"
 	mapfile = None
 	logger.info(f"Looking for {mappath}...")
 	gen_bmap = True
