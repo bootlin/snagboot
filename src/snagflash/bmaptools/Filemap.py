@@ -36,10 +36,9 @@ import array
 import fcntl
 import tempfile
 import logging
+logger = logging.getLogger("snagflash")
+
 from snagflash.bmaptools import BmapHelpers
-
-_log = logging.getLogger(__name__)  # pylint: disable=C0103
-
 
 class ErrorNotSupp(Exception):
     """
@@ -112,8 +111,8 @@ class _FilemapBase(object):
                 % (self._image_path, fstype)
             )
 
-        _log.debug('opened image "%s"' % self._image_path)
-        _log.debug(
+        logger.debug('opened image "%s"' % self._image_path)
+        logger.debug(
             "block size %d, blocks count %d, image size %d"
             % (self.block_size, self.blocks_cnt, self.image_size)
         )
@@ -213,7 +212,7 @@ class FilemapSeek(_FilemapBase):
 
         # Call the base class constructor first
         _FilemapBase.__init__(self, image)
-        _log.debug("FilemapSeek: initializing")
+        logger.debug("FilemapSeek: initializing")
 
         self._probe_seek_hole()
 
@@ -251,7 +250,7 @@ class FilemapSeek(_FilemapBase):
         if offs != 0:
             # We are dealing with the stub 'SEEK_HOLE' implementation which
             # always returns EOF.
-            _log.debug("lseek(0, SEEK_HOLE) returned %d" % offs)
+            logger.debug("lseek(0, SEEK_HOLE) returned %d" % offs)
             raise ErrorNotSupp(
                 "the file-system does not support "
                 '"SEEK_HOLE" and "SEEK_DATA" but only '
@@ -268,7 +267,7 @@ class FilemapSeek(_FilemapBase):
         else:
             result = offs // self.block_size == block
 
-        _log.debug("FilemapSeek: block_is_mapped(%d) returns %s" % (block, result))
+        logger.debug("FilemapSeek: block_is_mapped(%d) returns %s" % (block, result))
         return result
 
     def block_is_unmapped(self, block):
@@ -299,12 +298,12 @@ class FilemapSeek(_FilemapBase):
 
             start_blk = start // self.block_size
             end_blk = end // self.block_size - 1
-            _log.debug("FilemapSeek: yielding range (%d, %d)" % (start_blk, end_blk))
+            logger.debug("FilemapSeek: yielding range (%d, %d)" % (start_blk, end_blk))
             yield (start_blk, end_blk)
 
     def get_mapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug(
+        logger.debug(
             "FilemapSeek: get_mapped_ranges(%d,  %d(%d))"
             % (start, count, start + count - 1)
         )
@@ -312,7 +311,7 @@ class FilemapSeek(_FilemapBase):
 
     def get_unmapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug(
+        logger.debug(
             "FilemapSeek: get_unmapped_ranges(%d,  %d(%d))"
             % (start, count, start + count - 1)
         )
@@ -360,7 +359,7 @@ class FilemapFiemap(_FilemapBase):
 
         # Call the base class constructor first
         _FilemapBase.__init__(self, image)
-        _log.debug("FilemapFiemap: initializing")
+        logger.debug("FilemapFiemap: initializing")
 
         self._buf_size = _FIEMAP_BUFFER_SIZE
 
@@ -420,13 +419,13 @@ class FilemapFiemap(_FilemapBase):
                     "FilemapFiemap: the FIEMAP ioctl is not supported "
                     "by the file-system"
                 )
-                _log.debug(errstr)
+                logger.debug(errstr)
                 raise ErrorNotSupp(errstr)
             if err.errno == errno.ENOTTY:
                 errstr = (
                     "FilemapFiemap: the FIEMAP ioctl is not supported " "by the kernel"
                 )
-                _log.debug(errstr)
+                logger.debug(errstr)
                 raise ErrorNotSupp(errstr)
             raise Error(
                 "the FIEMAP ioctl failed for '%s': %s" % (self._image_path, err)
@@ -442,7 +441,7 @@ class FilemapFiemap(_FilemapBase):
         # If it contains zero, the block is not mapped, otherwise it is
         # mapped.
         result = bool(struct_fiemap[3])
-        _log.debug("FilemapFiemap: block_is_mapped(%d) returns %s" % (block, result))
+        logger.debug("FilemapFiemap: block_is_mapped(%d) returns %s" % (block, result))
         return result
 
     def block_is_unmapped(self, block):
@@ -508,7 +507,7 @@ class FilemapFiemap(_FilemapBase):
 
     def get_mapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug(
+        logger.debug(
             "FilemapFiemap: get_mapped_ranges(%d,  %d(%d))"
             % (start, count, start + count - 1)
         )
@@ -523,25 +522,25 @@ class FilemapFiemap(_FilemapBase):
             if last_prev == first - 1:
                 last_prev = last
             else:
-                _log.debug(
+                logger.debug(
                     "FilemapFiemap: yielding range (%d, %d)" % (first_prev, last_prev)
                 )
                 yield (first_prev, last_prev)
                 first_prev, last_prev = first, last
 
-        _log.debug("FilemapFiemap: yielding range (%d, %d)" % (first_prev, last_prev))
+        logger.debug("FilemapFiemap: yielding range (%d, %d)" % (first_prev, last_prev))
         yield (first_prev, last_prev)
 
     def get_unmapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug(
+        logger.debug(
             "FilemapFiemap: get_unmapped_ranges(%d,  %d(%d))"
             % (start, count, start + count - 1)
         )
         hole_first = start
         for first, last in self._do_get_mapped_ranges(start, count):
             if first > hole_first:
-                _log.debug(
+                logger.debug(
                     "FilemapFiemap: yielding range (%d, %d)" % (hole_first, first - 1)
                 )
                 yield (hole_first, first - 1)
@@ -549,7 +548,7 @@ class FilemapFiemap(_FilemapBase):
             hole_first = last + 1
 
         if hole_first < start + count:
-            _log.debug(
+            logger.debug(
                 "FilemapFiemap: yielding range (%d, %d)"
                 % (hole_first, start + count - 1)
             )

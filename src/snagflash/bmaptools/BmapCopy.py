@@ -64,12 +64,12 @@ import stat
 import sys
 import hashlib
 import logging
+logger = logging.getLogger("snagflash")
+
 import datetime
 from typing import Optional
 from xml.etree import ElementTree
 from snagflash.bmaptools.BmapHelpers import human_size
-
-_log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 # The highest supported bmap format version
 SUPPORTED_BMAP_VERSION = "2.0"
@@ -135,7 +135,7 @@ class SysfsChange:
     def __enter__(self):
         try:
             self.old_value = self._read()
-            _log.debug(f"found {self.path} to be '{self.old_value}'")
+            logger.debug(f"found {self.path} to be '{self.old_value}'")
         except IOError as exc:
             if self.suppress_ioerrors:
                 self.error = exc
@@ -145,7 +145,7 @@ class SysfsChange:
 
         if self.old_value != self.temp_value:
             try:
-                _log.debug(f"setting {self.path} to '{self.temp_value}'")
+                logger.debug(f"setting {self.path} to '{self.temp_value}'")
                 self._write(self.temp_value)
                 self.modified = True
             except IOError as exc:
@@ -158,7 +158,7 @@ class SysfsChange:
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.modified:
             try:
-                _log.debug(f"setting {self.path} back to '{self.old_value}'")
+                logger.debug(f"setting {self.path} back to '{self.old_value}'")
                 self._write(self.old_value)
             except IOError as exc:
                 raise Error(f"cannot restore {self.path} to '{self.old_value}': {exc}")
@@ -438,7 +438,7 @@ class Bmap(object):
           * 'buf' a buffer containing the batch data.
         """
 
-        _log.debug("the reader thread has started")
+        logger.debug("the reader thread has started")
         for (first, last, chksum) in self._get_block_ranges():
             if verify and chksum:
                 hash_obj = hashlib.new(self._cs_type)
@@ -456,7 +456,7 @@ class Bmap(object):
                     )
 
                 if not buf:
-                    _log.debug(
+                    logger.debug(
                         "no more data to read from file '%s'", self._image_path
                     )
                     return
@@ -596,7 +596,6 @@ class BmapCopy(Bmap):
 
             blocks_written += end - start + 1
             bytes_written += len(buf)
-
 
         if not self.image_size:
             # The image size was unknown up until now, set it
@@ -738,13 +737,13 @@ class BmapBdevCopy(BmapCopy):
             self._sysfs_scheduler_path, "none"
         ) as scheduler_chg:
             if max_ratio_chg.error:
-                _log.warning(
+                logger.warning(
                     "failed to disable excessive buffering, expect "
                     "worse system responsiveness (reason: cannot set "
                     f"max. I/O ratio to 1: {max_ratio_chg.error})"
                 )
             if scheduler_chg.error:
-                _log.info(
+                logger.info(
                     "failed to enable I/O optimization, expect "
                     "suboptimal speed (reason: cannot switch to the "
                     f"{max_ratio_chg.temp_value} I/O scheduler: "
@@ -752,7 +751,7 @@ class BmapBdevCopy(BmapCopy):
                     f"{max_ratio_chg.error})"
                 )
             if max_ratio_chg.error or scheduler_chg.error:
-                _log.info(
+                logger.info(
                     "You may want to set these I/O optimizations through a udev rule "
                     "like this:\n"
                     "#/etc/udev/rules.d/60-bmaptool-optimizations.rules\n"
