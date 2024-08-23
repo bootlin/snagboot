@@ -109,14 +109,7 @@ class Fastboot():
 		logger.info(f"(bootloader) {var} value {ret}")
 		return ret
 
-	def download(self, path: str, padding: int = None):
-		self.download_section(path, 0, -1, padding)
-
-	def download_section(self, path: str, offset: int, size: int, padding: int = None):
-		with open(path, "rb") as file:
-			file.seek(offset)
-			blob = file.read(size)
-
+	def send(self, blob: bytes, padding: int = None):
 		if padding is None:
 			padding = 0
 
@@ -125,6 +118,16 @@ class Fastboot():
 		for chunk in utils.dnload_iter(blob + b"\x00" * padding, self.max_size):
 			self.dev.write(self.ep_out, chunk, timeout=self.timeout)
 		self.response()
+
+	def download_section(self, path: str, offset: int, size: int, padding: int = None):
+		with open(path, "rb") as file:
+			file.seek(offset)
+			blob = file.read(size)
+
+		self.send(blob, padding)
+
+	def download(self, path: str, padding: int = None):
+		self.download_section(path, 0, -1, padding)
 
 	def erase(self, part: str):
 		packet = f"erase:{part}\x00"

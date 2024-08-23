@@ -2,6 +2,7 @@ import re
 import yaml
 import logging
 import functools
+import random
 import os
 logger = logging.getLogger("snagflash")
 
@@ -51,6 +52,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 	def __init__(self, fast):
 		self.fast = fast
 		self.env = {}
+		self.checked = False
 
 	def err(self, msg: str):
 		print(f"CLI Error: {msg}")
@@ -125,7 +127,37 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		self.cmd_run(f"oem_run:gpt write mmc {device_num} '{partitions}'")
 		self.cmd_run(f"oem_run:part list mmc {device_num}")
 
+	def preflash_checks(self):
+		"""
+		Run a few checks:
+		- fb-addr, fb-size and target are defined
+		- Fastboot buffer address seems correct
+		"""
+		if self.checked:
+			return
+
+		logger.info("Running pre-flash checks...")
+
+		fb_addr = int(self.request_env("fb-addr"), 0)
+		self.request_env("fb-size")
+		self.request_env("target")
+
+		fast = self.fast
+
+		pattern = random.randint(0, 255)
+		fast.send(pattern.to_bytes(1))
+
+		fast.oem_run(f"mw.b 0x{(fb_addr + 1):x} 0x{pattern:x} 1")
+		try:
+			fast.oem_run(f"cmp.b 0x{fb_addr:x} 0x{(fb_addr + 1):x} 1")
+		except Exception:
+			raise ValueError(f"The given value for fb-addr: 0x{fb_addr:x} seems incorrect! comparison of written check pattern failed") from None
+
+		self.checked = True
+
 	def cmd_flash(self, args: str):
+		self.preflash_checks()
+
 		path, sep, rest = args.partition(" ")
 		path = path.strip('"').strip('"')
 		rest = rest.strip(" ")
