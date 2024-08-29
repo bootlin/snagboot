@@ -46,8 +46,6 @@ the Snagfactory configuration file format.
 
 Power-up one of your boards in recovery mode and plug it into your host PC. Then, launch the Zadig app and find the USB device corresponding to your board. You might have to click on Options>‘List all devices’ to see it. Then, select the libusb-win32 driver and click on the install driver button.
 
-⚠There is a bug in older libusb versions which confuses root hub numbers, preventing snagfactory from working properly. The fix to this bug is currently in a pending pull request on the libusb repository.
-
 ## Running the app
 
 ![snagfactory UI](snagfactory.png)

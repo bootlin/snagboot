@@ -29,6 +29,7 @@ from snagrecover.utils import prettify_usb_addr
 import glob
 import usb
 import os
+import platform
 import select
 import re
 import logging
@@ -49,6 +50,9 @@ MAIN_ITEM_TAG_INPUT  = 8
 MAIN_ITEM_TAG_OUTPUT = 9
 
 GLOBAL_ITEM_TAG_REPORT_ID = 8
+
+def get_descriptor(dev, desc_size, desc_type, desc_index):
+	return dev.ctrl_transfer(0x81 if desc_type == usb.DT_REPORT else 0x80, 6, (desc_type << 8) | desc_index, 0, desc_size)
 
 class HIDError(Exception):
 	"Raised to signal failed I/O or invalid HID data in USB descriptors"
@@ -83,7 +87,7 @@ class HIDReportDesc():
 	def __init__(self, parent):
 		self.parent = parent
 		self.size = parent.hid_desc.wDescriptorLength
-		self.desc = usb.control.get_descriptor(parent.usb_dev, self.size, usb.DT_REPORT, parent.main_intf.bInterfaceNumber)
+		self.desc = get_descriptor(parent.usb_dev, self.size, usb.DT_REPORT, parent.main_intf.bInterfaceNumber)
 		if self.desc is None:
 			parent.err("Failed to fetch Report descriptor!")
 
@@ -127,7 +131,7 @@ class HIDDesc():
 		# The HID descriptor is located right after the interface descriptor
 		# i.MX ROM SDP devices don't seem to support querying Interface or HID descriptors
 		# directly, so we query the full cfg descriptor and find the HID descriptor inside
-		full_cfg_desc = usb.control.get_descriptor(parent.usb_dev, parent.main_cfg.wTotalLength, usb.DT_CONFIG, parent.main_cfg.index)
+		full_cfg_desc = get_descriptor(parent.usb_dev, parent.main_cfg.wTotalLength, usb.DT_CONFIG, parent.main_cfg.index)
 		if full_cfg_desc is None:
 			parent.err("Failed to fetch full Configuration descriptor")
 
@@ -221,7 +225,7 @@ class HIDDevice():
 			logger.info(f"Expected cfg {self.main_cfg.bConfigurationValue} but device {pretty_addr} has cfg {cur_cfg.bConfigurationValue} instead, attempting to set cfg...")
 			self.usb_dev.set_configuration(self.main_cfg.bConfigurationValue)
 
-		if self.usb_dev.is_kernel_driver_active(self.main_intf.bInterfaceNumber):
+		if platform.system() == "Linux" and self.usb_dev.is_kernel_driver_active(self.main_intf.bInterfaceNumber):
 			# The kernel driver in question should be usbhid
 			hidraw_path = self.get_hidraw_device()
 			if hidraw_path is None:

@@ -5,6 +5,8 @@ import time
 import logging
 logger = logging.getLogger("snagrecover")
 
+from snagrecover.usb import SnagbootUSBContext
+
 import yaml
 import os
 
@@ -56,7 +58,8 @@ def find_usb_paths(usb_id: tuple) -> list:
 
 	logger.info(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
 
-	devices = usb.core.find(idVendor=vid, idProduct=pid, find_all=True)
+	usb_ctx = SnagbootUSBContext.get_context()
+	devices = list(usb_ctx.find(idVendor=vid, idProduct=pid))
 
 	for dev in devices:
 		usb_paths.append((dev.bus, dev.port_numbers))
@@ -93,11 +96,11 @@ def prettify_usb_addr(usb_addr) -> str:
 
 def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
+	usb_ctx = SnagbootUSBContext.get_context()
 
 	for i in range(USB_RETRIES):
-		dev_list = list(usb.core.find(bus=usb_path[0], \
-					port_numbers=usb_path[1], \
-					find_all=True))
+		usb_ctx = SnagbootUSBContext.rescan()
+		dev_list = list(usb_ctx.find(bus=usb_path[0], port_numbers=usb_path[1]))
 
 		nb_devs = len(dev_list)
 
