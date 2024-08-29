@@ -9,6 +9,10 @@ from snagrecover.usb import SnagbootUSBContext
 
 import yaml
 import os
+import platform
+
+if platform.system() == "Windows":
+	import winreg
 
 USB_RETRIES = 10
 USB_INTERVAL = 1
@@ -71,6 +75,7 @@ def parse_usb_addr(usb_addr: str, find_all=False) -> tuple:
 	parses vid:pid addresses into (vid,pid)
 	and bus-port1.port2.[...] into (bus, (port1,port2,...))
 	"""
+
 	if ":" in usb_addr:
 		usb_id = parse_usb_ids(usb_addr)
 		usb_paths = find_usb_paths(usb_id)
@@ -94,6 +99,49 @@ def prettify_usb_addr(usb_addr) -> str:
 	else:
 		return f"{usb_addr[0]:04x}:{usb_addr[1]:04x}"
 
+def iter_entries(key) -> list:
+	i = 0
+
+	while True:
+		try:
+			yield winreg.EnumKey(key, i)
+		except OSError:
+			# last entry reached
+			break
+		i += 1
+
+def check_driver(vid: int, pid: int):
+	"""
+	Check that the libusb-win32 driver is bound to a USB vid:pid pair.
+	"""
+	usb_key_path = r"SYSTEM\\CurrentControlSet\\Enum\\USB"
+	driver_key_path = None
+
+	logger.debug(f"Checking driver for {vid:04x}:{pid:04x}")
+
+	with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, usb_key_path) as usb_key:
+		match = None
+
+		for entry in iter_entries(usb_key):
+			if entry == f"VID_{vid:04X}&PID_{pid:04X}":
+				match = entry
+				break
+
+		if match is None:
+			raise SystemError(f"The USB ID pair {vid:04x}:{pid:04x} is not bound to any driver! Please use Zadig to bind this ID pair to the libusb-win32 driver!")
+
+		with winreg.OpenKey(usb_key, match) as devid_key:
+			# Just check the first device entry, all the other ones should have the same driver
+			driver_key_path = usb_key_path + r"\\" + match + r"\\" + list(iter_entries(devid_key))[0]
+
+	with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, driver_key_path) as driver_key:
+		try:
+			service = winreg.QueryValueEx(driver_key, "service")
+			if service[0] != "libusb0":
+				raise SystemError(f"The USB ID pair {vid:04x}:{pid:04x} is bound to an unsupported driver: {service[0]}! Please use Zadig to bind this ID pair to the libusb-win32 driver instead!") from None
+		except FileNotFoundError:
+			raise SystemError(f"The USB ID pair {vid:04x}:{pid:04x} is not bound to any driver! Please use Zadig to bind this ID pair to the libusb-win32 driver!") from None
+
 def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
 	usb_ctx = SnagbootUSBContext.get_context()
@@ -107,8 +155,13 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 		if nb_devs == 1:
 			dev = dev_list[0]
 
+			if platform.system() == "Windows":
+				check_driver(dev.idVendor, dev.idProduct)
+
 			try:
 				dev.get_active_configuration()
+				return dev
+			except NotImplementedError:
 				return dev
 			except usb.core.USBError:
 				logger.warning(f"Failed to get configuration descriptor for device at {pretty_addr}!")
