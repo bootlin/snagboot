@@ -239,10 +239,16 @@ class HIDDevice():
 		else:
 			# This case is for systems which don't
 			# have usbhid loaded for some reason.
+			# It is also suitable for Windows. if
+			# the system HID driver has been replaced
+			# with the correct libusb driver beforehand.
 			try:
 				usb.util.claim_interface(self.usb_dev, self.main_intf.bInterfaceNumber)
 			except usb.USBError as err:
 				raise OSError(f"Failed to claim interface {self.main_intf.bInterfaceNumber} of USB device {pretty_addr}, maybe something else is using this device?") from err
+
+			# Set reporting frequency to 0 for all reports
+			self.set_idle(0, 0)
 
 			self.hid_desc = HIDDesc(self)
 			self.report_desc = HIDReportDesc(self)
@@ -250,9 +256,6 @@ class HIDDevice():
 			self.read = self.libusb_read
 			self.write = self.libusb_write
 			self.hidraw = None
-
-			# Set reporting frequency to 0 for all reports
-			self.set_idle(0, 0)
 
 			logger.info(f"HID device {pretty_addr} has no hidraw dev")
 
