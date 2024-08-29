@@ -26,7 +26,7 @@ logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import fel
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error, prettify_usb_addr, is_usb_path
+from snagrecover.utils import access_error, prettify_usb_addr
 from snagrecover.usb import SnagbootUSBContext
 
 USB_TIMEOUT = 5000

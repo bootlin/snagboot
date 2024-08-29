@@ -22,9 +22,8 @@ logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
-import usb
 
-def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
+def stm32mp1_run(port, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle stm32mp1 firmware
 	so we can leave it in the common module for now
@@ -48,7 +47,7 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	logger.info("Done")
 	return None
 
-def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
+def am62x_run(dev, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle am62x firmware
 	so we can leave it in the common module for now
