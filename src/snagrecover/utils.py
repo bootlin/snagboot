@@ -60,7 +60,7 @@ def find_usb_paths(usb_id: tuple) -> list:
 
 	logger.info(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
 
-	usb_ctx = SnagbootUSBContext.get_context()
+	usb_ctx = SnagbootUSBContext.rescan()
 	devices = list(usb_ctx.find(idVendor=vid, idProduct=pid))
 
 	for dev in devices:
