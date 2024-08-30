@@ -38,7 +38,10 @@ class SnagFactorySession():
 		# Main state machine for factory session
 
 		if self.phase == "scanning":
-			self.scan_for_boards()
+			if self.scan_tick == 0:
+				self.scan_for_boards()
+
+			self.scan_tick = (self.scan_tick + 1) % 4
 
 		if self.phase == "running":
 			self.nb_recovering = 0
@@ -93,6 +96,7 @@ class SnagFactorySession():
 
 	def __init__(self, config_path):
 		self.start_ts = time.time()
+		self.scan_tick = 0
 
 		if config_path is None:
 			self.config = default_config

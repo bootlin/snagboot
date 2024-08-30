@@ -315,7 +315,7 @@ class SnagFactory(App):
 		ui.session.update()
 		ui.update_board_list()
 
-		Clock.schedule_interval(ui.update, 1.0 / 2)
+		Clock.schedule_interval(ui.update, 1.0 / 8)
 		return ui
 
 
