@@ -23,10 +23,12 @@ import glob
 import time
 from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
+from snagrecover.protocols import cdc
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 from snagrecover.utils import get_usb, prettify_usb_addr
 import logging
+import platform
 
 logger = logging.getLogger("snagrecover")
 
@@ -90,7 +92,7 @@ def get_serial_port_path(dev) -> str:
 		raise ValueError(f"Error: no tty devices were found at {intf_path}")
 
 	tty_path = tty_paths[0]
-	return f"/dev/{os.path.basename(tty_path)}"
+	return os.path.realpath(f"/dev/{os.path.basename(tty_path)}")
 
 def main():
 	# CONNECT TO SAM-BA MONITOR
@@ -100,41 +102,50 @@ def main():
 	dev = get_usb(recovery_config["usb_path"])
 
 	# SAM-BA monitor needs a reset sometimes
-	dev.reset()
+	try:
+		dev.reset()
+	except NotImplementedError:
+		pass
 	time.sleep(1)
 
-	port_path = get_serial_port_path(dev)
-	with serial.Serial(os.path.realpath(port_path), baudrate=115200, timeout=5, write_timeout=5) as port:
-		monitor = sambamon.SambaMon(port)
-		memops = memory_ops.MemoryOps(monitor)
-		logger.info("SAM-BA Monitor version string: " + monitor.get_version())
-		logger.info("Done connecting")
+	if platform.system() == "Linux":
+		port_path = get_serial_port_path(dev)
+		port = serial.Serial(port_path, baudrate=115200, timeout=5, write_timeout=5)
+	else:
+		port = cdc.CDCDevice(dev, timeout=500)
 
-		# CHECK BOARD ID
-		logger.info("Checking chip id...")
-		if not check_id(memops):
-			raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
+	monitor = sambamon.SambaMon(port)
+	memops = memory_ops.MemoryOps(monitor)
+	logger.info("SAM-BA Monitor version string: " + monitor.get_version())
+	logger.info("Done connecting")
 
-		logger.info("Done checking")
-		if soc_model == "sama5d2":
-			# reconfigure L2 cache as SRAM
-			memops.write32(SFR_L2CC_HRAMC, 0x00)
+	# CHECK BOARD ID
+	logger.info("Checking chip id...")
+	if not check_id(memops):
+		raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
 
-		# INITIALIZE CLOCK TREE
-		logger.info("Initializing clock tree...")
-		run_firmware(port, "lowlevel")
-		logger.info("Done initializing clock tree")
+	logger.info("Done checking")
+	if soc_model == "sama5d2":
+		# reconfigure L2 cache as SRAM
+		memops.write32(SFR_L2CC_HRAMC, 0x00)
+
+	# INITIALIZE CLOCK TREE
+	logger.info("Initializing clock tree...")
+	run_firmware(port, "lowlevel")
+	logger.info("Done initializing clock tree")
 
 
-		# INITIALIZE EXTRAM
-		logger.info("Initializing external RAM...")
-		run_firmware(port, "extram")
-		logger.info("Done initializing RAM")
+	# INITIALIZE EXTRAM
+	logger.info("Initializing external RAM...")
+	run_firmware(port, "extram")
+	logger.info("Done initializing RAM")
 
-		# REMAP ROM ADDRESSES
-		memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
+	# REMAP ROM ADDRESSES
+	memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
 
-		# DOWNLOAD U-BOOT
-		logger.info("Installing U-Boot...")
-		run_firmware(port, "u-boot")
-		logger.info("Done!")
+	# DOWNLOAD U-BOOT
+	logger.info("Installing U-Boot...")
+	run_firmware(port, "u-boot")
+	logger.info("Done!")
+
+	port.close()

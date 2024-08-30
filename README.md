@@ -82,6 +82,8 @@ Please install the following software:
 
 - python3-libusb: run `pip install libusb`
 
+Powershell is also required but it should already be installed.
+
 After installing Python, Swig and libusb, you should add them to your PATH environment variable:
 
 - Open the start menu and type « environment variable » into the search bar

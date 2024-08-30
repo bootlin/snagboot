@@ -19,7 +19,6 @@
 
 import usb
 import time
-import functools
 import logging
 logger = logging.getLogger("snagrecover")
 

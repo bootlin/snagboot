@@ -17,12 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import serial
 import logging
 logger = logging.getLogger("snagrecover")
 
 class SambaMon():
-	def __init__(self, port: serial.serialposix.Serial):
+	def __init__(self, port):
 		self.port = port
 		# set sam-ba monitor to binary mode
 		logger.debug("Sending sambamon command N#")
