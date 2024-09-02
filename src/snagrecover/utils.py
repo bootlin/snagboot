@@ -101,7 +101,7 @@ def check_driver(vid: int, pid: int):
 	"""
 	Check that the libusb-win32 driver is bound to the given USB vid:pid pair.
 	"""
-	ps_cmd = 'Get-CimInstance -ClassName Win32_PnPEntity -Property DeviceID,Service,Present | Where-Object { ($_.Present -eq $True) -and ($_.Service -like "libusb*")} | Format-Table -AutoSize'
+	ps_cmd = 'Get-CimInstance -ClassName Win32_PnPEntity -Property DeviceID,Service,Present | Where-Object { ($_.Present -eq $True) -and ($_.Service -like "libusb*")} | Format-Table -Property DeviceID'
 	ret = subprocess.run("powershell.exe -Command -", input=ps_cmd.encode("utf-8"), shell=True, capture_output=True)
 
 	if ret.stdout is None:
