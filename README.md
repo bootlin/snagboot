@@ -16,7 +16,7 @@ ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts:
 </p>
 
 The currently supported SoC families are ST STM32MP1, Microchip SAMA5, NXP
-i.MX6/7/8/93, TI AM335x, Allwinner SUNXI and TI AM62x. Please check
+i.MX6/7/8/93, TI AM335x, Allwinner SUNXI, TI AM62x and TI AM64x. Please check
 [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml) or run `snagrecover
 --list-socs` for a more precise list of supported SoCs.
 

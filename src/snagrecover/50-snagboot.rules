@@ -69,5 +69,5 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="3016", ATTRS{idProduct}=="0100", MODE="0660"
 #Allwinner SUNXI rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1f3a", ATTRS{idProduct}=="efe8", MODE="0660", TAG+="uaccess"
 
-#TI AM62x rules
+#TI AM6x rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="6165", MODE="0660", TAG+="uaccess"

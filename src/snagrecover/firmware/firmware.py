@@ -47,9 +47,9 @@ def stm32mp1_run(port, fw_name: str, fw_blob: bytes):
 	logger.info("Done")
 	return None
 
-def am62x_run(dev, fw_name: str, fw_blob: bytes):
+def am6x_run(dev, fw_name: str, fw_blob: bytes):
 	"""
-	There isn't a lot of complicated logic to handle am62x firmware
+	There isn't a lot of complicated logic to handle am6x firmware
 	so we can leave it in the common module for now
 	"""
 	# find firmware altsetting (i.e. partition id)
@@ -105,8 +105,8 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	elif soc_family == "sunxi":
 		from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
 		sunxi_run(port, fw_name, fw_blob)
-	elif soc_family == "am62x":
-		am62x_run(port, fw_name, fw_blob)
+	elif soc_family == "am6x":
+		am6x_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")

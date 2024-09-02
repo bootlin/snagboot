@@ -182,9 +182,9 @@ def get_recovery(soc_family: str):
 	elif soc_family == "sunxi":
 		from snagrecover.recoveries.sunxi import main as sunxi_recovery
 		return sunxi_recovery
-	elif soc_family == "am62x":
-		from snagrecover.recoveries.am62x import main as am62x_recovery
-		return am62x_recovery
+	elif soc_family == "am6x":
+		from snagrecover.recoveries.am6x import main as am6x_recovery
+		return am6x_recovery
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 

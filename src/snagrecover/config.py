@@ -28,7 +28,7 @@ default_usb_ids =  {
 	"stm32mp1": "0483:df11",
 	"sama5":    "03eb:6124",
 	"sunxi":    "1f3a:efe8",
-	"am62x":     "0451:6165",
+	"am6x":     "0451:6165",
 	"imx": {
 		"imx8qxp": "1fc9:012f",
 		"imx8qm": "1fc9:0129",
