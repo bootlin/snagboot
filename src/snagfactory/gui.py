@@ -156,6 +156,13 @@ class SnagFactoryUI(Widget):
 	status = StringProperty("Scanning for boards...")
 	phase_label = StringProperty("")
 
+	def __init__(self, session):
+		super().__init__()
+		self.session = session
+		self.session.update()
+		self.verbose_log_target = None
+		self.update_board_list()
+
 	def view_board_list(self):
 		self.main_page.page = 0
 
@@ -262,11 +269,20 @@ class SnagFactoryUI(Widget):
 		for board_widget in self.board_widgets:
 			board_widget.update()
 
-	def start(self):
-		self.phase_label = "running factory session"
-		self.view_board_list()
-		self.update_board_list()
-		self.session.start()
+	def start(self, btn):
+		if self.session.phase == "scanning":
+			self.phase_label = "running factory session"
+			self.view_board_list()
+			self.update_board_list()
+			self.session.start()
+			btn.background_normal = "rescan.png"
+			btn.text = "rescan"
+		elif self.session.phase == "logview":
+			# Keep the same config file and start a new session
+			new_session = SnagFactorySession(self.session.config_path)
+			self.session = new_session
+			btn.background_normal = "start.png"
+			btn.text = "start"
 
 	def update(self, dt):
 		last_phase = self.session.phase
@@ -302,21 +318,23 @@ class SnagFactoryUI(Widget):
 
 
 class SnagFactory(App):
+	def call_ui(self, method: str, *args):
+		if self.ui is None:
+			return
+
+		getattr(self.ui, method)(*args)
+
 	def build(self):
 		self.icon = os.path.dirname(__file__) + "/assets/lab_penguins.png"
 		Builder.load_file(os.path.dirname(__file__) + "/gui.kv")
 		Builder.load_file(os.path.dirname(__file__) + "/config.kv")
 
 		session = SnagFactorySession(None)
-		ui = SnagFactoryUI()
-		ui.verbose_log_target = None
-		ui.session = session
+		self.ui = SnagFactoryUI(session)
 
-		ui.session.update()
-		ui.update_board_list()
+		Clock.schedule_interval(self.ui.update, 1.0 / 8)
 
-		Clock.schedule_interval(ui.update, 1.0 / 8)
-		return ui
+		return self.ui
 
 
 def main():

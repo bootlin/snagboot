@@ -26,7 +26,7 @@
 
         Button:
             text: "Dismiss"
-            on_release: app.root.dismiss_popup()
+            on_release: app.call_ui("dismiss_popup")
             background_normal: ""
             background_color: 0, 0, 1
 
@@ -53,7 +53,7 @@
             height: 30
             Button:
                 text: "Cancel"
-                on_release: app.root.dismiss_popup()
+                on_release: app.call_ui("dismiss_popup")
                 background_normal: ""
                 background_color: 1, 0, 0
 
@@ -139,6 +139,31 @@
             halign: "center"
             valign: "middle"
 
+<SnagFactoryLabeledButton@BoxLayout>
+    orientation: "vertical"
+    text: ""
+    callback: None
+    width: 0
+    height: 0
+    background_normal: ""
+
+    Button:
+        size_hint: None, None
+        background_color: 0,0,0,0
+        canvas:
+            Rectangle:
+                size: 80,80
+                pos: self.pos
+                source: root.background_normal
+        on_press: self.background_color = 1, 1, 1, 1; app.call_ui(root.callback, root)
+        on_release: self.background_color = 0, 0, 0, 0;
+
+    Label:
+        text: root.text
+        text_size: self.size
+        halign: "center"
+        valign: "top"
+
 <SnagFactorySidebar@BoxLayout>
     canvas:
         Color:
@@ -147,14 +172,13 @@
             size: self.size
             pos: self.pos
 
-    Button:
-        size_hint: None, None
-        center_x: 0
-        width: 70
-        height: 100
+    SnagFactoryLabeledButton:
         background_normal: "start.png"
+        callback: "start"
+        text: "start"
+
+    Label:
         text: ""
-        on_press: app.root.start();
 
     ToggleButton:
         size_hint: None, None
@@ -167,7 +191,7 @@
         state: "down"
         text: ""
         group: "main_tab"
-        on_press: app.root.view_board_list();
+        on_press: app.call_ui("view_board_list");
 
     ToggleButton:
         size_hint: None, None
@@ -179,7 +203,7 @@
         background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
         text: ""
         group: "main_tab"
-        on_press: app.root.view_config()
+        on_press: app.call_ui("view_config")
 
     Label:
         test: ""
@@ -191,7 +215,7 @@
         height: 61
         background_normal: "load_config.png"
         text: ""
-        on_press: app.root.open_config_dialog();
+        on_press: app.call_ui("open_config_dialog");
 
     Button:
         size_hint: None, None
@@ -200,7 +224,7 @@
         height: 61
         background_normal: "view_logs.png"
         text: ""
-        on_press: app.root.open_log_dialog();
+        on_press: app.call_ui("open_log_dialog");
 
 
 <SnagFactoryLogView@BoxLayout>

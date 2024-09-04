@@ -95,6 +95,7 @@ class SnagFactorySession():
 			yaml.dump(session_store, file, default_flow_style=False)
 
 	def __init__(self, config_path):
+		self.config_path = config_path
 		self.start_ts = time.time()
 		self.scan_tick = 0
 
