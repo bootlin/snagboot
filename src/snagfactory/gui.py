@@ -81,6 +81,7 @@ class SnagFactoryFileDialog(FloatLayout):
 	rootpath = StringProperty("")
 	path = StringProperty("")
 	sort_func = ObjectProperty(lambda files,fs_class: sorted(files))
+	filters = ListProperty([])
 
 	def handle_load(self):
 		pass
@@ -114,9 +115,7 @@ class SnagFactoryBoard(Widget):
 		if self.ui.verbose_log_target == self.board.path:
 			btn.background_color = [0.6, 0.76, 1]
 			btn.text = "show logs"
-			self.ui.verbose_log_target = None
-			self.ui.log_area.text = ""
-			self.ui.log_boxlayout.size_hint_x = 0
+			self.ui.hide_verbose_logs()
 		else:
 			btn.background_color = [0.3, 0.45, 1]
 			btn.text = "hide logs"
@@ -191,6 +190,7 @@ class SnagFactoryUI(Widget):
 		content.rootpath = os.path.expanduser("~")
 		content.path = last_dir if last_dir is not None else content.rootpath
 		content.handle_load = self.load_config
+		content.filters = ["*.yaml", "*.yml"]
 		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._popup.open()
 
@@ -278,6 +278,11 @@ class SnagFactoryUI(Widget):
 		for board_widget in self.board_widgets:
 			board_widget.update()
 
+	def hide_verbose_logs(self):
+		self.verbose_log_target = None
+		self.log_area.text = ""
+		self.log_boxlayout.size_hint_x = 0
+
 	def start(self, btn):
 		if self.session.phase == "scanning":
 			self.phase_label = "running factory session"
@@ -298,8 +303,10 @@ class SnagFactoryUI(Widget):
 		self.session.update()
 
 		if self.session.phase == "scanning":
+			self.phase_label = ""
 			self.update_board_list()
 			self.status = f"{len(self.board_widgets)} boards found"
+			self.hide_verbose_logs()
 		elif self.session.phase == "running":
 			ts = time.time()
 			self.phase_label = "running factory session... |" + "  " * int(ts % 3) + "==" + "  " * int(3 - (ts % 3))  + "|"
