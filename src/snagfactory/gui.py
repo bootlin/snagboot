@@ -110,8 +110,17 @@ class SnagFactoryBoard(Widget):
 		"PAUSED": [1,0.5,0.5],
 	}
 
-	def show_verbose_log(self):
-		self.ui.verbose_log_target = self.board
+	def show_verbose_log(self, btn):
+		if self.ui.verbose_log_target == self.board.path:
+			btn.background_color = [0.6, 0.76, 1]
+			btn.text = "show logs"
+			self.ui.verbose_log_target = None
+			self.ui.log_area.text = ""
+			self.ui.log_boxlayout.size_hint_x = 0
+		else:
+			btn.background_color = [0.3, 0.45, 1]
+			btn.text = "hide logs"
+			self.ui.verbose_log_target = self.board.path
 
 	def attach_board(self, board, ui):
 		self.board = board
@@ -311,10 +320,15 @@ class SnagFactoryUI(Widget):
 
 			self.log_boxlayout.size_hint_x = 0.5
 
-			board = self.verbose_log_target
+			log_target = None
+			for board_widget in self.board_widgets:
+				if board_widget.board.path == self.verbose_log_target:
+					log_target = board_widget.board
+					break
 
-			self.log_board_path.text = board.path
-			self.log_area.text = "\n".join(board.session_log[-LOG_VIEW_CAPACITY:])
+			if log_target is not None:
+				self.log_board_path.text = self.verbose_log_target
+				self.log_area.text = "\n".join(log_target.session_log[-LOG_VIEW_CAPACITY:])
 
 
 class SnagFactory(App):

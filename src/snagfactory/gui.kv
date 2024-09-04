@@ -130,10 +130,10 @@
             shorten: True
 
         Button:
-            text: "log"
+            text: "show logs"
             size_hint_x: 0.1
             text_size: self.width, self.height
-            on_press: root.show_verbose_log()
+            on_press: root.show_verbose_log(self)
             background_color: 0.6, 0.76, 1, 1
             background_normal: ""
             halign: "center"
