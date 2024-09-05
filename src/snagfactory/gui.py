@@ -9,6 +9,7 @@ from kivy.uix.accordion import AccordionItem
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.properties import (
     ListProperty, ObjectProperty, StringProperty
 )
@@ -16,6 +17,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 import kivy.resources
 import time
+import yaml
 from math import ceil
 
 from snagfactory.session import SnagFactorySession
@@ -30,52 +32,34 @@ import os
 LOG_VIEW_CAPACITY = 100
 PROGBAR_TICKS = 20
 
+class SnagFactoryPanelItem(TabbedPanelItem):
+	content_text = StringProperty("")
+
 class SnagFactoryBoardID(BoxLayout):
 	usb_ids = StringProperty("")
 	soc_model = StringProperty("")
 
-class SnagFactorySoCFamily(BoxLayout):
+class SnagFactorySoCFamily(TabbedPanel):
 	name = StringProperty("")
 
 	def set_config(self, fw_config: dict, tasks_config: dict):
-		main_grid = GridLayout(cols=2, size_hint_y=0.5)
-		main_grid_params = {
-		"target-device": tasks_config[0]["target-device"],
-		}
+		tabs = {}
 
 		for key, value in fw_config.items():
-			main_grid_params[key] = value
+			tabs[key] = yaml.dump(value)
 
-		for key, value in main_grid_params.items():
-			main_grid.add_widget(Label(text=key))
-			main_grid.add_widget(Label(text=str(value)))
+		for key, value in tasks_config[0].items():
+			tabs[key] = hex(value) if isinstance(value, int) else str(value)
 
-		self.add_widget(main_grid)
+		for config in tasks_config[1:]:
+			tabs["task: " + config["task"]] = yaml.dump(config["args"])
 
-		parts_widget = BoxLayout(orientation="vertical")
+		panel_items = [SnagFactoryPanelItem(text=key, content_text=value) for key,value in tabs.items()]
 
-		if "boot0" in tasks_config:
-			parts_widget.add_widget(Label(text=f"boot part 0: name {tasks_config['boot0']['name']} image {tasks_config['boot0']['image']}"))
+		for panel_item in panel_items:
+			self.add_widget(panel_item)
 
-		if "boot1" in tasks_config:
-			parts_widget.add_widget(Label(text=f"boot part 1: name {tasks_config['boot1']['name']} image {tasks_config['boot1']['image']}"))
-
-		if "post-flash" in tasks_config:
-			parts_widget.add_widget(Label(text="Post-flashing commands"))
-			for cmd in tasks_config["post-flash"]:
-				parts_widget.add_widget(Label(text=f"{cmd}", font_size="15"))
-
-		if "partitions" in tasks_config:
-
-			parts_widget.add_widget(Label(text="Partition table to create:"))
-
-			for partition in tasks_config["partitions"]:
-				prop_string = " ".join([f"{key}:{value}" for key,value in partition.items()])
-				parts_widget.add_widget(Label(text=prop_string, font_size="15"))
-		else:
-			parts_widget.add_widget(Label(text="WIP"))
-
-		self.add_widget(parts_widget)
+		self.default_tab = panel_items[0]
 
 class SnagFactoryFileDialog(FloatLayout):
 	rootpath = StringProperty("")
@@ -255,8 +239,8 @@ class SnagFactoryUI(Widget):
 			fw_config = self.session.config["soc-models"][f"{soc_model}-firmware"]
 			tasks_config = config
 
-			accordion_item = AccordionItem(title=name)
-			soc_model_widget = SnagFactorySoCFamily(name=name)
+			accordion_item = AccordionItem(title=soc_model)
+			soc_model_widget = SnagFactorySoCFamily(name=soc_model)
 			soc_model_widget.set_config(fw_config, tasks_config)
 			accordion_item.add_widget(soc_model_widget)
 			soc_families_view.add_widget(accordion_item)

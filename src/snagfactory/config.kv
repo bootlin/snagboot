@@ -8,6 +8,27 @@
     background_selected: ""
     title_template: "SnagFactoryAccordionTitle"
 
+<SnagFactoryPanelItem>
+    background_normal: ""
+    text_size: self.size
+
+    Label:
+        text: root.content_text
+        size_hint: None, None
+        size: self.texture_size
+
+<TabbedPanelStrip>
+    background_normal: ""
+    col_default_width: 140
+    col_force_default: True
+
+    canvas:
+        Color:
+            rgba: (0.80, 0.80, 0.80)
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
 [SnagFactoryAccordionTitle@Label]:
     text: ctx.title
     canvas.before:
@@ -25,16 +46,6 @@
             size: self.size
             pos: self.pos
 
-<SnagFactoryPartition@BoxLayout>
-    orientation: "horizontal"
-    name: ""
-    height: 50
-    active: False
-    description: ""
-
-    Label:
-        text: root.description
-
 <SnagFactoryBoardID>
     orientation: "horizontal"
 
@@ -48,19 +59,13 @@
         text: root.soc_model
 
 <SnagFactorySoCFamily>
-    orientation: "vertical"
+    background_image: ""
+    strip_image: ""
+    tab_width: self.width
 
     canvas:
         Color:
-            rgb: 0, 0, 0
-        BoxShadow:
-            size: self.size
-            pos: self.pos
-            border_radius: 0, 0, 0, 0
-            blur_radius: 0
-            spread_radius: 3, 3
-        Color:
-            rgb: 1, 1, 1
+            rgba: (1, 1, 1)
         Rectangle:
             size: self.size
             pos: self.pos
