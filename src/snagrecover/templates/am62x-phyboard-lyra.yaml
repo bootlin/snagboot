@@ -1,5 +1,5 @@
 tiboot3:
-  path: tiboot3.bin-perif
+  path: tiboot3.bin-usbdfu
 tispl:
   path: tispl.bin
 u-boot:
