@@ -20,6 +20,10 @@ class SnagbootUSBContext():
 
 	instance = None
 
+	def finalizer(usb_ctx):
+		for ref in usb_ctx.devices:
+			del ref
+
 	def get_context():
 		if __class__.instance is None:
 			__class__.instance = __class__()
@@ -27,16 +31,20 @@ class SnagbootUSBContext():
 		return weakref.proxy(__class__.instance)
 
 	def rescan():
-		__class__.instance = None
-		gc.collect()
+		if __class__.instance is not None:
+			# delete what should be the last references to the underlying libusb context
+
+			__class__.instance = None
+
+			gc.collect()
+
 		__class__.instance = __class__()
 		return weakref.proxy(__class__.instance)
 
 	def __init__(self):
 		self.devices = list(usb.core.find(find_all=True))
-		self.lib = self.devices[0]._ctx
-		self.id  = uuid.uuid4
 		self.check_for_libusb_bug()
+		self._finalizer = weakref.finalize(self, __class__.finalizer, self)
 
 	def check_for_libusb_bug(self):
 		"""
