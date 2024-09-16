@@ -1,5 +1,4 @@
 import usb
-import uuid
 import platform
 import weakref
 import gc
