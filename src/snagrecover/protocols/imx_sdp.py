@@ -86,6 +86,8 @@ class SDPCommand():
 	"HAB_CLOSED": b"\x12\x34\x34\x12"
 	}
 
+	REPORT2_PACKET_SIZE = 1025
+
 	CBW_BLTC_SIGNATURE = 0x43544C42
 	CBW_HOST_TO_DEVICE_FLAGS = 0x00
 	BLTC_DOWNLOAD_FW = 0x02
@@ -114,15 +116,15 @@ class SDPCommand():
 		+ self.data.to_bytes(4, "big") + self.file_type
 
 	def check_hab(self):
-		hab_status = self.dev.read(4, timeout=5)
-		if hab_status != SDPCommand.hab_codes["HAB_OPEN"]:
+		hab_status = self.dev.read(64, timeout=5)
+		if hab_status[:4] != __class__.hab_codes["HAB_OPEN"]:
 			raise ValueError(f"Error: status HAB_CLOSED or unknown: {hab_status} found on address ")
 		return None
 
 	def read32(self, addr: int) -> int:
 		self.clear()
-		self.cmd = SDPCommand.command_codes["READ_REGISTER"]
-		self.format = SDPCommand.format_codes["FORMAT_32"]
+		self.cmd = __class__.command_codes["READ_REGISTER"]
+		self.format = __class__.format_codes["FORMAT_32"]
 		self.addr = addr
 		self.data_count = 4
 		packet = self.build_packet()
@@ -134,8 +136,8 @@ class SDPCommand():
 
 	def write32(self, addr: int, value: int) -> bool:
 		self.clear()
-		self.cmd = SDPCommand.command_codes["WRITE_REGISTER"]
-		self.format = SDPCommand.format_codes["FORMAT_32"]
+		self.cmd = __class__.command_codes["WRITE_REGISTER"]
+		self.format = __class__.format_codes["FORMAT_32"]
 		self.addr = addr
 		self.data_count = 4
 		self.data = value
@@ -246,11 +248,11 @@ class SDPCommand():
 		self.clear()
 		self.addr = addr
 		self.data_count = size
-		self.cmd = SDPCommand.command_codes["WRITE_FILE"]
+		self.cmd = __class__.command_codes["WRITE_FILE"]
 
 		# SoCs using HID have separate commands for DCD and DATA
 		if self.is_hid() and write_dcd:
-			self.cmd = SDPCommand.command_codes["DCD_WRITE"]
+			self.cmd = __class__.command_codes["DCD_WRITE"]
 
 		if not self.is_hid():
 			self.file_type = self.FT_APP
@@ -259,8 +261,10 @@ class SDPCommand():
 		self.dev.write(packet1)
 
 		if self.is_hid():
-			for chunk in utils.dnload_iter(blob[offset:offset + size], 1024):
+			for chunk in utils.dnload_iter(blob[offset:offset + size], __class__.REPORT2_PACKET_SIZE - 1):
 				packet2 = b"\x02" + chunk
+				if len(packet2) < __class__.REPORT2_PACKET_SIZE:
+					packet2 = packet2 + b"\x00" * (__class__.REPORT2_PACKET_SIZE - (len(packet2) % __class__.REPORT2_PACKET_SIZE))
 				self.dev.write(packet2)
 
 			self.check_hab()
@@ -270,7 +274,7 @@ class SDPCommand():
 			self.dev.write(blob[offset:offset + size])
 
 			self.clear()
-			self.cmd = SDPCommand.command_codes["ERROR_STATUS"]
+			self.cmd = __class__.command_codes["ERROR_STATUS"]
 			packet = self.build_packet()
 			self.dev.write(packet)
 
@@ -287,7 +291,7 @@ class SDPCommand():
 			return
 
 		self.clear()
-		self.cmd = SDPCommand.command_codes["JUMP_ADDRESS"]
+		self.cmd = __class__.command_codes["JUMP_ADDRESS"]
 		self.addr = addr
 		packet = self.build_packet()
 		self.dev.write(packet)
@@ -312,7 +316,7 @@ class SDPCommand():
 	def skip_dcd_header(self):
 		logger.info("Sending SKIP_DCD_HEADER command")
 		self.clear()
-		self.cmd = SDPCommand.command_codes["SKIP_DCD_HEADER"]
+		self.cmd = __class__.command_codes["SKIP_DCD_HEADER"]
 		packet1 = self.build_packet()
 		self.dev.write(packet1)
 		self.check_hab()
@@ -331,12 +335,12 @@ class SDPCommand():
 			# only some mpu models require a preliminary command before the report 2
 			# transfer
 			packet1_arr = bytearray(b"\x01") # report 1
-			packet1_arr += SDPCommand.CBW_BLTC_SIGNATURE.to_bytes(4, "little")
+			packet1_arr += __class__.CBW_BLTC_SIGNATURE.to_bytes(4, "little")
 			packet1_arr += b"\x01\x00\x00\x00" # tag
 			packet1_arr += size.to_bytes(4, "little") # XferLength
-			packet1_arr += SDPCommand.CBW_HOST_TO_DEVICE_FLAGS.to_bytes(1, "little")
+			packet1_arr += __class__.CBW_HOST_TO_DEVICE_FLAGS.to_bytes(1, "little")
 			packet1_arr += b"\x00\x00" # reserved
-			packet1_arr += SDPCommand.BLTC_DOWNLOAD_FW.to_bytes(1, "little") # Command
+			packet1_arr += __class__.BLTC_DOWNLOAD_FW.to_bytes(1, "little") # Command
 			packet1_arr += size.to_bytes(4, "big") # Length
 			packet1_arr += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" # reserved
 			packet1 = bytes(packet1_arr)
