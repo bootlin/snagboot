@@ -68,7 +68,7 @@ def find_usb_paths(usb_id: tuple) -> list:
 
 	return usb_paths
 
-def parse_usb_addr(usb_addr: str, find_all=False) -> tuple:
+def usb_addr_to_path(usb_addr: str, find_all=False) -> tuple:
 	"""
 	parses vid:pid addresses into (vid,pid)
 	and bus-port1.port2.[...] into (bus, (port1,port2,...))

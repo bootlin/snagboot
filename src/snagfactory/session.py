@@ -137,7 +137,7 @@ class SnagFactorySession():
 	def scan_for_boards(self):
 		self.board_list = []
 		for (usb_ids, soc_model) in self.config["boards"].items():
-			paths = snagrecover.utils.parse_usb_addr(usb_ids, find_all=True)
+			paths = snagrecover.utils.usb_addr_to_path(usb_ids, find_all=True)
 
 			if paths is None:
 				continue

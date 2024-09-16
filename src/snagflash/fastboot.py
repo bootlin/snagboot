@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from snagrecover.protocols import fastboot as fb
-from snagrecover.utils import parse_usb_addr, get_usb, access_error
+from snagrecover.utils import usb_addr_to_path, get_usb, access_error
 import sys
 import logging
 logger = logging.getLogger("snagflash")
@@ -31,7 +31,7 @@ def fastboot(args):
 		logger.error("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
 		sys.exit(-1)
 
-	usb_addr = parse_usb_addr(args.port)
+	usb_addr = usb_addr_to_path(args.port)
 	if usb_addr is None:
 		access_error("USB Fastboot", args.port)
 

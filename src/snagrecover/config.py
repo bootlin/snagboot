@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
-from snagrecover.utils import cli_error, parse_usb_addr, get_family, access_error
+from snagrecover.utils import cli_error, usb_addr_to_path, get_family, access_error
 import logging
 logger = logging.getLogger("snagrecover")
 import os
@@ -77,11 +77,17 @@ def init_config(args: list):
 	if soc_family != "am335x":
 		if args.usb_path is None:
 			if soc_family == "imx":
-				recovery_config["usb_path"] = parse_usb_addr(default_usb_ids["imx"][soc_model])
+				usb_ids = default_usb_ids["imx"][soc_model]
 			else:
-				recovery_config["usb_path"] = parse_usb_addr(default_usb_ids[soc_family])
+				usb_ids = default_usb_ids[soc_family]
+
+			recovery_config["usb_path"] = usb_addr_to_path(usb_ids)
+
+			if recovery_config["usb_path"] is None:
+				access_error("USB", usb_ids)
+
 		else:
-			recovery_config["usb_path"] = parse_usb_addr(args.usb_path)
+			recovery_config["usb_path"] = usb_addr_to_path(args.usb_path)
 			if recovery_config["usb_path"] is None:
 				access_error("USB", args.usb_path)
 
