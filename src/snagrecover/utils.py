@@ -9,8 +9,6 @@ from snagrecover.usb import SnagbootUSBContext
 
 import yaml
 import os
-import platform
-import subprocess
 
 USB_RETRIES = 10
 USB_INTERVAL = 1
@@ -97,20 +95,6 @@ def prettify_usb_addr(usb_addr) -> str:
 	else:
 		return f"{usb_addr[0]:04x}:{usb_addr[1]:04x}"
 
-def check_driver(vid: int, pid: int):
-	"""
-	Check that the libusb-win32 driver is bound to the given USB vid:pid pair.
-	"""
-	ps_cmd = 'Get-CimInstance -ClassName Win32_PnPEntity -Property DeviceID,Service,Present | Where-Object { ($_.Present -eq $True) -and ($_.Service -like "libusb*")} | Format-Table -Property DeviceID'
-	ret = subprocess.run("powershell.exe -Command -", input=ps_cmd.encode("utf-8"), shell=True, capture_output=True)
-
-	if ret.stdout is None:
-		raise SystemError(f"powershell command failed! cmd: {ps_cmd}")
-
-	libusb_devices = ret.stdout.decode("utf-8")
-	if f"VID_{vid:04X}&PID_{pid:04X}" not in libusb_devices:
-		raise SystemError(f"The USB ID pair {vid:04x}:{pid:04x} is not bound to the required driver! Please use Zadig to bind this ID pair to the libusb-win32 driver!") from None
-
 def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
 	usb_ctx = SnagbootUSBContext.get_context()
@@ -123,9 +107,6 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 
 		if nb_devs == 1:
 			dev = dev_list[0]
-
-			if platform.system() == "Windows":
-				check_driver(dev.idVendor, dev.idProduct)
 
 			try:
 				dev.get_active_configuration()

@@ -101,21 +101,15 @@ C:\Users\yourusername\AppData\Roaming\Python\Python312\Scripts
 setuptools: Run `pip install setuptools` then  `pip install snagboot` in powershell
 
 Snagboot requires the "libusb-win32" driver to be bound to any device it
-processes. This means that before running snagboot on Windows, you should
-replace default system drivers with this one. This is done using the Zadig tool
-which you previously installed.
-
-**Warning**: Replacing default system drivers can break existing workflows that
-relied on using said default drivers to communicate with these devices!
+processes **apart from i.MX and SAMA5 devices, which already have their own
+system drivers**. This can be done using the Zadig tool which you previously
+installed.
 
 After opening Zadig, select the device entry corresponding to your board's
-VID:PID pair. If you don't see it in the list, select the "Options>List all
-devices" menu option.
+VID:PID pair.
 
 Then, make sure the "libusb-win32" driver is selected and click on "Install
-driver" or "Replace driver". You should only have to do this once for a given
-VID:PID pair, but Windows sometimes replaces drivers spontaneously. Snagrecover
-will throw an explicit error if the wrong driver is detected on a USB device.
+driver". You should only have to do this once for a given VID:PID pair.
 
 ## Usage guide
 
