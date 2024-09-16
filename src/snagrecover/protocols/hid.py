@@ -43,14 +43,6 @@ CTRL_HID_SET_IDLE     = 0xa
 REPORT_TYPE_INPUT    = 0x1
 REPORT_TYPE_OUTPUT   = 0x2
 
-ITEM_TYPE_MAIN     = 0
-ITEM_TYPE_GLOBAL   = 1
-
-MAIN_ITEM_TAG_INPUT  = 8
-MAIN_ITEM_TAG_OUTPUT = 9
-
-GLOBAL_ITEM_TAG_REPORT_ID = 8
-
 def get_descriptor(dev, desc_size, desc_type, desc_index):
 	return dev.ctrl_transfer(0x81 if desc_type == usb.DT_REPORT else 0x80, 6, (desc_type << 8) | desc_index, 0, desc_size)
 
@@ -71,109 +63,6 @@ def match_intr_in(desc) -> bool:
 	match &= bool(desc.bmAttributes & usb.ENDPOINT_TYPE_INTERRUPT)
 	match &= bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
 	return match
-
-class HIDShortItem():
-	def __init__(self, desc, long=False):
-		self.bType = (desc[0] & 0xc) >> 2
-		self.bTag = (desc[0] & 0xf0) >> 4
-		bSize = desc[0] & 0x3
-		full_size = 1 + (4 if bSize == 3 else bSize)
-		self.data = None if full_size <= 1 else int.from_bytes(desc[1:], byteorder='little', signed=False)
-
-class HIDReportDesc():
-	def is_long_item(header):
-		return header == 0b11111110
-
-	def __init__(self, parent):
-		self.parent = parent
-		self.size = parent.hid_desc.wDescriptorLength
-		self.desc = get_descriptor(parent.usb_dev, self.size, usb.DT_REPORT, parent.main_intf.bInterfaceNumber)
-		if self.desc is None:
-			parent.err("Failed to fetch Report descriptor!")
-
-		# Collect items
-		self.items = []
-		offset = 0
-		while offset < self.size:
-			header = self.desc[offset]
-			if __class__.is_long_item(header):
-				continue
-
-			bSize = header & 0x3
-			size = 4 if bSize == 3 else bSize
-			item = HIDShortItem(self.desc[offset:offset + size + 1])
-			item.offset = offset
-
-			self.items.append(item)
-			offset += 1 + size
-
-class HIDDesc():
-	SIZE = 9
-
-	def find_hid_desc(self, full_cfg_desc):
-		offset = 0
-		while offset < len(full_cfg_desc):
-			desc_size = full_cfg_desc[offset]
-			if desc_size == 0:
-				self.parent.err("Invalid descriptor size 0!")
-
-			desc_type = full_cfg_desc[offset + 1]
-			if desc_type == usb.DT_HID:
-				self.desc = full_cfg_desc[offset:offset+desc_size]
-				return
-
-			offset += desc_size
-
-		self.parent.err("Failed to find HID descriptor!")
-
-	def __init__(self, parent):
-		self.parent = parent
-		# The HID descriptor is located right after the interface descriptor
-		# i.MX ROM SDP devices don't seem to support querying Interface or HID descriptors
-		# directly, so we query the full cfg descriptor and find the HID descriptor inside
-		full_cfg_desc = get_descriptor(parent.usb_dev, parent.main_cfg.wTotalLength, usb.DT_CONFIG, parent.main_cfg.index)
-		if full_cfg_desc is None:
-			parent.err("Failed to fetch full Configuration descriptor")
-
-		self.find_hid_desc(full_cfg_desc)
-		desc = self.desc
-
-		self.bLength = desc[0]
-		ver_maj = desc[3]
-		ver_min = desc[2]
-		self.bcdHID = (ver_maj << 8) | ver_min
-		self.bNumDescriptors = desc[5]
-		self.bDescriptorType = desc[6]
-		self.wDescriptorLength = (desc[8] << 8) | desc[7]
-
-		# Assume the first class descriptor is a Report.
-		# Ignore other class descriptors. Don't fetch optional descriptor
-		if self.bNumDescriptors == 0 or self.bDescriptorType != usb.DT_REPORT:
-			parent.err(f"HID descriptor has unexpected values for bNumDescriptors and/or bDescriptorType! num: {self.bNumDescriptors} type:0x{self.bDescriptorType:x}")
-
-class HIDReport():
-	def __init__(self, item: HIDShortItem, report_id: int):
-		self.output = item.bTag == MAIN_ITEM_TAG_OUTPUT
-		self.id = report_id
-
-	def __repr__(self):
-		return f"(type: {'output' if self.output else 'input'}, id: {self.id})"
-
-class HIDStateTable():
-	def __init__(self, report_desc: HIDReportDesc):
-		# Fully-fledged HID parsers have nested collections with
-		# different types of items, we just use a big array and dump all
-		# of the in/out reports in it
-		self.reports = []
-		self.global_report_id = None
-
-		for item in report_desc.items:
-			if item.bType == ITEM_TYPE_MAIN and item.bTag in [MAIN_ITEM_TAG_INPUT, MAIN_ITEM_TAG_OUTPUT]:
-				self.reports.append(HIDReport(item, self.global_report_id))
-			elif item.bType == ITEM_TYPE_GLOBAL and item.bTag == GLOBAL_ITEM_TAG_REPORT_ID:
-				self.global_report_id = item.data
-
-		logger.info("HID State Table has report items: {self.reports}")
 
 class HIDDevice():
 	def err(self, msg):
@@ -248,11 +137,11 @@ class HIDDevice():
 				raise OSError(f"Failed to claim interface {self.main_intf.bInterfaceNumber} of USB device {pretty_addr}, maybe something else is using this device?") from err
 
 			# Set reporting frequency to 0 for all reports
-			self.set_idle(0, 0)
+			try:
+				self.set_idle(0, 0)
+			except usb.USBError:
+				pass
 
-			self.hid_desc = HIDDesc(self)
-			self.report_desc = HIDReportDesc(self)
-			self.item_table = HIDStateTable(self.report_desc)
 			self.read = self.libusb_read
 			self.write = self.libusb_write
 			self.hidraw = None
@@ -278,40 +167,18 @@ class HIDDevice():
 
 		return self.usb_dev.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, wLength)
 
-	def find_report_by_id(self, report_id: int):
-		for report in self.item_table.reports:
-			if report.id == report_id:
-				return report
-		return None
-
 	def set_report(self, report_id: int, data: bytes):
-		report = self.find_report_by_id(report_id)
-		if report is None:
-			raise HIDError(f"No HID report found with ID {report_id}")
-
 		bmRequestType = usb.util.CTRL_OUT | usb.util.CTRL_TYPE_CLASS | usb.util.CTRL_RECIPIENT_INTERFACE
 		bRequest = CTRL_HID_SET_REPORT
-		wValue = (REPORT_TYPE_OUTPUT if report.output else REPORT_TYPE_INPUT) & 0xff00
+		wValue = (REPORT_TYPE_OUTPUT << 8) & 0xff00
 		wValue |= report_id & 0x00ff
 		wIndex = self.main_intf.bInterfaceNumber
+		logger.debug(f"set_report id {report_id} data length: {len(data)}")
 
 		return self.usb_dev.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, data)
 
-	def get_report(self, report_id: int, length: int):
-		report = self.find_report_by_id(report_id)
-		if report is None:
-			raise HIDError(f"No HID report found with ID {report_id}")
-
-		bmRequestType = usb.util.CTRL_IN | usb.util.CTRL_TYPE_CLASS | usb.util.CTRL_RECIPIENT_INTERFACE
-		bRequest = CTRL_HID_GET_REPORT
-		wValue = (REPORT_TYPE_OUTPUT if report.output else REPORT_TYPE_INPUT) & 0xff00
-		wValue |= report_id & 0x00ff
-		wIndex = self.main_intf.bInterfaceNumber
-		wLength = length
-
-		return self.usb_dev.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, wLength)
-
 	def libusb_read(self, length: int, timeout: int):
+		logger.debug(f"HID libusb read length: {length}")
 		data = self.intr_in.read(length + 1)[1:]
 		if isinstance(data, int) or data is None:
 			raise HIDError("Failed to read {length + 1} bytes from HID device")
