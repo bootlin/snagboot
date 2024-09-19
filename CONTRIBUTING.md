@@ -14,7 +14,7 @@
 - function definitions should have type hints when possible
 - operators are surrounded by spaces e.g. a = 3 + 2 not a=3+2
 - function arguments are separated by spaces e.g. foo(a, b, c)
-- please lint your code with ruff: `cd snagboot && ruff .`
+- please lint your code with ruff: `cd snagboot && ruff check src`
 
 ## Code architecture
 
@@ -29,6 +29,9 @@
 - when adding a new protocol to src/snagrecover/protocols, please use the
   memory_ops interface when possible
 - snagrecover should not modify non-volatile memories
+
+For a more in-depth guide on adding new SoC families to snagrecover, please
+consult the [developers](docs/developers/supporting_new_socs.md) doc.
 
 ## Wishlist
 
