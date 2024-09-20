@@ -23,7 +23,7 @@ from snagrecover import utils
 import logging
 logger = logging.getLogger("snagrecover")
 
-MAX_LIBUSB_TRANSFER_SIZE = 0x8000
+MAX_LIBUSB_TRANSFER_SIZE = 0x40000
 
 """
 See doc/android/fastboot-protocol.rst in the U-Boot sources
