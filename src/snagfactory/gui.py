@@ -50,7 +50,7 @@ class SnagFactorySoCFamily(TabbedPanel):
 			tabs[key] = hex(value) if isinstance(value, int) else str(value)
 
 		for config in tasks_config[1:]:
-			tabs["task: " + config["task"]] = yaml.dump(config["args"])
+			tabs["task: " + config["task"]] = yaml.dump(config.get("args", ""))
 
 		panel_items = [SnagFactoryPanelItem(text=key, content_text=value) for key,value in tabs.items()]
 
