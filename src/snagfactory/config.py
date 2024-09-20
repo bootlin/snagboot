@@ -5,6 +5,10 @@ import re
 from snagfactory.fastboot import task_table
 from snagfactory.utils import SnagFactoryConfigError
 
+any_rule = {
+	"type": object,
+}
+
 def list_soc_models():
 	with open(os.path.dirname(__file__) + "/../snagrecover/supported_socs.yaml", "r") as file:
 		socs = yaml.safe_load(file)
@@ -175,10 +179,7 @@ config_rule = {
 
 		f"{soc_model_pattern}-firmware": {
 			"type": dict,
-			".+": {
-				"type": dict,
-				".+": str_rule(".+"),
-			},
+			".+": any_rule,
 		},
 
 		f"{soc_model_pattern}-tasks": tasks_rule,
@@ -267,6 +268,9 @@ def read_config(path):
 	return config, pipelines
 
 def check_entry(entry, rule):
+	if rule["type"] is object:
+		return
+
 	entry_type = type(entry)
 
 	if entry_type is dict:
@@ -290,6 +294,9 @@ def check_entry(entry, rule):
 		# check parameter types
 		for key,value in entry.items():
 			param_type = rule[key]["type"]
+			if param_type is object:
+				continue
+
 			if not isinstance(value, param_type):
 				raise SnagFactoryConfigError(f"Parameter {key} has invalid type! {type(value)} instead of {param_type}")
 
