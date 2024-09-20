@@ -130,10 +130,12 @@ class SnagFactoryBoard(Widget):
 			self.resume_btn = Button(text="resume",on_press=self.unpause, background_normal="", background_color=(0,1,0), size_hint_x=0.2)
 			self.board_box.add_widget(self.resume_btn)
 
-		self.status = f"[{self.spinner_symbols[self.spinner_cur]}] {self.board.status}"
-
-		self.spinner_cur = (self.spinner_cur + 1) % 4
+		self.status = self.board.status
 		self.phase = self.board.phase.name
+		if self.phase in ["FLASHING", "RECOVERING"]:
+			self.spinner_cur = (self.spinner_cur + 1) % 4
+			self.status = f"[{self.spinner_symbols[self.spinner_cur]}] " + self.status
+
 		self.phase_color = __class__.phase_colors[self.phase]
 
 		progress = self.board.progress
