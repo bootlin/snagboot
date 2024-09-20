@@ -105,6 +105,14 @@
             valign: "middle"
 
         Label:
+            size_hint_x: 0.25
+            text_size: self.width, self.height
+            text: root.progbar
+            halign: "center"
+            valign: "middle"
+            shorten: True
+
+        Label:
             id: phase_label
             size_hint_x: 0.1
             text_size: self.width, self.height
@@ -112,14 +120,6 @@
             halign: "center"
             valign: "middle"
             color: root.phase_color
-
-        Label:
-            size_hint_x: 0.25
-            text_size: self.width, self.height
-            text: root.progbar
-            halign: "center"
-            valign: "middle"
-            shorten: True
 
         Label:
             text_size: self.width, self.height
