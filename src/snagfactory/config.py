@@ -20,7 +20,7 @@ def str_rule(pattern: str):
 	}
 
 name_rule = str_rule("[\w\-]+")
-path_rule = str_rule("[\w\-\/\.]+")
+path_rule = str_rule("[\w\-\/\.:]+")
 
 fastboot_cmd_rule = str_rule("\w+(:.+)?")
 
