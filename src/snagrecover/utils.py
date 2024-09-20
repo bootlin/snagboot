@@ -10,7 +10,7 @@ from snagrecover.usb import SnagbootUSBContext
 import yaml
 import os
 
-USB_RETRIES = 10
+USB_RETRIES = 9
 USB_INTERVAL = 1
 
 def get_family(soc_model: str) -> str:
@@ -95,11 +95,11 @@ def prettify_usb_addr(usb_addr) -> str:
 	else:
 		return f"{usb_addr[0]:04x}:{usb_addr[1]:04x}"
 
-def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
+def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
 	usb_ctx = SnagbootUSBContext.get_context()
 
-	for i in range(USB_RETRIES):
+	for i in range(retries + 1):
 		usb_ctx = SnagbootUSBContext.rescan()
 		dev_list = list(usb_ctx.find(bus=usb_path[0], port_numbers=usb_path[1]))
 
@@ -120,7 +120,7 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 			logger.info(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
 			logger.warning(f"Too many results for address {pretty_addr}!\{str(dev_list)}")
 
-		logger.info(f"USB retry {i + 1}/{USB_RETRIES}")
+		logger.info(f"USB retry {i + 1}/{retries}")
 		time.sleep(USB_INTERVAL)
 
 
