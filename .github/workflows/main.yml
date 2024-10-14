@@ -26,4 +26,4 @@ jobs:
           ruff check --output-format=github .
       - name: Build and install
         run: |
-          pip install .
+          ./install.sh

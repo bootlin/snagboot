@@ -57,11 +57,12 @@ info
 possibly not work. In this case, make sure to customize the provided udev rules
 for your specific system.
 
-Alternatively, Snagboot can be installed as a local Python wheel:
+Alternatively, Snagboot can be installed as a local Python wheel. An
+installation script is provided to automatically build and install the package.
 
 ```bash
 $ cd snagboot
-$ pip install .
+$ ./install.sh
 ```
 
 There is also an [AUR package](https://aur.archlinux.org/packages/snagboot)
