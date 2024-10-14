@@ -112,7 +112,7 @@ def get_windows_serial_port_path(dev) -> str:
 	if len(matching_ports) == 1:
 		return matching_ports[0].device
 
-	raise SystemError(f"Found {len(matching_ports)} recovery serial ports matching USB device {pretty_path}! Please move one of the SAMA5 boards to a different USB port")
+	raise SystemError(f"USB path {pretty_path} maps to {len(matching_ports)} possible COM ports: {[port.name for port in matching_ports]}. Please move these serial devices to different physical USB ports or plug them behind an additional USB hub")
 
 def get_linux_serial_port_path(dev) -> str:
 	cfg = dev.get_active_configuration()
