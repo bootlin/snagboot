@@ -145,7 +145,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		fast = self.fast
 
 		pattern = random.randint(0, 255)
-		fast.send(pattern.to_bytes(1))
+		fast.send(pattern.to_bytes(1, "little"))
 
 		fast.oem_run(f"mw.b 0x{(fb_addr + 1):x} 0x{pattern:x} 1")
 		try:
