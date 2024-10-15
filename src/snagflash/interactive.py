@@ -185,8 +185,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 				part = target
 
 			flash_func = functools.partial(self.flash_mtd,
-							path=path, offset=offset,
-							part=part)
+							path=path, part=part)
 
 		bmap_path = path + ".bmap"
 		if os.path.exists(bmap_path):
@@ -200,18 +199,18 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 					ranges = []
 					for (start, end, _) in bmap._get_block_ranges():
-						offset = bmap.block_size * start
+						range_offset = bmap.block_size * start
 						size = (end - start + 1) * bmap.block_size
-						ranges.append((size, offset))
+						ranges.append((size, range_offset))
 
 			i = 0
-			for (size, offset) in ranges:
+			for (size, range_offset) in ranges:
 				logger.info(f"Flashing sparse range {i}/{len(ranges)}")
-				flash_func(file_size=size, file_offset=offset)
+				flash_func(file_size=size, file_offset=range_offset, offset=offset + range_offset)
 				i += 1
 		else:
 			logger.info("No bmap file found, flashing in non-sparse mode")
-			flash_func(file_size=file_size, file_offset=0)
+			flash_func(file_size=file_size, file_offset=0, offset=offset)
 
 	def flash_mtd(self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0):
 		fast = self.fast
@@ -249,19 +248,24 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 		for i in range(nchunks):
 			logger.info(f"downloading section {i + 1}/{nchunks}")
-			fast.download_section(path, file_offset, fb_size)
-			logger.info(f"erasing flash area offset 0x{file_offset:x} size 0x{fb_size:x}...")
-			fast.oem_run(f"mtd erase {part} {file_offset:x} {fb_size:x}")
+			fast.download_section(path, file_offset + i * fb_size, fb_size)
+
+			target_offset = offset + i * fb_size
+			logger.info(f"erasing flash area offset 0x{target_offset} size 0x{fb_size:x}...")
+			fast.oem_run(f"mtd erase {part} {target_offset:x} {fb_size:x}")
+
 			logger.info(f"writing section {i + 1}/{nchunks}")
-			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{file_offset:x} 0x{fb_size:x}")
-			file_offset += fb_size
+			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size:x}")
 
 		if remainder > 0:
 			logger.info("downloading remainder")
-			fast.download_section(path, file_offset, remainder)
-			logger.info(f"erasing flash area offset 0x{file_offset:x} size 0x{remainder:x}...")
-			fast.oem_run(f"mtd erase {part} {file_offset:x} {remainder:x}")
-			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{file_offset:x} 0x{remainder:x}")
+			fast.download_section(path, file_offset + nchunks * fb_size, remainder)
+
+			target_offset = offset + nchunks * fb_size
+			logger.info(f"erasing flash area offset 0x{target_offset} size 0x{remainder:x}...")
+			fast.oem_run(f"mtd erase {part} {target_offset:x} {remainder:x}")
+
+			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder:x}")
 
 	def flash_mmc(self, path: str, offset: int, device_num: int, file_size: int, file_offset: int = 0, part: str = None):
 		fast = self.fast
@@ -298,6 +302,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		if file_size <= fb_size:
 			logger.info(f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size:x}")
 			fast.download_section(path, file_offset, file_size)
+
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{part_start + offset_lba:x} 0x{file_size_lba:x}")
 			return
 
@@ -308,15 +313,16 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 		for i in range(nchunks):
 			logger.info(f"flashing section {i + 1}/{nchunks}")
-			target_offset = part_start + i * fb_size_lba
-			fast.download_section(path, file_offset, fb_size_aligned)
+			target_offset = part_start + offset_lba + i * fb_size_lba
+			fast.download_section(path, file_offset + i * fb_size_lba, fb_size_aligned)
+
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size_lba:x}")
-			file_offset += fb_size_aligned
 
 		if remainder > 0:
 			logger.info("flashing remainder")
-			target_offset = part_start + nchunks * fb_size_lba
-			fast.download_section(path, file_offset, remainder)
+			target_offset = part_start + offset_lba + nchunks * fb_size_lba
+			fast.download_section(path, file_offset + nchunks * fb_size_lba, remainder)
+
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder_lba:x}")
 
 	def run(self, cmds: list):
