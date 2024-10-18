@@ -27,3 +27,6 @@ jobs:
       - name: Build and install
         run: |
           ./install.sh
+      - name: Run tests
+        run: |
+          python tests.py

@@ -234,13 +234,13 @@ def preprocess_config(config):
 
 	map_config(config, suffixed_num_to_int)
 
-def read_config(path):
+def read_config(path, check_paths=True):
 	with open(path, "r") as file:
 		config = yaml.safe_load(file)
 
 	preprocess_config(config)
 
-	check_config(config)
+	check_config(config, check_paths)
 
 	pipelines = {}
 	for soc_key,soc_config in config["soc-models"].items():
@@ -325,7 +325,7 @@ def check_entry(entry, rule):
 			if not matched:
 				raise SnagFactoryConfigError(f"Invalid list item {sub_entry}, all possible matches failed: {error_msgs}")
 
-def check_config(config):
+def check_config(config, check_paths=True):
 	# Check config syntax
 	check_entry(config, config_rule)
 
@@ -341,6 +341,9 @@ def check_config(config):
 
 		if f"{soc_model}-firmware" not in config["soc-models"]:
 			raise SnagFactoryConfigError(f"Section {soc_model}-firmware is missing!")
+
+		if not check_paths:
+			continue
 
 		for firmware in soc_config.values():
 			if not os.path.exists(firmware["path"]):
