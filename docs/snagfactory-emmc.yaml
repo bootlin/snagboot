@@ -3,12 +3,12 @@ boards:
 
 soc-models:
   am625-firmware:
-      tiboot3:
-        path: "tiboot3.bin"
-      tispl:
-        path: "tispl.bin"
-      u-boot:
-        path: "u-boot.img"
+    tiboot3:
+      path: "tiboot3.bin"
+    tispl:
+      path: "tispl.bin"
+    u-boot:
+      path: "u-boot.img"
 
   am625-tasks:
     - target-device: mmc0
@@ -23,15 +23,14 @@ soc-models:
         - name: rootfs
           size: 1G
 
-    - task: reset
-
     - task: flash
       args:
-        - image: "README.md"
-          image-offset: 0x1000
         - part: "rootfs"
-          image: "MANIFEST.in"
-        - part: "hwpart 2"
-          image: "README.md"
-          image-offset: 0x200
+          image: "rootfs.ext4"
+        - part: "hwpart 1"
+          image: "boot.bin"
+
+    - task: run
+      args:
+        - "oem_run: mmc partconf 0 1 1 0"
 
