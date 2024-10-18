@@ -210,6 +210,7 @@ class SnagFactoryUI(Widget):
 		self.dismiss_popup()
 
 	def load_log(self, filenames):
+		self.session = SnagFactorySession(None)
 		self.session.load_log(filenames[0])
 		self.update_board_list()
 		self.update_config_view()
