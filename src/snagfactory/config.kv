@@ -19,7 +19,7 @@
 
 <TabbedPanelStrip>
     background_normal: ""
-    col_default_width: 140
+    col_default_width: dp(140)
     col_force_default: True
 
     canvas:
@@ -72,8 +72,8 @@
 
 <SnagFactoryConfig@BoxLayout>
     orientation: "horizontal"
-    padding: 5
-    spacing: 10
+    padding: dp(5)
+    spacing: dp(10)
     soc_families_view: soc_families_view
     board_ids_view: board_ids_view
 
@@ -88,12 +88,12 @@
     BoxLayout:
         orientation: "vertical"
         size_hint_x: 0.4
-        spacing: 5
+        spacing: dp(5)
 
         BoxLayout:
             orientation: "vertical"
             size_hint_y: 0.2
-            padding: 5
+            padding: dp(5)
             id: board_ids_view
 
             canvas:

@@ -2,7 +2,7 @@
 
 <Label>
     color: 0, 0, 0, 1
-    font_size: 20
+    font_size: sp(20)
 
 <SnagFactoryErrorDialog>
     canvas:
@@ -51,7 +51,7 @@
 
         BoxLayout:
             size_hint_y: None
-            height: 30
+            height: dp(30)
             Button:
                 text: "Cancel"
                 on_release: app.call_ui("dismiss_popup")
@@ -66,7 +66,7 @@
 
 <SnagFactoryBoard>
     size_hint_y: None
-    height: 65
+    height: dp(65)
     phase_label: phase_label
     board_box: board_box
 
@@ -75,7 +75,7 @@
         pos: root.pos
         size: root.size
         orientation: "horizontal"
-        padding: 10
+        padding: dp(10)
 
         canvas:
             Color:
@@ -153,7 +153,7 @@
         background_color: 0,0,0,0
         canvas:
             Rectangle:
-                size: 80,80
+                size: dp(80),dp(80)
                 pos: self.pos
                 source: root.background_normal
         on_press: self.background_color = 1, 1, 1, 1; app.call_ui(root.callback, root)
@@ -184,8 +184,8 @@
     ToggleButton:
         size_hint: None, None
         center_x: 0
-        width: 70
-        height: 37
+        width: dp(70)
+        height: dp(37)
         background_normal: "boards.png"
         background_down: "boards.png"
         background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
@@ -197,8 +197,8 @@
     ToggleButton:
         size_hint: None, None
         center_x: 0
-        width: 80
-        height: 76
+        width: dp(80)
+        height: dp(76)
         background_normal: "config.png"
         background_down: "config.png"
         background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
@@ -212,8 +212,8 @@
     Button:
         size_hint: None, None
         center_x: 0
-        width: 80
-        height: 61
+        width: dp(80)
+        height: dp(61)
         background_normal: "load_config.png"
         text: ""
         on_press: app.call_ui("open_config_dialog");
@@ -221,8 +221,8 @@
     Button:
         size_hint: None, None
         center_x: 0
-        width: 80
-        height: 61
+        width: dp(80)
+        height: dp(61)
         background_normal: "view_logs.png"
         text: ""
         on_press: app.call_ui("open_log_dialog");
@@ -284,10 +284,10 @@
 
         SnagFactorySidebar:
             size_hint_x: None
-            width: 80
+            width: dp(80)
             orientation: "vertical"
-            padding: 5
-            spacing: 20
+            padding: dp(5)
+            spacing: dp(20)
 
         PageLayout:
             id: main_page
@@ -303,7 +303,8 @@
                     BoxLayout:
                         size_hint_y: 0.1
                         orientation: "vertical"
-                        padding: 10
+                        padding: dp(10)
+                        spacing: dp(5)
 
                         canvas:
                             Color:
@@ -313,13 +314,13 @@
                                 pos: self.pos
 
                         Label:
-                            font_size: 15
+                            font_size: sp(15)
                             text: root.phase_label
                             text_size: self.size
                             valign: "middle"
 
                         Label:
-                            font_size: 20
+                            font_size: sp(20)
                             text: root.status
                             text_size: self.size
                             valign: "middle"
