@@ -126,7 +126,7 @@ To recover and reflash a board using snagboot:
 
 
 
-For recovering and flashing large batches of boards efficiently, you may use the Snagfactory application which is included in Snagboot. Usage instructions for Snagfactory are available at [snagfactory.md](docs/snagfactory.md).
+For recovering and flashing large batches of boards efficiently, you may use the Snagfactory application which is included in Snagboot. Usage instructions for Snagfactory are available at [snagfactory.md](docs/snagfactory.md). The configuration file syntax for Snagfactory is documented at [snagfactory_config.md](docs/snagfactory_config.md).
 
 
 If you encounter issues, please take a look at the
