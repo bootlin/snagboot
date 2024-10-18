@@ -9,7 +9,7 @@ from kivy.uix.accordion import AccordionItem
 from kivy.uix.button import Button
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.properties import (
-    ListProperty, ObjectProperty, StringProperty
+    ListProperty, ObjectProperty, StringProperty, ColorProperty
 )
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -147,6 +147,7 @@ class SnagFactoryUI(Widget):
 	board_widgets = ListProperty([])
 	status = StringProperty("Scanning for boards...")
 	phase_label = StringProperty("")
+	phase_label_color = ColorProperty((0, 0, 0))
 
 	def __init__(self, session):
 		super().__init__()
@@ -268,6 +269,8 @@ class SnagFactoryUI(Widget):
 		self.log_boxlayout.size_hint_x = 0
 
 	def start(self, btn):
+		self.phase_label_color = (0, 0, 0)
+
 		if self.session.phase == "scanning":
 			self.phase_label = "running factory session"
 			self.view_board_list()
@@ -277,6 +280,7 @@ class SnagFactoryUI(Widget):
 			btn.text = "rescan"
 		elif self.session.phase == "logview":
 			# Keep the same config file and start a new session
+			self.phase_label_color = (0, 0, 1)
 			new_session = SnagFactorySession(self.session.config_path)
 			self.session = new_session
 			btn.background_normal = "start.png"
@@ -285,6 +289,7 @@ class SnagFactoryUI(Widget):
 	def update(self, dt):
 		last_phase = self.session.phase
 		self.session.update()
+		self.phase_label_color = (0, 0, 0)
 
 		if self.session.phase == "scanning":
 			self.phase_label = ""
@@ -300,6 +305,7 @@ class SnagFactoryUI(Widget):
 				board_widget.update()
 
 		elif self.session.phase == "logview":
+			self.phase_label_color = (0, 0, 1)
 			if last_phase == "running":
 				for board_widget in self.board_widgets:
 					board_widget.update()
