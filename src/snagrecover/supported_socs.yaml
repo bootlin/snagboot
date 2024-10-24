@@ -13,6 +13,8 @@ tested:
         family: am62x
   am62p:
         family: am62x
+  h2+:
+        family: sunxi
   h3:
         family: sunxi
   imx28:
@@ -78,8 +80,6 @@ untested:
         family: am335x
   am623:
         family: am62x
-  h2+:
-        family: sunxi
   h5:
         family: sunxi
   h6:
