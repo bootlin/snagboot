@@ -41,7 +41,7 @@ class SnagFactorySession():
 			if self.scan_tick == 0:
 				self.scan_for_boards()
 
-			self.scan_tick = (self.scan_tick + 1) % 4
+			self.scan_tick = (self.scan_tick + 1) % 8
 
 		if self.phase == "running":
 			self.nb_recovering = 0

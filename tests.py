@@ -1,6 +1,7 @@
 from snagfactory.config import read_config
 from snagfactory.gui import SnagFactory
 from snagfactory.session import SnagFactorySession
+from snagrecover.usb import SnagbootUSBContext
 from kivy.lang import Builder
 
 print("Testing config file reader")
@@ -20,5 +21,13 @@ Builder.load_file("src/snagfactory/config.kv")
 print("Testing Snagfactory session init")
 
 session = SnagFactorySession(None)
+
+print("Testing Snagboot USB context initialization")
+
+SnagbootUSBContext.rescan()
+
+print("Testing Snagboot USB context hard rescan")
+
+SnagbootUSBContext.hard_rescan()
 
 print("All tests ran without errors")

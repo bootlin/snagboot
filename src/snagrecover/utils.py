@@ -56,15 +56,18 @@ def find_usb_paths(usb_id: tuple) -> list:
 	(vid,pid) = usb_id
 	usb_paths = []
 
-	logger.info(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
+	logger.debug(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
 
-	usb_ctx = SnagbootUSBContext.rescan()
-	devices = list(usb_ctx.find(idVendor=vid, idProduct=pid))
+	SnagbootUSBContext.rescan()
+	devices = list(SnagbootUSBContext.find(idVendor=vid, idProduct=pid))
 
 	for dev in devices:
 		usb_paths.append((dev.bus, dev.port_numbers))
 
 	return usb_paths
+
+def count_duplicates(lst):
+	return len(lst) - len(set(lst))
 
 def usb_addr_to_path(usb_addr: str, find_all=False) -> tuple:
 	"""
@@ -78,14 +81,23 @@ def usb_addr_to_path(usb_addr: str, find_all=False) -> tuple:
 		if usb_paths == []:
 			return None
 		if find_all:
-			return usb_paths
-		else:
-			if len(usb_paths) > 1:
-				logger.info(f"Found too many ({len(usb_paths)}) possible results matching {usb_addr}!")
-				logger.error(f"Too many results for address {usb_addr}!\{str(usb_paths)}")
-				access_error("USB", usb_addr)
+			if count_duplicates(usb_paths) > 0:
+				time.sleep(1)
 
-			return usb_paths[0]
+				SnagbootUSBContext.hard_rescan()
+				usb_paths = find_usb_paths(usb_id)
+
+				if count_duplicates(usb_paths) > 0:
+					logger.error(f"Found {count_duplicates(usb_paths)} duplicate USB paths! {usb_paths}")
+					access_error("USB", usb_addr)
+
+			return usb_paths
+
+		if len(usb_paths) > 1:
+			logger.error(f"Too many results for address {usb_addr}! {usb_paths}")
+			access_error("USB", usb_addr)
+
+		return usb_paths[0]
 	else:
 		return parse_usb_path(usb_addr)
 
@@ -97,11 +109,11 @@ def prettify_usb_addr(usb_addr) -> str:
 
 def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
-	usb_ctx = SnagbootUSBContext.get_context()
+	SnagbootUSBContext.rescan()
 
 	for i in range(retries + 1):
-		usb_ctx = SnagbootUSBContext.rescan()
-		dev_list = list(usb_ctx.find(bus=usb_path[0], port_numbers=usb_path[1]))
+		SnagbootUSBContext.rescan()
+		dev_list = list(SnagbootUSBContext.find(bus=usb_path[0], port_numbers=usb_path[1]))
 
 		nb_devs = len(dev_list)
 
