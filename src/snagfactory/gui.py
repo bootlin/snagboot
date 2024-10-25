@@ -1,5 +1,4 @@
 from kivy.logger import Logger as kivy_logger
-kivy_logger.setLevel("WARNING")
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
@@ -17,6 +16,7 @@ import kivy.resources
 import time
 import yaml
 from math import ceil
+import sys
 
 from snagfactory.session import SnagFactorySession
 from snagfactory.config import SnagFactoryConfigError
@@ -351,7 +351,14 @@ class SnagFactory(App):
 
 def main():
 	multiprocessing.set_start_method('spawn')
+
 	factory_logger.setLevel("INFO")
+	kivy_logger.parent = factory_logger
+
+	stdout_handler = logging.StreamHandler(sys.stdout)
+	stdout_handler.setLevel(logging.WARNING)
+	factory_logger.addHandler(stdout_handler)
+
 	kivy.resources.resource_add_path(os.path.dirname(__file__) + "/assets")
 	SnagFactory().run()
 
