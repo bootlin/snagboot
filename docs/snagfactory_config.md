@@ -178,31 +178,6 @@ args:
     image-offset: 0x200
 ```
 
-## virtual-part
-
-Action:
-
-Creates a virtual partition in the Fastboot environment, with a name,
-start and size. This can be used as a way to target a specific offset inside the
-backend device. It can also be used to target eMMC boot or GP partitions by
-specifying the "hwpart" argument. Once the virtual partition is created, it can
-be passed to the "flash" task as if it were a regular partition.
-
-Example:
-
-
-```
-task: virtual-part
-args:
-  - name: rootfs_lba3
-    start: 0x22000600
-    size: 20M
-  - name: boot1
-    start: 0
-    size: 10M
-    hwpart: 1
-```
-
 ## reset
 
 Action:
@@ -211,7 +186,7 @@ Runs the U-Boot "reset" command on the target and recovers the board with
 snagrecover afterwards. This can be useful for flashing actions which require a
 reset to become effective.
 
-**Note**: Some flashing tasks, such as "virtual-part", affect the U-Boot
+**Note**: Some flashing tasks, such as "mtd-parts", affect the U-Boot
 environment. Resetting the board will clear these changes.
 
 Example:
