@@ -24,28 +24,30 @@ from snagflash.bmaptools import BmapCreate
 from snagflash.bmaptools import BmapCopy
 import sys
 import time
+import logging
+logger = logging.getLogger("snagflash")
 
 FILEPATH_RETRIES = 5
 
 def wait_filepath(path: str):
-	print(f"Waiting for {path}...")
+	logger.info(f"Waiting for {path}...")
 	retries = 0
 	while not os.path.exists(path):
 		if retries >= FILEPATH_RETRIES:
-			print(f"Timeout: file or directory {path} does not exist", file=sys.stderr)
+			logger.info(f"Timeout: file or directory {path} does not exist", file=sys.stderr)
 			sys.exit(-1)
 		time.sleep(2)
-		print(f"Retrying: find {path} {retries}/{FILEPATH_RETRIES}")
+		logger.info(f"Retrying: find {path} {retries}/{FILEPATH_RETRIES}")
 		retries += 1
-	print("Done")
+	logger.info("Done")
 
 def bmap_copy(filepath: str, dev, src_size: int):
-	mappath = os.path.splitext(filepath)[0] + ".bmap"
+	mappath = filepath + ".bmap"
 	mapfile = None
-	print(f"Looking for {mappath}...")
+	logger.info(f"Looking for {mappath}...")
 	gen_bmap = True
 	if os.path.exists(mappath):
-		print(f"Found bmap file {mappath}")
+		logger.info(f"Found bmap file {mappath}")
 		gen_bmap = False
 		mapfileb = open(mappath, "rb")
 		# check if the bmap file is clearsigned
@@ -53,12 +55,12 @@ def bmap_copy(filepath: str, dev, src_size: int):
 		# I'd prefer to avoid depending on the gpg package
 		hdr = mapfileb.read(34)
 		if hdr == b"-----BEGIN PGP SIGNED MESSAGE-----":
-			print("Warning: bmap file is clearsigned, skipping...")
+			logger.info("Warning: bmap file is clearsigned, skipping...")
 			gen_bmap = True
 		else:
 			mapfileb.seek(0)
 	if gen_bmap:
-		print("Generating bmap...")
+		logger.info("Generating bmap...")
 		try:
 			mapfile = tempfile.NamedTemporaryFile("w+")
 		except IOError as err:
@@ -81,29 +83,29 @@ def write_raw(args):
 	filepath = args.src
 	wait_filepath(devpath)
 	if not os.path.exists(filepath):
-		print(f"File {filepath} does not exist", file=sys.stderr)
+		logger.info(f"File {filepath} does not exist", file=sys.stderr)
 		sys.exit(-1)
-	print(f"Reading {filepath}...")
+	logger.info(f"Reading {filepath}...")
 	with open(filepath, "rb") as file:
 		blob = file.read(-1)
 		size = len(blob)
-	print(f"Copying {filepath} to {devpath}...")
+	logger.info(f"Copying {filepath} to {devpath}...")
 	with open(devpath, "rb+") as dev:
 		bmap_copy(filepath, dev, size)
-	print("Done")
+	logger.info("Done")
 
 def ums(args):
 	if args.dest:
 		if os.path.isdir(args.dest):
 			wait_filepath(args.dest)
-			print(f"Copying {args.src} to {args.dest}/{os.path.basename(args.src)}...")
+			logger.info(f"Copying {args.src} to {args.dest}/{os.path.basename(args.src)}...")
 		else:
 			dirname = os.path.dirname(args.dest)
 			if dirname != "":
 				wait_filepath(dirname)
-			print(f"Copying {args.src} to {args.dest}...")
+			logger.info(f"Copying {args.src} to {args.dest}...")
 		shutil.copy(args.src, args.dest)
-		print("Done")
+		logger.info("Done")
 	elif args.blockdev:
 		write_raw(args)
 

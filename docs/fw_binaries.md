@@ -221,29 +221,18 @@ SPL part, you can typically use u-boot.img for this
 configuration:
  * path
 
-## For TI AM62x/AM62Ax/AM62Px devices
+## For TI AM62x/AM62Ax/AM62Px/AM64x devices
 
 [example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
-**Warning:** Please refer to
-[this documentation](https://u-boot.readthedocs.io/en/latest/board/ti/am62x_sk.html)
-for building the required images. When building the U-Boot SPL image for R5,
-please make sure that the resulting SPL supports Booting from DFU! The
-defconfig indicated by the linked documentation does not guarantee this!
+Instructions for building the required images can be found in various locations
+depending on your SoC and board model. In general, your board vendor's
+documentation should be the first place to check. For evaluation kits, you can
+either check the [U-Boot documentation](https://u-boot.readthedocs.io/en/latest/board/ti/)
+or the TI SDK documentation for your SoC. When building tiboot3, please make
+sure that your configuration supports booting from DFU.
 
-**AM62Ax:** Please refer to
-[this documentation](https://software-dl.ti.com/processor-sdk-linux/esd/AM62AX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-General-Info.html#build-u-boot)
-for building the required images. The instructions for building the binaries are 
-board-specific. When building the images please make sure to use the USB DFU defconfig for
-Snagrecover and SD Boot defconfig for Snagflash.
-
-**AM62Px:** Please refer to
-[this documentation](https://software-dl.ti.com/processor-sdk-linux/esd/AM62PX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-General-Info.html#build-u-boot)
-for building the required images. The instructions for building the binaries are
-board-specific. When building the images please make sure to use the USB DFU defconfig for
-Snagrecover and SD Boot defconfig for Snagflash.
-
-AM62x/AM62Ax/AM62Px SoCs require multiple complex firmware images to boot.
+The following images are required for all AM6xx SoCs:
 
 **tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
 container with device tree blobs. SPL should support DFU.

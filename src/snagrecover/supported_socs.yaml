@@ -8,13 +8,15 @@ tested:
   am3358:
         family: am335x
   am625:
-        family: am62x
+        family: am6x
   am62a7:
-        family: am62x
+        family: am6x
   am62p:
-        family: am62x
+        family: am6x
   h2+:
         family: sunxi
+  am6442:
+        family: am6x
   h3:
         family: sunxi
   imx28:
@@ -79,7 +81,17 @@ untested:
   am3359:
         family: am335x
   am623:
-        family: am62x
+        family: am6x
+  am6411:
+        family: am6x
+  am6412:
+        family: am6x
+  am6421:
+        family: am6x
+  am6422:
+        family: am6x
+  am6441:
+        family: am6x
   h5:
         family: sunxi
   h6:

@@ -20,11 +20,17 @@
 import argparse
 from snagrecover import __version__
 from snagflash.dfu import dfu_cli
-from snagflash.ums import ums
 from snagflash.fastboot import fastboot
 from snagrecover.utils import cli_error
+import platform
 import logging
 import sys
+
+if platform.system() == "Linux":
+	from snagflash.ums import ums
+	protocols = ["dfu", "ums", "fastboot"]
+else:
+	protocols = ["dfu", "fastboot"]
 
 def cli():
 	example = '''Examples:
@@ -42,7 +48,7 @@ def cli():
 	common.add_argument("--loglevel", help="set loglevel", choices=["silent","info","debug"], default="silent")
 	common.add_argument("--logfile", help="set logfile", default="board_flashing.log")
 	common.add_argument("--version", help="show version", action="store_true")
-	common.add_argument("-P", "--protocol", help="Protocol to use for flashing", choices=["dfu","ums","fastboot"])
+	common.add_argument("-P", "--protocol", help="Protocol to use for flashing", choices=protocols)
 	common.add_argument("-p", "--port", help="USB device address for DFU and Fastboot commands", metavar="vid:pid|bus-port1.port2.[...]")
 	common.add_argument("--timeout", help="USB timeout, sometimes increasing this is necessary when downloading large files", default=60000)
 	dfuargs = parser.add_argument_group("DFU")
@@ -52,10 +58,14 @@ def cli():
 	dfuargs.add_argument("--dfu-reset", help="Reset USB device after download and reboot the board", action="store_true")
 	fbargs = parser.add_argument_group("Fastboot")
 	fbargs.add_argument("-f", "--fastboot-cmd", help="A fastboot command.", action="append", metavar="cmd:args")
-	umsargs = parser.add_argument_group("UMS")
-	umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
-	umsargs.add_argument("-d", "--dest", help="mounted transfer: set destination file name")
-	umsargs.add_argument("-b", "--blockdev", help="raw transfer: set destination block device", metavar="device")
+	fbargs.add_argument("-i", "--interactive", help="Start interactive mode", action="store_true")
+	fbargs.add_argument("-I", "--interactive-cmdfile", help="Read interactive mode commands from file")
+	if platform.system() == "Linux":
+		umsargs = parser.add_argument_group("UMS")
+		umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
+		umsargs.add_argument("-d", "--dest", help="mounted transfer: set destination file name")
+		umsargs.add_argument("-b", "--blockdev", help="raw transfer: set destination block device", metavar="device")
+
 	args = parser.parse_args()
 
 	# show version
@@ -65,18 +75,23 @@ def cli():
 
 	# setup logging
 	logger = logging.getLogger('snagflash')
-	if args.loglevel == "silent":
-		logger.addHandler(logging.NullHandler())
-	else:
+	logger.setLevel(logging.DEBUG)
+	log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+
+	stdout_handler = logging.StreamHandler(sys.stdout)
+	stdout_handler.setLevel(logging.INFO)
+	stdout_handler.setFormatter(log_formatter)
+	logger.addHandler(stdout_handler)
+
+	if args.loglevel != "silent":
 		log_handler = logging.FileHandler(args.logfile, encoding="utf-8")
-		log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 		log_handler.setFormatter(log_formatter)
-		logger.addHandler(log_handler)
 		if args.loglevel == "debug":
 			logger.setLevel(logging.DEBUG)
 		elif args.loglevel == "info":
-			logger.addHandler(log_handler)
 			logger.setLevel(logging.INFO)
+		logger.addHandler(log_handler)
+
 	# make sure we don't log into the recovery log when importing its modules
 	recovery_logger = logging.getLogger('snagrecover')
 	recovery_logger.parent = logger
@@ -90,7 +105,7 @@ def cli():
 		ums(args)
 	elif args.protocol == "fastboot":
 		if args.fastboot_cmd is None:
-			cli_error("missing at least one fastboot command!")
+			args.fastboot_cmd = []
 		fastboot(args)
 	else:
 		cli_error(f"unrecognized protocol {args.protocol}")

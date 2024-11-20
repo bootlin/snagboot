@@ -64,15 +64,12 @@ import stat
 import sys
 import hashlib
 import logging
+logger = logging.getLogger("snagflash")
+
 import datetime
-from six import reraise
-from six.moves import queue as Queue
-from six.moves import _thread as thread
 from typing import Optional
 from xml.etree import ElementTree
 from snagflash.bmaptools.BmapHelpers import human_size
-
-_log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 # The highest supported bmap format version
 SUPPORTED_BMAP_VERSION = "2.0"
@@ -138,7 +135,7 @@ class SysfsChange:
     def __enter__(self):
         try:
             self.old_value = self._read()
-            _log.debug(f"found {self.path} to be '{self.old_value}'")
+            logger.debug(f"found {self.path} to be '{self.old_value}'")
         except IOError as exc:
             if self.suppress_ioerrors:
                 self.error = exc
@@ -148,7 +145,7 @@ class SysfsChange:
 
         if self.old_value != self.temp_value:
             try:
-                _log.debug(f"setting {self.path} to '{self.temp_value}'")
+                logger.debug(f"setting {self.path} to '{self.temp_value}'")
                 self._write(self.temp_value)
                 self.modified = True
             except IOError as exc:
@@ -161,80 +158,19 @@ class SysfsChange:
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.modified:
             try:
-                _log.debug(f"setting {self.path} back to '{self.old_value}'")
+                logger.debug(f"setting {self.path} back to '{self.old_value}'")
                 self._write(self.old_value)
             except IOError as exc:
                 raise Error(f"cannot restore {self.path} to '{self.old_value}': {exc}")
         return False
 
 
-class BmapCopy(object):
-    """
-    This class implements the bmap-based copying functionality. To copy an
-    image with bmap you should create an instance of this class, which requires
-    the following:
-
-    * full path or a file-like object of the image to copy
-    * full path or a file object of the destination file copy the image to
-    * full path or a file object of the bmap file (optional)
-    * image size in bytes (optional)
-
-    Although the main purpose of this class is to use bmap, the bmap is not
-    required, and if it was not provided then the entire image will be copied
-    to the destination file.
-
-    When the bmap is provided, it is not necessary to specify image size,
-    because the size is contained in the bmap. Otherwise, it is benefitial to
-    specify the size because it enables extra sanity checks and makes it
-    possible to provide the progress bar.
-
-    When the image size is known either from the bmap or the caller specified
-    it to the class constructor, all the image geometry description attributes
-    ('blocks_cnt', etc) are initialized by the class constructor and available
-    for the user.
-
-    However, when the size is not known, some of  the image geometry
-    description attributes are not initialized by the class constructor.
-    Instead, they are initialized only by the 'copy()' method.
-
-    The 'copy()' method implements image copying. You may choose whether to
-    verify the checksum while copying or not. Note, this is done only in case
-    of bmap-based copying and only if bmap contains checksums (e.g., bmap
-    version 1.0 did not have checksums support).
-
-    You may choose whether to synchronize the destination file after writing or
-    not. To explicitly synchronize it, use the 'sync()' method.
-
-    This class supports all the bmap format versions up version
-    'SUPPORTED_BMAP_VERSION'.
-
-    It is possible to have a simple progress indicator while copying the image.
-    Use the 'set_progress_indicator()' method.
-
-    You can copy only once with an instance of this class. This means that in
-    order to copy the image for the second time, you have to create a new class
-    instance.
-    """
-
-    def __init__(self, image, dest, bmap=None, image_size=None):
-        """
-        The class constructor. The parameters are:
-            image      - file-like object of the image which should be copied,
-                         should only support 'read()' and 'seek()' methods,
-                         and only seeking forward has to be supported.
-            dest       - file object of the destination file to copy the image
-                         to.
-            bmap       - file object of the bmap file to use for copying.
-            image_size - size of the image in bytes.
-        """
-
+class Bmap(object):
+    def __init__(self, image, bmap=None, image_size=None):
         self._xml = None
 
-        self._dest_fsync_watermark = None
         self._batch_blocks = None
-        self._batch_queue = None
         self._batch_bytes = 1024 * 1024
-        self._batch_queue_len = 6
 
         self.bmap_version = None
         self.bmap_version_major = None
@@ -251,37 +187,14 @@ class BmapCopy(object):
         self._f_bmap = None
         self._f_bmap_path = None
 
-        self._progress_started = None
-        self._progress_index = None
-        self._progress_time = None
-        self._progress_file = None
-        self._progress_format = None
-        self.set_progress_indicator(None, None)
-        self._psplash_pipe = None
-
         self._f_image = image
         self._image_path = image.name
-
-        self._f_dest = dest
-        self._dest_path = dest.name
-        st_data = os.fstat(self._f_dest.fileno())
-        self._dest_is_regfile = stat.S_ISREG(st_data.st_mode)
 
         # The bmap file checksum type and length
         self._cs_type = None
         self._cs_len = None
         self._cs_attrib_name = None
         self._bmap_cs_attrib_name = None
-
-        # Special quirk for /dev/null which does not support fsync()
-        if (
-            stat.S_ISCHR(st_data.st_mode)
-            and os.major(st_data.st_rdev) == 1
-            and os.minor(st_data.st_rdev) == 3
-        ):
-            self._dest_supports_fsync = False
-        else:
-            self._dest_supports_fsync = True
 
         if bmap:
             self._f_bmap = bmap
@@ -298,48 +211,6 @@ class BmapCopy(object):
             self._set_image_size(image_size)
 
         self._batch_blocks = self._batch_bytes // self.block_size
-
-    def set_psplash_pipe(self, path):
-        """
-        Set the psplash named pipe file path to be used when updating the
-        progress - best effort.
-
-        The 'path' argument is the named pipe used by the psplash process to get
-        progress bar commands. When the path argument doesn't exist or is not a
-        pipe, the function will ignore with a warning. This behavior is
-        considered as such because the progress is considered a decoration
-        functionality which might or might not be available even if requested.
-        When used as a boot service, the unavailability of the psplash service
-        (due to various reasons: no screen, racing issues etc.) should not
-        break the writting process. This is why this implementation is done as
-        a best effort.
-        """
-
-        if os.path.exists(path) and stat.S_ISFIFO(os.stat(path).st_mode):
-            self._psplash_pipe = path
-        else:
-            _log.warning(
-                "'%s' is not a pipe, so psplash progress will not be " "updated" % path
-            )
-
-    def set_progress_indicator(self, file_obj, format_string):
-        """
-        Setup the progress indicator which shows how much data has been copied
-        in percent.
-
-        The 'file_obj' argument is the console file object where the progress
-        has to be printed to. Pass 'None' to disable the progress indicator.
-
-        The 'format_string' argument is the format string for the progress
-        indicator. It has to contain a single '%d' placeholder which will be
-        substitutes with copied data in percent.
-        """
-
-        self._progress_file = file_obj
-        if format_string:
-            self._progress_format = format_string
-        else:
-            self._progress_format = "Copied %d%%"
 
     def _set_image_size(self, image_size):
         """
@@ -480,63 +351,6 @@ class BmapCopy(object):
                 )
             self._verify_bmap_checksum()
 
-    def _update_progress(self, blocks_written):
-        """
-        Print the progress indicator if the mapped area size is known and if
-        the indicator has been enabled by assigning a console file object to
-        the 'progress_file' attribute.
-        """
-
-        if self.mapped_cnt:
-            assert blocks_written <= self.mapped_cnt
-            percent = int((float(blocks_written) / self.mapped_cnt) * 100)
-            _log.debug(
-                "wrote %d blocks out of %d (%d%%)"
-                % (blocks_written, self.mapped_cnt, percent)
-            )
-        else:
-            _log.debug("wrote %d blocks" % blocks_written)
-
-        if self._progress_file:
-            if self.mapped_cnt:
-                progress = "\r" + self._progress_format % percent + "\n"
-            else:
-                # Do not rotate the wheel too fast
-                now = datetime.datetime.now()
-                min_delta = datetime.timedelta(milliseconds=250)
-                if now - self._progress_time < min_delta:
-                    return
-                self._progress_time = now
-
-                progress_wheel = ("-", "\\", "|", "/")
-                progress = "\r" + progress_wheel[self._progress_index % 4] + "\n"
-                self._progress_index += 1
-
-            # This is a little trick we do in order to make sure that the next
-            # message will always start from a new line - we switch to the new
-            # line after each progress update and move the cursor up. As an
-            # example, this is useful when the copying is interrupted by an
-            # exception - the error message will start form new line.
-            if self._progress_started:
-                # The "move cursor up" escape sequence
-                self._progress_file.write("\033[1A")  # pylint: disable=W1401
-            else:
-                self._progress_started = True
-
-            self._progress_file.write(progress)
-            self._progress_file.flush()
-
-        # Update psplash progress when configured. This is using a best effort
-        # strategy to not affect the writing process when psplash breaks, is
-        # not available early enough or screen is not available.
-        if self._psplash_pipe and self.mapped_cnt:
-            try:
-                mode = os.O_WRONLY | os.O_NONBLOCK
-                with os.fdopen(os.open(self._psplash_pipe, mode), "w") as p_fo:
-                    p_fo.write("PROGRESS %d\n" % percent)
-            except:
-                pass
-
     def _get_block_ranges(self):
         """
         This is a helper generator that parses the bmap XML file and for each
@@ -624,57 +438,116 @@ class BmapCopy(object):
           * 'buf' a buffer containing the batch data.
         """
 
-        _log.debug("the reader thread has started")
-        try:
-            for (first, last, chksum) in self._get_block_ranges():
-                if verify and chksum:
-                    hash_obj = hashlib.new(self._cs_type)
+        for (first, last, chksum) in self._get_block_ranges():
+            if verify and chksum:
+                hash_obj = hashlib.new(self._cs_type)
 
-                self._f_image.seek(first * self.block_size)
+            self._f_image.seek(first * self.block_size)
 
-                iterator = self._get_batches(first, last)
-                for (start, end, length) in iterator:
-                    try:
-                        buf = self._f_image.read(length * self.block_size)
-                    except IOError as err:
-                        raise Error(
-                            "error while reading blocks %d-%d of the "
-                            "image file '%s': %s" % (start, end, self._image_path, err)
-                        )
-
-                    if not buf:
-                        _log.debug(
-                            "no more data to read from file '%s'", self._image_path
-                        )
-                        self._batch_queue.put(None)
-                        return
-
-                    if verify and chksum:
-                        hash_obj.update(buf)
-
-                    blocks = (len(buf) + self.block_size - 1) // self.block_size
-                    _log.debug(
-                        "queueing %d blocks, queue length is %d"
-                        % (blocks, self._batch_queue.qsize())
-                    )
-
-                    self._batch_queue.put(("range", start, start + blocks - 1, buf))
-
-                if verify and chksum and hash_obj.hexdigest() != chksum:
+            iterator = self._get_batches(first, last)
+            for (start, end, length) in iterator:
+                try:
+                    buf = self._f_image.read(length * self.block_size)
+                except IOError as err:
                     raise Error(
-                        "checksum mismatch for blocks range %d-%d: "
-                        "calculated %s, should be %s (image file %s)"
-                        % (first, last, hash_obj.hexdigest(), chksum, self._image_path)
+                        "error while reading blocks %d-%d of the "
+                        "image file '%s': %s" % (start, end, self._image_path, err)
                     )
-        # Silence pylint warning about catching too general exception
-        # pylint: disable=W0703
-        except Exception:
-            # pylint: enable=W0703
-            # In case of any exception - just pass it to the main thread
-            # through the queue.
-            self._batch_queue.put(("error", sys.exc_info()))
 
-        self._batch_queue.put(None)
+                if not buf:
+                    logger.debug(
+                        "no more data to read from file '%s'", self._image_path
+                    )
+                    return
+
+                if verify and chksum:
+                    hash_obj.update(buf)
+
+                blocks = (len(buf) + self.block_size - 1) // self.block_size
+
+                yield (start, start + blocks - 1, buf)
+
+            if verify and chksum and hash_obj.hexdigest() != chksum:
+                raise Error(
+                    "checksum mismatch for blocks range %d-%d: "
+                    "calculated %s, should be %s (image file %s)"
+                    % (first, last, hash_obj.hexdigest(), chksum, self._image_path)
+                )
+
+class BmapCopy(Bmap):
+    """
+    This class implements the bmap-based copying functionality. To copy an
+    image with bmap you should create an instance of this class, which requires
+    the following:
+
+    * full path or a file-like object of the image to copy
+    * full path or a file object of the destination file copy the image to
+    * full path or a file object of the bmap file (optional)
+    * image size in bytes (optional)
+
+    Although the main purpose of this class is to use bmap, the bmap is not
+    required, and if it was not provided then the entire image will be copied
+    to the destination file.
+
+    When the bmap is provided, it is not necessary to specify image size,
+    because the size is contained in the bmap. Otherwise, it is benefitial to
+    specify the size because it enables extra sanity checks.
+
+    When the image size is known either from the bmap or the caller specified
+    it to the class constructor, all the image geometry description attributes
+    ('blocks_cnt', etc) are initialized by the class constructor and available
+    for the user.
+
+    However, when the size is not known, some of  the image geometry
+    description attributes are not initialized by the class constructor.
+    Instead, they are initialized only by the 'copy()' method.
+
+    The 'copy()' method implements image copying. You may choose whether to
+    verify the checksum while copying or not. Note, this is done only in case
+    of bmap-based copying and only if bmap contains checksums (e.g., bmap
+    version 1.0 did not have checksums support).
+
+    You may choose whether to synchronize the destination file after writing or
+    not. To explicitly synchronize it, use the 'sync()' method.
+
+    This class supports all the bmap format versions up version
+    'SUPPORTED_BMAP_VERSION'.
+
+    You can copy only once with an instance of this class. This means that in
+    order to copy the image for the second time, you have to create a new class
+    instance.
+    """
+
+    def __init__(self, image, dest, bmap=None, image_size=None):
+        """
+        The class constructor. The parameters are:
+            image      - file-like object of the image which should be copied,
+                         should only support 'read()' and 'seek()' methods,
+                         and only seeking forward has to be supported.
+            dest       - file object of the destination file to copy the image
+                         to.
+            bmap       - file object of the bmap file to use for copying.
+            image_size - size of the image in bytes.
+        """
+
+        super().__init__(image, bmap, image_size)
+
+        self._dest_fsync_watermark = None
+
+        self._f_dest = dest
+        self._dest_path = dest.name
+        st_data = os.fstat(self._f_dest.fileno())
+        self._dest_is_regfile = stat.S_ISREG(st_data.st_mode)
+
+        # Special quirk for /dev/null which does not support fsync()
+        if (
+            stat.S_ISCHR(st_data.st_mode)
+            and os.major(st_data.st_rdev) == 1
+            and os.minor(st_data.st_rdev) == 3
+        ):
+            self._dest_supports_fsync = False
+        else:
+            self._dest_supports_fsync = True
 
     def copy(self, sync=True, verify=True):
         """
@@ -684,18 +557,9 @@ class BmapCopy(object):
         verified while copying.
         """
 
-        # Create the queue for block batches and start the reader thread, which
-        # will read the image in batches and put the results to '_batch_queue'.
-        self._batch_queue = Queue.Queue(self._batch_queue_len)
-        thread.start_new_thread(self._get_data, (verify,))
-
         blocks_written = 0
         bytes_written = 0
         fsync_last = 0
-
-        self._progress_started = False
-        self._progress_index = 0
-        self._progress_time = datetime.datetime.now()
 
         if self.image_size and self._dest_is_regfile:
             # If we already know image size, make sure that destination file
@@ -707,18 +571,8 @@ class BmapCopy(object):
 
         # Read the image in '_batch_blocks' chunks and write them to the
         # destination file
-        while True:
-            batch = self._batch_queue.get()
-            if batch is None:
-                # No more data, the image is written
-                break
-            elif batch[0] == "error":
-                # The reader thread encountered an error and passed us the
-                # exception.
-                exc_info = batch[1]
-                reraise(exc_info[0], exc_info[1], exc_info[2])
-
-            (start, end, buf) = batch[1:4]
+        for image_section in self._get_data(verify):
+            (start, end, buf) = image_section
 
             assert len(buf) <= (end - start + 1) * self.block_size
             assert len(buf) > (end - start) * self.block_size
@@ -739,11 +593,8 @@ class BmapCopy(object):
                     % (start, end, self._dest_path, err)
                 )
 
-            self._batch_queue.task_done()
             blocks_written += end - start + 1
             bytes_written += len(buf)
-
-            self._update_progress(blocks_written)
 
         if not self.image_size:
             # The image size was unknown up until now, set it
@@ -885,13 +736,13 @@ class BmapBdevCopy(BmapCopy):
             self._sysfs_scheduler_path, "none"
         ) as scheduler_chg:
             if max_ratio_chg.error:
-                _log.warning(
+                logger.warning(
                     "failed to disable excessive buffering, expect "
                     "worse system responsiveness (reason: cannot set "
                     f"max. I/O ratio to 1: {max_ratio_chg.error})"
                 )
             if scheduler_chg.error:
-                _log.info(
+                logger.info(
                     "failed to enable I/O optimization, expect "
                     "suboptimal speed (reason: cannot switch to the "
                     f"{max_ratio_chg.temp_value} I/O scheduler: "
@@ -899,7 +750,7 @@ class BmapBdevCopy(BmapCopy):
                     f"{max_ratio_chg.error})"
                 )
             if max_ratio_chg.error or scheduler_chg.error:
-                _log.info(
+                logger.info(
                     "You may want to set these I/O optimizations through a udev rule "
                     "like this:\n"
                     "#/etc/udev/rules.d/60-bmaptool-optimizations.rules\n"

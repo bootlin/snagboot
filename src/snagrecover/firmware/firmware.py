@@ -20,15 +20,10 @@
 import logging
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
-from snagrecover.firmware.imx_fw import imx_run
-from snagrecover.firmware.sama5_fw import sama5_run
-from snagrecover.firmware.am335x_fw import am335x_run
-from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
-import usb
 
-def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
+def stm32mp1_run(port, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle stm32mp1 firmware
 	so we can leave it in the common module for now
@@ -39,7 +34,7 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 		partprefix = "@Partition3"
 	else:
 		cli_error(f"unsupported firmware {fw_name}")
-	print("Searching for partition id...")
+	logger.info("Searching for partition id...")
 	partid = dfu.search_partid(port, partprefix, match_prefix=True)
 	if partid is None and partprefix == "@Partition3":
 		partprefix = "@SSBL"
@@ -47,14 +42,14 @@ def stm32mp1_run(port: usb.core.Device, fw_name: str, fw_blob: bytes):
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partprefix}*'")
 	dfu_cmd = dfu.DFU(port)
-	print("Downloading file...")
+	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
-	print("Done")
+	logger.info("Done")
 	return None
 
-def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
+def am6x_run(dev, fw_name: str, fw_blob: bytes):
 	"""
-	There isn't a lot of complicated logic to handle am62x firmware
+	There isn't a lot of complicated logic to handle am6x firmware
 	so we can leave it in the common module for now
 	"""
 	# find firmware altsetting (i.e. partition id)
@@ -66,16 +61,16 @@ def am62x_run(dev: usb.core.Device, fw_name: str, fw_blob: bytes):
 		partname = "u-boot.img"
 	else:
 		cli_error(f"unsupported firmware {fw_name}")
-	print("Searching for partition id...")
+	logger.info("Searching for partition id...")
 	partid = dfu.search_partid(dev, partname)
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partname}'")
 	dfu_cmd = dfu.DFU(dev, stm32=False)
-	print("Downloading file...")
+	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
-	print("Done")
+	logger.info("Done")
 	if fw_name == "u-boot":
-		print("Sending detach command...")
+		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
@@ -93,22 +88,26 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
 
-	print(f"Installing firmware {fw_name}")
+	logger.info(f"Installing firmware {fw_name}")
 	if subfw_name != "":
-		print(f"Subfirmware: {subfw_name}")
+		logger.info(f"Subfirmware: {subfw_name}")
 	if soc_family == "sama5":
+		from snagrecover.firmware.sama5_fw import sama5_run
 		sama5_run(port, fw_name, fw_blob)
 	elif soc_family == "stm32mp1":
 		stm32mp1_run(port, fw_name, fw_blob)
 	elif soc_family == "imx":
+		from snagrecover.firmware.imx_fw import imx_run
 		imx_run(port, fw_name, fw_blob, subfw_name)
 	elif soc_family == "am335x":
+		from snagrecover.firmware.am335x_fw import am335x_run
 		am335x_run(port, fw_name)
 	elif soc_family == "sunxi":
+		from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
 		sunxi_run(port, fw_name, fw_blob)
-	elif soc_family == "am62x":
-		am62x_run(port, fw_name, fw_blob)
+	elif soc_family == "am6x":
+		am6x_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
-	print(f"Done installing firmware {fw_name}")
+	logger.info(f"Done installing firmware {fw_name}")
 

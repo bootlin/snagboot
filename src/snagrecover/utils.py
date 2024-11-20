@@ -5,10 +5,12 @@ import time
 import logging
 logger = logging.getLogger("snagrecover")
 
+from snagrecover.usb import SnagbootUSBContext
+
 import yaml
 import os
 
-USB_RETRIES = 10
+USB_RETRIES = 9
 USB_INTERVAL = 1
 
 def get_family(soc_model: str) -> str:
@@ -21,11 +23,11 @@ def is_usb_path(usb_addr) -> bool:
 	return isinstance(usb_addr, tuple) and isinstance(usb_addr[1], tuple)
 
 def access_error(dev_type: str, dev_addr: str):
-	print(f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights", file=sys.stderr)
+	logger.info(f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights")
 	sys.exit(-1)
 
 def cli_error(error: str):
-	print(f"CLI error: {error}", file=sys.stderr)
+	logger.info(f"CLI error: {error}")
 	sys.exit(-1)
 
 def parse_usb_ids(usb_id: str) -> tuple:
@@ -54,34 +56,48 @@ def find_usb_paths(usb_id: tuple) -> list:
 	(vid,pid) = usb_id
 	usb_paths = []
 
-	print(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
+	logger.debug(f"Searching for USB device paths matching {prettify_usb_addr((vid,pid))}...")
 
-	devices = usb.core.find(idVendor=vid, idProduct=pid, find_all=True)
+	SnagbootUSBContext.rescan()
+	devices = list(SnagbootUSBContext.find(idVendor=vid, idProduct=pid))
 
 	for dev in devices:
 		usb_paths.append((dev.bus, dev.port_numbers))
 
 	return usb_paths
 
-def parse_usb_addr(usb_addr: str, find_all=False) -> tuple:
+def count_duplicates(lst):
+	return len(lst) - len(set(lst))
+
+def usb_addr_to_path(usb_addr: str, find_all=False) -> tuple:
 	"""
 	parses vid:pid addresses into (vid,pid)
 	and bus-port1.port2.[...] into (bus, (port1,port2,...))
 	"""
+
 	if ":" in usb_addr:
 		usb_id = parse_usb_ids(usb_addr)
 		usb_paths = find_usb_paths(usb_id)
 		if usb_paths == []:
 			return None
 		if find_all:
-			return usb_paths
-		else:
-			if len(usb_paths) > 1:
-				print(f"Found too many ({len(usb_paths)}) possible results matching {usb_addr}!")
-				logger.error(f"Too many results for address {usb_addr}!{str(usb_paths)}")
-				access_error("USB", usb_addr)
+			if count_duplicates(usb_paths) > 0:
+				time.sleep(1)
 
-			return usb_paths[0]
+				SnagbootUSBContext.hard_rescan()
+				usb_paths = find_usb_paths(usb_id)
+
+				if count_duplicates(usb_paths) > 0:
+					logger.error(f"Found {count_duplicates(usb_paths)} duplicate USB paths! {usb_paths}")
+					access_error("USB", usb_addr)
+
+			return usb_paths
+
+		if len(usb_paths) > 1:
+			logger.error(f"Too many results for address {usb_addr}! {usb_paths}")
+			access_error("USB", usb_addr)
+
+		return usb_paths[0]
 	else:
 		return parse_usb_path(usb_addr)
 
@@ -91,13 +107,13 @@ def prettify_usb_addr(usb_addr) -> str:
 	else:
 		return f"{usb_addr[0]:04x}:{usb_addr[1]:04x}"
 
-def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
+def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
+	SnagbootUSBContext.rescan()
 
-	for i in range(USB_RETRIES):
-		dev_list = list(usb.core.find(bus=usb_path[0], \
-					port_numbers=usb_path[1], \
-					find_all=True))
+	for i in range(retries + 1):
+		SnagbootUSBContext.rescan()
+		dev_list = list(SnagbootUSBContext.find(bus=usb_path[0], port_numbers=usb_path[1]))
 
 		nb_devs = len(dev_list)
 
@@ -107,14 +123,16 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 			try:
 				dev.get_active_configuration()
 				return dev
+			except NotImplementedError:
+				return dev
 			except usb.core.USBError:
 				logger.warning(f"Failed to get configuration descriptor for device at {pretty_addr}!")
 
 		elif nb_devs > 1:
-			print(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
-			logger.warning(f"Too many results for address {pretty_addr}!{str(dev_list)}")
+			logger.info(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
+			logger.warning(f"Too many results for address {pretty_addr}!\{str(dev_list)}")
 
-		print(f"USB retry {i + 1}/{USB_RETRIES}")
+		logger.info(f"USB retry {i + 1}/{retries}")
 		time.sleep(USB_INTERVAL)
 
 
@@ -157,9 +175,9 @@ def get_recovery(soc_family: str):
 	elif soc_family == "sunxi":
 		from snagrecover.recoveries.sunxi import main as sunxi_recovery
 		return sunxi_recovery
-	elif soc_family == "am62x":
-		from snagrecover.recoveries.am62x import main as am62x_recovery
-		return am62x_recovery
+	elif soc_family == "am6x":
+		from snagrecover.recoveries.am6x import main as am6x_recovery
+		return am6x_recovery
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 

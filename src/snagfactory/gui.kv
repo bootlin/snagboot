@@ -1,0 +1,352 @@
+#:kivy 2.3.0
+
+<Label>
+    color: 0, 0, 0, 1
+    font_size: sp(20)
+
+<SnagFactoryErrorDialog>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+
+        Label:
+            text: "There is an issue with this configuration file:"
+
+        Label:
+            text: root.msg
+            text_size: self.width, None
+
+        Button:
+            text: "Dismiss"
+            on_release: app.call_ui("dismiss_popup")
+            background_normal: ""
+            background_color: 0, 0, 1
+
+<SnagFactoryFileDialog>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            rootpath: root.rootpath
+            path: root.path
+            sort_func: root.sort_func
+            filters: root.filters
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(30)
+            Button:
+                text: "Cancel"
+                on_release: app.call_ui("dismiss_popup")
+                background_normal: ""
+                background_color: 1, 0, 0
+
+            Button:
+                text: "Load"
+                on_release: root.handle_load(filechooser.selection)
+                background_normal: ""
+                background_color: 0.5, 0.5, 1
+
+<SnagFactoryBoard>
+    size_hint_y: None
+    height: dp(65)
+    phase_label: phase_label
+    board_box: board_box
+
+    BoxLayout:
+        id: board_box
+        pos: root.pos
+        size: root.size
+        orientation: "horizontal"
+        padding: dp(10)
+
+        canvas:
+            Color:
+                rgb: 1, 0.38, 0.10
+            BoxShadow:
+                size: board_box.size
+                pos: board_box.pos
+                border_radius: 10, 10, 10, 10
+            Color:
+                rgb: 1, 1, 1
+            RoundedRectangle:
+                size: board_box.size
+                pos: board_box.pos
+
+        Label:
+            text_size: self.width, self.height
+            text: root.path
+            size_hint_x: 0.1
+            halign: "left"
+            valign: "middle"
+
+        Label:
+            text_size: self.width, self.height
+            text: root.soc_model
+            size_hint_x: 0.1
+            halign: "center"
+            valign: "middle"
+
+        Label:
+            size_hint_x: 0.25
+            text_size: self.width, self.height
+            text: root.progbar
+            halign: "center"
+            valign: "middle"
+            shorten: True
+
+        Label:
+            id: phase_label
+            size_hint_x: 0.1
+            text_size: self.width, self.height
+            text: root.phase
+            halign: "center"
+            valign: "middle"
+            color: root.phase_color
+
+        Label:
+            text_size: self.width, self.height
+            size_hint_x: 0.25
+            text: root.status
+            color: root.status_color
+            halign: "left"
+            valign: "middle"
+            shorten: True
+
+        Button:
+            text: "show logs"
+            size_hint_x: 0.1
+            text_size: self.width, self.height
+            on_press: root.show_verbose_log(self)
+            background_color: 0.6, 0.76, 1, 1
+            background_normal: ""
+            halign: "center"
+            valign: "middle"
+
+<SnagFactoryLabeledButton@BoxLayout>
+    orientation: "vertical"
+    text: ""
+    callback: None
+    width: 0
+    height: 0
+    background_normal: ""
+
+    Button:
+        size_hint: None, None
+        background_color: 0,0,0,0
+        canvas:
+            Rectangle:
+                size: dp(80),dp(80)
+                pos: self.pos
+                source: root.background_normal
+        on_press: self.background_color = 1, 1, 1, 1; app.call_ui(root.callback, root)
+        on_release: self.background_color = 0, 0, 0, 0;
+
+    Label:
+        text: root.text
+        text_size: self.size
+        halign: "center"
+        valign: "top"
+
+<SnagFactorySidebar@BoxLayout>
+    canvas:
+        Color:
+            rgb: 1, 0.38, 0.10
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    SnagFactoryLabeledButton:
+        background_normal: "start.png"
+        callback: "start"
+        text: "start"
+
+    Label:
+        text: ""
+
+    ToggleButton:
+        size_hint: None, None
+        center_x: 0
+        width: dp(70)
+        height: dp(37)
+        background_normal: "boards.png"
+        background_down: "boards.png"
+        background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
+        state: "down"
+        text: ""
+        group: "main_tab"
+        on_press: app.call_ui("view_board_list");
+
+    ToggleButton:
+        size_hint: None, None
+        center_x: 0
+        width: dp(80)
+        height: dp(76)
+        background_normal: "config.png"
+        background_down: "config.png"
+        background_color: (0, 0, 0, 0.5) if self.state == "down" else (0, 0, 0, 1)
+        text: ""
+        group: "main_tab"
+        on_press: app.call_ui("view_config")
+
+    Label:
+        test: ""
+
+    Button:
+        size_hint: None, None
+        center_x: 0
+        width: dp(80)
+        height: dp(61)
+        background_normal: "load_config.png"
+        text: ""
+        on_press: app.call_ui("open_config_dialog");
+
+    Button:
+        size_hint: None, None
+        center_x: 0
+        width: dp(80)
+        height: dp(61)
+        background_normal: "view_logs.png"
+        text: ""
+        on_press: app.call_ui("open_log_dialog");
+
+
+<SnagFactoryLogView@BoxLayout>
+    log_area: log_area
+    log_board_path: log_board_path
+
+    Label:
+        size_hint_y: 0.1
+        text: "Detailed logs"
+        text_size: self.width, None
+
+    Label:
+        id: log_board_path
+        size_hint_y: 0.1
+        text_size: self.width, None
+        text: ""
+
+    ScrollView:
+        id: log_scrollview
+        width: root.width
+        size_hint_y: 0.8
+        do_scroll_x: False
+        scroll_y: 0
+        scroll_type: ["bars"]
+
+        Label:
+            id: log_area
+            text_size: self.width, None
+            size: self.texture_size
+            size_hint_y: None
+            text: ""
+            halign: "left"
+            valign: "top"
+
+
+<SnagFactoryUI>
+    id: snagfactory_ui
+    widget_container: widget_container
+    log_boxlayout: log_boxlayout
+    log_area: log_boxlayout.log_area
+    log_board_path: log_boxlayout.log_board_path
+    main_page: main_page
+    session_config: session_config
+
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "horizontal"
+
+        SnagFactorySidebar:
+            size_hint_x: None
+            width: dp(80)
+            orientation: "vertical"
+            padding: dp(5)
+            spacing: dp(20)
+
+        PageLayout:
+            id: main_page
+            border: 0
+            anim_kwargs: {'d': 0.2, 't': 'in_quad'}
+
+            BoxLayout:
+                orientation: "horizontal"
+
+                BoxLayout:
+                    orientation: "vertical"
+
+                    BoxLayout:
+                        size_hint_y: 0.1
+                        orientation: "vertical"
+                        padding: dp(10)
+                        spacing: dp(5)
+
+                        canvas:
+                            Color:
+                                rgb: 0.90, 0.90, 0.90
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+
+                        Label:
+                            font_size: sp(15)
+                            text: root.phase_label
+                            text_size: self.size
+                            color: root.phase_label_color
+                            valign: "middle"
+
+                        Label:
+                            font_size: sp(20)
+                            text: root.status
+                            text_size: self.size
+                            valign: "middle"
+
+                    ScrollView:
+                        id: board_scrollview
+                        do_scroll_x: False
+                        scroll_type: ["bars"]
+
+                        GridLayout:
+                            id: widget_container
+                            pos: board_scrollview.pos
+                            height: self.minimum_height
+                            width: board_scrollview.width
+                            cols: 1
+                            size_hint_y: None
+                            spacing: 20
+                            padding: 5
+
+                SnagFactoryLogView:
+                    id: log_boxlayout
+                    size_hint_x: 0
+                    orientation: "vertical"
+
+            SnagFactoryConfig:
+                id: session_config
+
+

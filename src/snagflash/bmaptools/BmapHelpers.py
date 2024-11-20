@@ -21,7 +21,6 @@ This module contains various shared helper functions.
 import os
 import struct
 import subprocess
-from fcntl import ioctl
 from subprocess import PIPE
 
 # Path to check for zfs compatibility.
@@ -62,28 +61,6 @@ def human_time(seconds):
         result += "%dm " % minutes
 
     return result + "%.1fs" % seconds
-
-
-def get_block_size(file_obj):
-    """
-    Return block size for file object 'file_obj'. Errors are indicated by the
-    'IOError' exception.
-    """
-
-    # Get the block size of the host file-system for the image file by calling
-    # the FIGETBSZ ioctl (number 2).
-    try:
-        binary_data = ioctl(file_obj, 2, struct.pack("I", 0))
-        bsize = struct.unpack("I", binary_data)[0]
-        if not bsize:
-            raise IOError("get 0 bsize by FIGETBSZ ioctl")
-    except IOError as err:
-        stat = os.fstat(file_obj.fileno())
-        if hasattr(stat, "st_blksize"):
-            bsize = stat.st_blksize
-        else:
-            raise IOError("Unable to determine block size")
-    return bsize
 
 
 def program_is_available(name):

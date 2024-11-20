@@ -150,13 +150,13 @@ def main():
 	sdp_cmd.close()
 
 	# WAIT FOR SPL DEVICE
-	print("Waiting for SPL device...")
+	logger.info("Waiting for SPL device...")
 	t0 = time.time()
 	while time.time() - t0 < 5:
 		# The SPL device should be found at the same USB path as the ROM device
 		usb_dev = get_usb(rom_path, error_on_fail=False)
 		if usb_dev is not None and usb_dev.address != rom_devnum:
-			print(f"Found USB device at {prettify_usb_addr(rom_path)} for SPL stage!")
+			logger.info(f"Found USB device at {prettify_usb_addr(rom_path)} for SPL stage!")
 			break
 
 		time.sleep(1)
@@ -175,5 +175,5 @@ def main():
 		run_firmware(sdp_cmd, "u-boot")
 
 	sdp_cmd.close()
-	print("DONE")
+	logger.info("DONE")
 

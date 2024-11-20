@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import serial
+import serial.tools.list_ports
 import os.path
 import glob
 import time
@@ -25,8 +26,9 @@ from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import get_usb, prettify_usb_addr
+from snagrecover.utils import get_usb, prettify_usb_addr, access_error
 import logging
+import platform
 
 logger = logging.getLogger("snagrecover")
 
@@ -78,6 +80,41 @@ def check_id(memops: memory_ops.MemoryOps) -> bool:
     return check
 
 def get_serial_port_path(dev) -> str:
+	if platform.system() == "Windows":
+		return get_windows_serial_port_path(dev)
+
+	return get_linux_serial_port_path(dev)
+
+def get_windows_serial_port_path(dev) -> str:
+	"""
+	Finding the serial port device associated with a libusb device is not
+	straightforward on Windows.
+	Start by listing all serial ports that have the same port number list
+	as the libusb device. Unfortunately, the libusb bus number cannot be
+	obtained in the same manner. If multiple serial ports have the same port
+	number list, then fail explicitely.
+	"""
+	pretty_path = prettify_usb_addr((dev.bus, dev.port_numbers))
+
+	matching_ports = []
+	for port_info in serial.tools.list_ports.comports():
+		if port_info.location is None:
+			continue
+
+		win_bus_num, sep, port_numbers = port_info.location.partition("-")
+		port_numbers = tuple([int(p) for p in port_numbers.split(".")])
+		if port_numbers == dev.port_numbers and port_info.vid == dev.idVendor and port_info.pid == dev.idProduct:
+			matching_ports.append(port_info)
+
+	if len(matching_ports) == 0:
+		access_error("USB", pretty_path)
+
+	if len(matching_ports) == 1:
+		return matching_ports[0].device
+
+	raise SystemError(f"USB path {pretty_path} maps to {len(matching_ports)} possible COM ports: {[port.name for port in matching_ports]}. Please move these serial devices to different physical USB ports or plug them behind an additional USB hub")
+
+def get_linux_serial_port_path(dev) -> str:
 	cfg = dev.get_active_configuration()
 	pretty_path = prettify_usb_addr((dev.bus, dev.port_numbers))
 	if cfg.bNumInterfaces == 0:
@@ -90,51 +127,57 @@ def get_serial_port_path(dev) -> str:
 		raise ValueError(f"Error: no tty devices were found at {intf_path}")
 
 	tty_path = tty_paths[0]
-	return f"/dev/{os.path.basename(tty_path)}"
+	return os.path.realpath(f"/dev/{os.path.basename(tty_path)}")
 
 def main():
 	# CONNECT TO SAM-BA MONITOR
-	print("Connecting to SAM-BA monitor...")
+	logger.info("Connecting to SAM-BA monitor...")
 	soc_model = recovery_config["soc_model"]
 
 	dev = get_usb(recovery_config["usb_path"])
 
 	# SAM-BA monitor needs a reset sometimes
-	dev.reset()
+	try:
+		dev.reset()
+	except NotImplementedError:
+		pass
 	time.sleep(1)
 
 	port_path = get_serial_port_path(dev)
-	with serial.Serial(os.path.realpath(port_path), baudrate=115200, timeout=5, write_timeout=5) as port:
-		monitor = sambamon.SambaMon(port)
-		memops = memory_ops.MemoryOps(monitor)
-		logger.info("SAM-BA Monitor version string: " + monitor.get_version())
-		print("Done connecting")
+	port = serial.Serial(port_path, baudrate=115200, timeout=5, write_timeout=5)
 
-		# CHECK BOARD ID
-		print("Checking chip id...")
-		if not check_id(memops):
-			raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
+	monitor = sambamon.SambaMon(port)
+	memops = memory_ops.MemoryOps(monitor)
+	logger.info("SAM-BA Monitor version string: " + monitor.get_version())
+	logger.info("Done connecting")
 
-		print("Done checking")
-		if soc_model == "sama5d2":
-			# reconfigure L2 cache as SRAM
-			memops.write32(SFR_L2CC_HRAMC, 0x00)
+	# CHECK BOARD ID
+	logger.info("Checking chip id...")
+	if not check_id(memops):
+		raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
 
-		# INITIALIZE CLOCK TREE
-		print("Initializing clock tree...")
-		run_firmware(port, "lowlevel")
-		print("Done initializing clock tree")
+	logger.info("Done checking")
+	if soc_model == "sama5d2":
+		# reconfigure L2 cache as SRAM
+		memops.write32(SFR_L2CC_HRAMC, 0x00)
+
+	# INITIALIZE CLOCK TREE
+	logger.info("Initializing clock tree...")
+	run_firmware(port, "lowlevel")
+	logger.info("Done initializing clock tree")
 
 
-		# INITIALIZE EXTRAM
-		print("Initializing external RAM...")
-		run_firmware(port, "extram")
-		print("Done initializing RAM")
+	# INITIALIZE EXTRAM
+	logger.info("Initializing external RAM...")
+	run_firmware(port, "extram")
+	logger.info("Done initializing RAM")
 
-		# REMAP ROM ADDRESSES
-		memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
+	# REMAP ROM ADDRESSES
+	memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
 
-		# DOWNLOAD U-BOOT
-		print("Installing U-Boot...")
-		run_firmware(port, "u-boot")
-		print("Done!")
+	# DOWNLOAD U-BOOT
+	logger.info("Installing U-Boot...")
+	run_firmware(port, "u-boot")
+	logger.info("Done!")
+
+	port.close()

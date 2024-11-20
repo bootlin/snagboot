@@ -1,0 +1,36 @@
+boards:
+  "0451:6165": "am625"
+
+soc-models:
+  am625-firmware:
+    tiboot3:
+      path: "tiboot3.bin"
+    tispl:
+      path: "tispl.bin"
+    u-boot:
+      path: "u-boot.img"
+
+  am625-tasks:
+    - target-device: mmc0
+      fb-buffer-addr: 0xd0000000
+      fb-buffer-size: 0x7000000
+
+    - task: gpt
+      args:
+        - name: boot
+          size: 4M
+          bootable: True
+        - name: rootfs
+          size: 1G
+
+    - task: flash
+      args:
+        - part: "rootfs"
+          image: "rootfs.ext4"
+        - part: "hwpart 1"
+          image: "boot.bin"
+
+    - task: run
+      args:
+        - "oem_run: mmc partconf 0 1 1 0"
+

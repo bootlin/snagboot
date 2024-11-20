@@ -1,0 +1,123 @@
+#:kivy 2.3.0
+
+<CheckBox>
+    color: 1, 0.38, 0.10
+
+<AccordionItem>
+    background_normal: ""
+    background_selected: ""
+    title_template: "SnagFactoryAccordionTitle"
+
+<SnagFactoryPanelItem>
+    background_normal: ""
+    text_size: self.size
+
+    Label:
+        text: root.content_text
+        size_hint: None, None
+        size: self.texture_size
+
+<TabbedPanelStrip>
+    background_normal: ""
+    col_default_width: dp(140)
+    col_force_default: True
+
+    canvas:
+        Color:
+            rgba: (0.80, 0.80, 0.80)
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+[SnagFactoryAccordionTitle@Label]:
+    text: ctx.title
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        BoxShadow:
+            size: self.size
+            pos: self.pos
+            border_radius: 0, 0, 0, 0
+            blur_radius: 0
+            spread_radius: 3, 3
+        Color:
+            rgb: 0.8, 0.8, 0.8
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+<SnagFactoryBoardID>
+    orientation: "horizontal"
+
+    Label:
+        text: root.usb_ids
+
+    Label:
+        text: "->"
+
+    Label:
+        text: root.soc_model
+
+<SnagFactorySoCFamily>
+    background_image: ""
+    strip_image: ""
+    tab_width: self.width
+
+    canvas:
+        Color:
+            rgba: (1, 1, 1)
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+<SnagFactoryConfig@BoxLayout>
+    orientation: "horizontal"
+    padding: dp(5)
+    spacing: dp(10)
+    soc_families_view: soc_families_view
+    board_ids_view: board_ids_view
+
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint_x: 0.4
+        spacing: dp(5)
+
+        BoxLayout:
+            orientation: "vertical"
+            size_hint_y: 0.2
+            padding: dp(5)
+            id: board_ids_view
+
+            canvas:
+                Color:
+                    rgb: 0, 0, 0
+                BoxShadow:
+                    size: self.size
+                    pos: self.pos
+                    border_radius: 0, 0, 0, 0
+                    blur_radius: 0
+                    spread_radius: 3, 3
+                Color:
+                    rgb: 1, 1, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+            Label:
+                text: "USB targets"
+
+        Accordion:
+            id: soc_families_view
+            orientation: "vertical"
+
+            AccordionItem:
+                title: "No config file loaded yet!"
+

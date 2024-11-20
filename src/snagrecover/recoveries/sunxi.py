@@ -19,11 +19,13 @@
 
 import usb
 import time
-import functools
+import logging
+logger = logging.getLogger("snagrecover")
+
 from snagrecover.protocols import fel
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error, prettify_usb_addr, is_usb_path
+from snagrecover.utils import get_usb, access_error, prettify_usb_addr
 
 USB_TIMEOUT = 5000
 USB_RETRY = 5
@@ -31,28 +33,20 @@ USB_RETRY = 5
 def main():
 	# Try to reset device
 	usb_addr = recovery_config["usb_path"]
-	if is_usb_path(usb_addr):
-		find_usb = functools.partial(usb.core.find,
-				bus=usb_addr[0],
-				port_numbers=usb_addr[1])
-	else:
-		find_usb = functools.partial(usb.core.find,
-				idVendor=usb_addr[0],
-				idProduct=usb_addr[1])
 
 	# FEL devices seem to require a slightly special retry procedure, which
 	# is why we don't just call get_usb from utils.
 	for i in range(USB_RETRY):
-		dev = find_usb()
+		dev = get_usb(usb_addr, error_on_fail=False, retries=0)
 		if dev is None:
 			if i == USB_RETRY - 1:
 				access_error("USB FEL", prettify_usb_addr(usb_addr))
-			print("Failed to find device, retrying...")
+			logger.info("Failed to find device, retrying...")
 			continue
 		try:
 			dev.reset()
 		except usb.core.USBError as err:
-			print("Failed to reset USB device, retrying...")
+			logger.info("Failed to reset USB device, retrying...")
 			if i == USB_RETRY - 1:
 				raise Exception("Maximum retry count exceeded") from err
 			time.sleep(2)
@@ -61,16 +55,16 @@ def main():
 
 	# Try to set device configuration
 	for i in range(USB_RETRY):
-		dev = find_usb()
+		dev = get_usb(usb_addr, error_on_fail=False, retries=0)
 		if dev is None:
 			if i == USB_RETRY - 1:
 				access_error("USB FEL", prettify_usb_addr(usb_addr))
-			print("Failed to find device, retrying...")
+			logger.info("Failed to find device, retrying...")
 			continue
 		try:
 			dev.set_configuration()
 		except usb.core.USBError as err:
-			print("Failed to initialize device, retrying...")
+			logger.info("Failed to initialize device, retrying...")
 			if i == USB_RETRY - 1:
 				raise Exception("Maximum retry count exceeded") from err
 			time.sleep(1)

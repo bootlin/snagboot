@@ -1,0 +1,49 @@
+boards:
+  "0451:6165": "am625"
+
+soc-models:
+  am625-firmware:
+    tiboot3:
+      path: "tiboot3.bin"
+    tispl:
+      path: "tispl.bin"
+    u-boot:
+      path: "u-boot.img"
+
+  am625-tasks:
+    - eraseblk-size: 0x40000
+      fb-buffer-addr: 0xd0000000
+      fb-buffer-size: 0x7000000
+      target-device: nor0
+
+    - task: run
+      args:
+        - "oem_run:mtd list"
+        - "oem_run:setenv mtdids nor0=nor0"
+
+    - task: mtd-parts
+      args:
+        - name: ospi.tiboot3
+          size: 0x80000
+        - name: ospi.tispl
+          size: 0x200000
+        - name: ospi.u-boot
+          size: 0x400000
+        - name: ospi.env
+          size: 0x40000
+        - name: ospi.env.backup
+          size: 0x40000
+        - name: ospi.rootfs
+          size: 0x1fc0000
+          start: 0x2000000
+
+    - task: flash
+      args:
+        - image: "tiboot3.bin"
+          part: ospi.tiboot3
+        - image: "tispl.bin"
+          part: ospi.tispl
+        - image: "u-boot.img"
+          part: ospi.u-boot
+        - image: "rootfs.ext4"
+          part: ospi.rootfs

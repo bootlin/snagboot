@@ -97,9 +97,9 @@ def am335x_run(port, fw_name: str):
 	bootp_thread = threading.Thread(name="Recovery BOOTP server for AM335x", target=bootp_proc, args=[bootp_server])
 	bootp_thread.daemon = True
 
-	print("Starting TFTP server...")
+	logger.info("Starting TFTP server...")
 	tftp_thread.start()
-	print("Starting BOOTP server...")
+	logger.info("Starting BOOTP server...")
 	bootp_thread.start()
 
 	t0 = time.time()
@@ -122,8 +122,8 @@ def am335x_run(port, fw_name: str):
 	tftp_server.stop()
 	logger.info("Waiting for TFTP server to stop...")
 
-	print("Waiting for BOOTP shutdown...")
+	logger.info("Waiting for BOOTP shutdown...")
 	bootp_thread.join()
-	print("Waiting for TFTP shutdown...")
+	logger.info("Waiting for TFTP shutdown...")
 	tftp_thread.join()
 

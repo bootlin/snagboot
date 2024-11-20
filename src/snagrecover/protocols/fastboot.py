@@ -23,7 +23,7 @@ from snagrecover import utils
 import logging
 logger = logging.getLogger("snagrecover")
 
-MAX_LIBUSB_TRANSFER_SIZE = 0x8000
+MAX_LIBUSB_TRANSFER_SIZE = 0x40000
 
 """
 See doc/android/fastboot-protocol.rst in the U-Boot sources
@@ -75,17 +75,17 @@ class Fastboot():
 			ret = self.dev.read(self.ep_in, 256, timeout=self.timeout)
 			status = bytes(ret[:4])
 			if status == b"INFO":
-				print(f"(bootloader) {bytes(ret[4:256])}")
+				logger.debug(f"(bootloader) {bytes(ret[4:256])}")
 			elif status == b"TEXT":
-				print(f"(bootloader) {bytes(ret[4:256])}", end="")
+				logger.debug(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
 				raise Exception(f"Fastboot fail with message: {bytes(ret[4:256])}")
 			elif status == b"OKAY":
-				logger.info("fastboot OKAY")
+				logger.debug("fastboot OKAY")
 				return bytes(ret[4:])
 			elif status == b"DATA":
 				length = int("0x" + (bytes(ret[4:12]).decode("ascii")), base=16)
-				logger.info(f"fastboot DATA length: {length}")
+				logger.debug(f"fastboot DATA length: {length}")
 				return length
 		raise Exception("Timeout while completing fastboot transaction")
 
@@ -95,7 +95,7 @@ class Fastboot():
 			ret = self.dev.read(self.ep_in, 256, timeout = self.timeout)
 			status = bytes(ret[:4])
 			if status in [b"INFO", b"TEXT"]:
-				print(f"(bootloader) {bytes(ret[4:256])}", end="")
+				logger.info(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
 				raise Exception(f"Fastboot fail with message: {bytes(ret[4:256])}")
 			elif status == b"OKAY":
@@ -106,16 +106,28 @@ class Fastboot():
 	def getvar(self, var: str):
 		packet = b"getvar:" + var.encode("ascii") + b"\x00"
 		ret = self.cmd(packet)
-		print(f"(bootloader) {var} value {ret}")
+		logger.info(f"(bootloader) {var} value {ret}")
+		return ret
 
-	def download(self, path: str):
-		with open(path, "rb") as file:
-			blob = file.read(-1)
-		packet = f"download:{len(blob):08x}".encode()
+	def send(self, blob: bytes, padding: int = None):
+		if padding is None:
+			padding = 0
+
+		packet = f"download:{len(blob) + padding:08x}".encode()
 		self.cmd(packet)
-		for chunk in utils.dnload_iter(blob, self.max_size):
+		for chunk in utils.dnload_iter(blob + b"\x00" * padding, self.max_size):
 			self.dev.write(self.ep_out, chunk, timeout=self.timeout)
 		self.response()
+
+	def download_section(self, path: str, offset: int, size: int, padding: int = None):
+		with open(path, "rb") as file:
+			file.seek(offset)
+			blob = file.read(size)
+
+		self.send(blob, padding)
+
+	def download(self, path: str, padding: int = None):
+		self.download_section(path, 0, -1, padding)
 
 	def erase(self, part: str):
 		packet = f"erase:{part}\x00"
@@ -194,4 +206,15 @@ class Fastboot():
 		"""
 		packet = f"oem bootbus:{arg}\x00"
 		self.cmd(packet)
+
+	def reset(self):
+		"""
+		Run the 'reset' U-Boot command.
+		This one requires special handling because
+		getting the Fastboot gadget response will not be possible.
+		"""
+		packet = "oem run:reset\x00"
+
+		self.dev.write(self.ep_out, packet, timeout=self.timeout)
+
 
