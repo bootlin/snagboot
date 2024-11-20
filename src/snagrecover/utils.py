@@ -38,7 +38,7 @@ def parse_usb_ids(usb_id: str) -> tuple:
 	return (vid,pid)
 
 def parse_usb_path(path: str) -> tuple:
-	path_regex = re.compile('^(\d+)-(\d+)((\.\d+)*)$')
+	path_regex = re.compile(r'^(\d+)-(\d+)((\.\d+)*)$')
 	match = path_regex.match(path)
 	if match is None:
 		cli_error(f"failed to parse USB device path {path}")
@@ -78,7 +78,7 @@ def parse_usb_addr(usb_addr: str, find_all=False) -> tuple:
 		else:
 			if len(usb_paths) > 1:
 				print(f"Found too many ({len(usb_paths)}) possible results matching {usb_addr}!")
-				logger.error(f"Too many results for address {usb_addr}!\{str(usb_paths)}")
+				logger.error(f"Too many results for address {usb_addr}!{str(usb_paths)}")
 				access_error("USB", usb_addr)
 
 			return usb_paths[0]
@@ -112,7 +112,7 @@ def get_usb(usb_path, error_on_fail=True) -> usb.core.Device:
 
 		elif nb_devs > 1:
 			print(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
-			logger.warning(f"Too many results for address {pretty_addr}!\{str(dev_list)}")
+			logger.warning(f"Too many results for address {pretty_addr}!{str(dev_list)}")
 
 		print(f"USB retry {i + 1}/{USB_RETRIES}")
 		time.sleep(USB_INTERVAL)
