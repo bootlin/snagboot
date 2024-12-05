@@ -1,0 +1,6 @@
+tf-a:
+  path: tf-a-stm32mp257f-ev1_usb.stm32
+fip:
+  path: fip_usb.bin
+fip-ddr:
+  path: fip-ddr_usb.bin

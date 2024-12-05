@@ -25,7 +25,7 @@ import os
 
 default_usb_ids =  {
 	# default ROM code USB IDs
-	"stm32mp1": "0483:df11",
+	"stm32mp": "0483:df11",
 	"sama5":    "03eb:6124",
 	"sunxi":    "1f3a:efe8",
 	"am6x":     "0451:6165",

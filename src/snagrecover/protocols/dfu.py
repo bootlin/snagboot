@@ -77,7 +77,7 @@ class DFU():
 
 	def __init__(self, dev: usb.core.Device, stm32: bool = True):
 		self.dev = dev
-		self.stm32 = stm32 # set when dfu is used to recover stm32mp1 boards
+		self.stm32 = stm32 # set when dfu is used to recover stm32mp boards
 		# try to find wTransferSize
 		bMaxPacketSize0 = dev.bMaxPacketSize0
 		self.transfer_size = bMaxPacketSize0

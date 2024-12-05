@@ -23,27 +23,39 @@ from snagrecover.protocols import dfu
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
 
-def stm32mp1_run(port, fw_name: str, fw_blob: bytes):
+def stm32mp_run(port, fw_name: str, fw_blob: bytes):
 	"""
-	There isn't a lot of complicated logic to handle stm32mp1 firmware
+	There isn't a lot of complicated logic to handle stm32mp firmware
 	so we can leave it in the common module for now
 	"""
 	if fw_name == "tf-a":
-		partprefix = "@FSBL"
+		partprefixes = ["@FSBL"]
 	elif fw_name == "fip":
-		partprefix = "@Partition3"
+		partprefixes = ["@Partition3", "@SSBL", "@FIP"]
+	elif fw_name == "fip-ddr":
+		partprefixes = ["@DDR FIP"]
 	else:
 		cli_error(f"unsupported firmware {fw_name}")
+
 	logger.info("Searching for partition id...")
-	partid = dfu.search_partid(port, partprefix, match_prefix=True)
-	if partid is None and partprefix == "@Partition3":
-		partprefix = "@SSBL"
+
+	partid = None
+	for partprefix in partprefixes:
 		partid = dfu.search_partid(port, partprefix, match_prefix=True)
+		if partid is not None:
+			break
+
 	if partid is None:
-		raise Exception(f"No DFU altsetting found with iInterface='{partprefix}*'")
+		raise Exception(f"No DFU altsetting found with iInterface in '{partprefixes}*'")
 	dfu_cmd = dfu.DFU(port)
 	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
+
+	if fw_name == "fip-ddr":
+		logger.info("Sending detach command...")
+		partid = dfu.search_partid(port, "@FIP", match_prefix=True)
+		dfu_cmd.detach(partid)
+
 	logger.info("Done")
 	return None
 
@@ -94,8 +106,8 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	if soc_family == "sama5":
 		from snagrecover.firmware.sama5_fw import sama5_run
 		sama5_run(port, fw_name, fw_blob)
-	elif soc_family == "stm32mp1":
-		stm32mp1_run(port, fw_name, fw_blob)
+	elif soc_family == "stm32mp":
+		stm32mp_run(port, fw_name, fw_blob)
 	elif soc_family == "imx":
 		from snagrecover.firmware.imx_fw import imx_run
 		imx_run(port, fw_name, fw_blob, subfw_name)

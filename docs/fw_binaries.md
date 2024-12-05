@@ -45,7 +45,7 @@ when configuring U-Boot.
   rights to the corresponding USB device. See [snagflash docs](snagflash.md)
   for more details.
 
-## For ST STM32MP1 devices
+## For ST STM32MP1/2 devices
 
 [example](../src/snagrecover/templates/stm32mp1-stm32mp157f-dk2.yaml)
 
@@ -63,6 +63,13 @@ configuration:
 build strategies, you have to pass your U-Boot binary to the tf-a build
 process. For the secure firmware, use SP_MIN if available.
 OPTEE can also work.
+
+configuration:
+ * path
+
+### For STM32MP2 only:
+
+**fip-ddr:** Contains the DDR initialization firmware.
 
 configuration:
  * path

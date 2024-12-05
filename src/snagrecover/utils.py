@@ -160,8 +160,8 @@ def dnload_iter(blob: bytes, chunk_size: int):
 		yield blob[chunk_size * N:chunk_size * N + R]
 
 def get_recovery(soc_family: str):
-	if soc_family == "stm32mp1":
-		from snagrecover.recoveries.stm32mp1 import main as stm32_recovery
+	if soc_family == "stm32mp":
+		from snagrecover.recoveries.stm32mp import main as stm32_recovery
 		return stm32_recovery
 	elif soc_family == "sama5":
 		from snagrecover.recoveries.sama5 import main as sama5_recovery

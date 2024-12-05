@@ -44,7 +44,7 @@ def main():
 	# DOWNLOAD TF-A
 	dfu_cmd = dfu.DFU(dev)
 	run_firmware(dev, "tf-a")
-	if soc_model == "stm32mp13":
+	if soc_model in ["stm32mp13", "stm32mp25"]:
 		logger.info("Sending detach command to SPL...")
 		phase_id = dfu_cmd.stm32_get_phase()
 		dfu_cmd.detach(phase_id)
@@ -62,7 +62,6 @@ def main():
 			layout_blob = flashlayout.build_image()
 			dfu_cmd.download_and_run(layout_blob, part0, offset=0, size=len(layout_blob))
 
-	# DOWNLOAD U-BOOT
 	if soc_model == "stm32mp13":
 		time.sleep(1.5)
 
@@ -77,6 +76,16 @@ def main():
 	dev = get_usb(usb_addr)
 	cfg = dev.get_active_configuration()
 	dfu_cmd = dfu.DFU(dev)
+
+	if soc_model == "stm32mp25":
+		run_firmware(dev, "fip-ddr")
+		time.sleep(1)
+
+	usb.util.dispose_resources(dev)
+	dev = get_usb(usb_addr)
+	cfg = dev.get_active_configuration()
+	dfu_cmd = dfu.DFU(dev)
+
 	run_firmware(dev, "fip")
 
 	# DETACH DFU DEVICE

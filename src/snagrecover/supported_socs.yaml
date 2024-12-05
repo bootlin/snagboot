@@ -48,9 +48,11 @@ tested:
   sama5d4:
         family: sama5
   stm32mp13:
-        family: stm32mp1
+        family: stm32mp
   stm32mp15:
-        family: stm32mp1
+        family: stm32mp
+  stm32mp25:
+        family: stm32mp
 untested:
   a10:
         family: sunxi
