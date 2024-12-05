@@ -14,7 +14,6 @@ def send_tiboot3(dev):
 	# without this delay, USB device will be present but not ready
 	time.sleep(1)
 
-
 def main():
 	usb_addr = recovery_config["usb_path"]
 	dev = get_usb(usb_addr)

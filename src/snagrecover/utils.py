@@ -107,7 +107,18 @@ def prettify_usb_addr(usb_addr) -> str:
 	else:
 		return f"{usb_addr[0]:04x}:{usb_addr[1]:04x}"
 
-def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES) -> usb.core.Device:
+def active_cfg_check(dev: usb.core.Device):
+	try:
+		dev.get_active_configuration()
+	except NotImplementedError:
+		return True
+	except usb.core.USBError:
+		logger.warning(f"Failed to get configuration descriptor for device at {prettify_usb_addr((dev.bus,dev.port_numbers))}!")
+		return False
+
+	return True
+
+def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES, ready_check=active_cfg_check) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
 	SnagbootUSBContext.rescan()
 
@@ -120,13 +131,8 @@ def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES) -> usb.core.Devic
 		if nb_devs == 1:
 			dev = dev_list[0]
 
-			try:
-				dev.get_active_configuration()
+			if ready_check(dev):
 				return dev
-			except NotImplementedError:
-				return dev
-			except usb.core.USBError:
-				logger.warning(f"Failed to get configuration descriptor for device at {pretty_addr}!")
 
 		elif nb_devs > 1:
 			logger.info(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
@@ -134,7 +140,6 @@ def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES) -> usb.core.Devic
 
 		logger.info(f"USB retry {i + 1}/{retries}")
 		time.sleep(USB_INTERVAL)
-
 
 	if error_on_fail:
 		access_error("USB", pretty_addr)

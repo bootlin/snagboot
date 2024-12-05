@@ -18,12 +18,21 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from snagrecover.protocols import fastboot as fb
-from snagrecover.utils import usb_addr_to_path, get_usb, access_error
+from snagrecover.utils import usb_addr_to_path, get_usb, access_error, prettify_usb_addr
 import sys
 import logging
 logger = logging.getLogger("snagflash")
 
 from snagflash.interactive import SnagflashInteractive
+
+def fastboot_ready_check(dev):
+	try:
+		fb.Fastboot(dev)
+	except Exception:
+		logger.warning(f"Failed to init Fastboot object from USB device at {prettify_usb_addr((dev.bus,dev.port_numbers))}")
+		return False
+
+	return True
 
 def fastboot(args):
 	if (args.port is None):
@@ -35,7 +44,7 @@ def fastboot(args):
 	if usb_addr is None:
 		access_error("USB Fastboot", args.port)
 
-	dev = get_usb(usb_addr)
+	dev = get_usb(usb_addr, ready_check=fastboot_ready_check)
 	dev.default_timeout = int(args.timeout)
 
 	fast = fb.Fastboot(dev, timeout = dev.default_timeout)
