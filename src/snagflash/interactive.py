@@ -251,7 +251,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			fast.download_section(path, file_offset + i * fb_size, fb_size)
 
 			target_offset = offset + i * fb_size
-			logger.info(f"erasing flash area offset 0x{target_offset} size 0x{fb_size:x}...")
+			logger.info(f"erasing flash area offset 0x{target_offset:x} size 0x{fb_size:x}...")
 			fast.oem_run(f"mtd erase {part} {target_offset:x} {fb_size:x}")
 
 			logger.info(f"writing section {i + 1}/{nchunks}")
@@ -327,6 +327,11 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 	def run(self, cmds: list):
 		for cmd in cmds:
+			cmd = cmd.strip()
+
+			if cmd == "":
+				continue
+
 			logger.info(f"running command {cmd}")
 			match = __class__.cmd_pattern.match(cmd)
 			if match is None:
