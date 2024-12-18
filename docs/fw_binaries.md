@@ -258,3 +258,30 @@ DM firmware, U-Boot SPL for A53 and device tree blobs
 configuration:
  * path
 
+## For Xilinx ZynqMP devices
+
+[example](../src/snagrecover/templates/zynqmp-generic.yaml)
+
+Detailed instructions for building the required boot images can be found in the
+[Xilinx documentation](https://xilinx.github.io/Embedded-Design-Tutorials), in
+the "boot-and-configuration" section for ZynqMP SoCs. Please note that the
+first boot image containing only the FSBL and PMUFW should not be required, as
+Snagboot is capable of extracting a working first-stage boot image from the
+full boot image.
+
+The following images are required for all AM6xx SoCs:
+
+**boot:** Xilinx ZynqMP boot image containing the Xilinx FSBL, PMUFW, ATF,
+control DT and U-Boot proper. The FSBL should be compiled with USB support
+enabled.
+
+configuration:
+ * path
+
+**fsbl:** (optional) Xilinx ZynqMP boot image containing the Xilinx FSBL and
+PMUFW. This is optional, and should only be provided if Snagboot fails to
+extract the FSBL and PMUFW from the complete boot image.
+
+configuration:
+ * path
+

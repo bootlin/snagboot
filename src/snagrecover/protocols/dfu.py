@@ -25,6 +25,16 @@ logger = logging.getLogger("snagrecover")
 from errno import EIO,ENODEV,EPIPE
 from snagrecover import utils
 
+def list_partids(dev: usb.core.Device):
+	cfg = dev.get_active_configuration()
+	intfs = cfg.interfaces()
+	partids = []
+
+	for intf in intfs:
+		partids.append(intf.bAlternateSetting)
+
+	return partids
+
 def search_partid(dev: usb.core.Device, partname: str, match_prefix=False) -> int:
 	# search for an altsetting associated with a partition name
 	cfg = dev.get_active_configuration()

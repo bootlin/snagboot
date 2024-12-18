@@ -53,6 +53,8 @@ tested:
         family: stm32mp
   stm32mp25:
         family: stm32mp
+  zynqmp:
+        family: zynqmp
 untested:
   a10:
         family: sunxi

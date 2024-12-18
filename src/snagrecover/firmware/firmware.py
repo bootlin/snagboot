@@ -119,6 +119,9 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		sunxi_run(port, fw_name, fw_blob)
 	elif soc_family == "am6x":
 		am6x_run(port, fw_name, fw_blob)
+	elif soc_family == "zynqmp":
+		from snagrecover.firmware.zynqmp_fw import zynqmp_run
+		zynqmp_run(port, fw_name, fw_blob, subfw_name)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")
