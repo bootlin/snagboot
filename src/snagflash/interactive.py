@@ -314,14 +314,14 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		for i in range(nchunks):
 			logger.info(f"flashing section {i + 1}/{nchunks}")
 			target_offset = part_start + offset_lba + i * fb_size_lba
-			fast.download_section(path, file_offset + i * fb_size_lba, fb_size_aligned)
+			fast.download_section(path, file_offset + i * fb_size_aligned, fb_size_aligned)
 
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size_lba:x}")
 
 		if remainder > 0:
 			logger.info("flashing remainder")
 			target_offset = part_start + offset_lba + nchunks * fb_size_lba
-			fast.download_section(path, file_offset + nchunks * fb_size_lba, remainder)
+			fast.download_section(path, file_offset + nchunks * fb_size_aligned, remainder)
 
 			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder_lba:x}")
 
