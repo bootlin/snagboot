@@ -110,7 +110,7 @@ class SnagFactorySession():
 		if platform.system() == "Windows":
 			snagboot_data = os.getenv('APPDATA') + "/snagboot"
 		else:
-			snagboot_data = os.getenv('HOME') + "/.snagboot"
+			snagboot_data = os.getenv('HOME') + "/.config/snagboot"
 
 		self.snagboot_data = snagboot_data
 		self.snagfactory_logs = self.snagboot_data + "/snagfactory/logs"
