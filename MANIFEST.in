@@ -8,4 +8,5 @@ include src/snagrecover/am335x_usb_setup.sh
 include src/snagfactory/gui.kv
 include src/snagfactory/config.kv
 include src/snagfactory/assets/*
+include src/snagfactory/gui-requirements.txt
 

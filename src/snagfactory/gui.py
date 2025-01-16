@@ -1,3 +1,30 @@
+# Check that required Kivy version is installed
+# Kivy is an optional dependency for snagboot but snagfactory requires it
+import sys
+import os
+import importlib.metadata
+import packaging.requirements
+import packaging.version
+
+with open(os.path.dirname(__file__) + "/gui-requirements.txt", "r") as req_file:
+	gui_dependencies = req_file.read(-1).splitlines()
+
+gui_reqs = [packaging.requirements.Requirement(req_str) for req_str in gui_dependencies]
+
+for req in gui_reqs:
+	dep_error = ""
+	try:
+		version = importlib.metadata.version(req.name)
+		if version not in req.specifier:
+			dep_error = f"{req} is required by snagfactory but version {version} is installed"
+	except importlib.metadata.PackageNotFoundError:
+		dep_error = f"{req} is required by snagfactory but this package is not installed"
+
+	if dep_error != "":
+		print("please install the snagboot[gui] package variant to run snagfactory! e.g. pip install snagboot[gui]")
+		print(f"underlying cause: {dep_error}")
+		sys.exit(1)
+
 from kivy.logger import Logger as kivy_logger
 from kivy.app import App
 from kivy.uix.widget import Widget
@@ -16,7 +43,6 @@ import kivy.resources
 import time
 import yaml
 from math import ceil
-import sys
 
 from snagfactory.session import SnagFactorySession
 from snagfactory.config import SnagFactoryConfigError
@@ -24,8 +50,6 @@ from snagfactory.config import SnagFactoryConfigError
 import multiprocessing
 import logging
 factory_logger = logging.getLogger("snagfactory")
-
-import os
 
 LOG_VIEW_CAPACITY = 100
 PROGBAR_TICKS = 20

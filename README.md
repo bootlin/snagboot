@@ -38,6 +38,8 @@ $ snagrecover -h
 $ snagflash -h
 ```
 
+Installing the gui variant: `python3 -m pip install --user snagboot[gui]`, provides the additional "snagfactory" command.
+
 You also need to install udev rules so that snagrecover has read and write
 access to the USB devices exposed by the SoCs.
 
@@ -63,6 +65,8 @@ installation script is provided to automatically build and install the package.
 ```bash
 $ cd snagboot
 $ ./install.sh
+OR
+$ ./install.sh --with-gui
 ```
 
 There is also an [AUR package](https://aur.archlinux.org/packages/snagboot)
@@ -128,6 +132,8 @@ To recover and reflash a board using snagboot:
 
 For recovering and flashing large batches of boards efficiently, you may use the Snagfactory application which is included in Snagboot. Usage instructions for Snagfactory are available at [snagfactory.md](https://github.com/bootlin/snagboot/blob/main/docs/snagfactory.md). The configuration file syntax for Snagfactory is documented at [snagfactory_config.md](https://github.com/bootlin/snagboot/blob/main/docs/snagfactory_config.md).
 
+
+Note that Snagfactory support is only included in the "gui" package variant: `pip install snagboot[gui]`
 
 If you encounter issues, please take a look at the
 [troubleshooting](https://github.com/bootlin/snagboot/blob/main/docs/troubleshooting.md) section.
