@@ -96,7 +96,7 @@ def cli():
 	recovery_logger = logging.getLogger('snagrecover')
 	recovery_logger.parent = logger
 
-	logger.info("Running snagflash using protocol {args.protocol}")
+	logger.info(f"Running snagflash using protocol {args.protocol}")
 	if args.protocol == "dfu":
 		dfu_cli(args)
 	elif args.protocol == "ums":
