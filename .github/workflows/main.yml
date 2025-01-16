@@ -26,7 +26,7 @@ jobs:
           ruff check --output-format=github .
       - name: Build and install
         run: |
-          ./install.sh
+          ./install.sh --with-gui
       - name: Run tests
         run: |
           python tests.py
