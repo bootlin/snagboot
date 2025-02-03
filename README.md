@@ -135,6 +135,8 @@ For recovering and flashing large batches of boards efficiently, you may use the
 
 Note that Snagfactory support is only included in the "gui" package variant: `pip install snagboot[gui]`
 
+Some [benchmark results](https://github.com/bootlin/snagboot/blob/main/docs/snagfactory_benchmarks.md) are provided in the Snagfactory docs.
+
 If you encounter issues, please take a look at the
 [troubleshooting](https://github.com/bootlin/snagboot/blob/main/docs/troubleshooting.md) section.
 
