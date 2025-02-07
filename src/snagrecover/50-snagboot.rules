@@ -76,3 +76,21 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="d022", MODE="0660"
 
 #Xilinx rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="03fd", ATTRS{idProduct}=="0050", MODE="0660", TAG+="uaccess"
+
+#Rockchip systems
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="2207", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="110a", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="110b", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="300a", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="301a", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="310b", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="310c", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="320a", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="320b", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="320c", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="330a", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="330c", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="330d", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="330e", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="350a", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2207", ATTRS{idProduct}=="350b", MODE="0660", TAG+="uaccess"

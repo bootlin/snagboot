@@ -52,6 +52,23 @@ default_usb_ids =  {
 		"imx8mm": "1fc9:0134",
 		"imx8mq": "1fc9:012b",
 		"imx53" : "15a2:004e",
+	},
+	"rockchip": {
+		"rv1108": "2207:110a",
+		"rv1126": "2207:110b",
+		"rk3066": "2207:300a",
+		"rk3036": "2207:301a",
+		"rk3188": "2207:310b",
+		"rk3128": "2207:310c",
+		"rk3288": "2207:320a",
+		"rk322x": "2207:320b",
+		"rk3328": "2207:320c",
+		"rk3368": "2207:330a",
+		"rk3399": "2207:330c",
+		"px30": "2207:330d",
+		"rk3308": "2207:330e",
+		"rk3568": "2207:350a",
+		"rk3588": "2207:350b"
 	}
 }
 
@@ -80,6 +97,8 @@ def init_config(args: list):
 		if args.usb_path is None:
 			if soc_family == "imx":
 				usb_ids = default_usb_ids["imx"][soc_model]
+			elif soc_family == "rockchip":
+				usb_ids = default_usb_ids["rockchip"][soc_model]
 			else:
 				usb_ids = default_usb_ids[soc_family]
 
