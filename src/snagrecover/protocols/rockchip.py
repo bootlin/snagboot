@@ -13,6 +13,7 @@ from snagrecover import utils
 
 logger = logging.getLogger("snagrecover")
 
+USB_REQUEST_TYPE_VENDOR = (0x02 << 5)
 
 class RochipBootRomError(Exception):
 	pass
@@ -43,13 +44,13 @@ class RochipBootRom():
 		self.ep_in = ep_in
 		self.ep_out = ep_out
 
-	def __write_chunk(self, addr: int, chunk: bytes) -> bool:
+	def __write_chunk(self, code: int, chunk: bytes) -> bool:
 		logger.debug(f"Sending {len(chunk)} bytes")
-		return self.dev.ctrl_transfer(0x40, 0x0c, 0, addr, chunk)
+		return self.dev.ctrl_transfer(USB_REQUEST_TYPE_VENDOR, 0x0c, 0, code, chunk)
 
-	def write_blob(self, blob: bytes, addr: int) -> bool:
-		if addr != 0x471 and addr != 0x472:
-			raise RochipBootRomError("Invalid address. Can only be 471 or 472")
+	def write_blob(self, blob: bytes, code: int) -> bool:
+		if code != 0x471 and code != 0x472:
+			raise RochipBootRomError("Invalid code value. Can only be 0x471 or 0x472")
 		crc = Crc16Ibm3740()
 		total_written = 0
 		crc_sent = False
@@ -67,14 +68,14 @@ class RochipBootRom():
 				chunk.append(crcbytes >> 8)
 				chunk.append(crcbytes & 0xff)
 				crc_sent = True
-			written = self.__write_chunk(addr, chunk)
+			written = self.__write_chunk(code, chunk)
 			ret = written == len(chunk)
 			if ret is False:
 				return ret
 			total_written += written
 			if chunk_len+2 == 4096:
 				chunk = [0x00]
-				written = self.__write_chunk(addr, chunk)
+				written = self.__write_chunk(code, chunk)
 				ret = written == len(chunk)
 				if ret is False:
 					return ret
@@ -83,7 +84,7 @@ class RochipBootRom():
 			crcbytes = crc.final()
 			chunk.append(crcbytes >> 8)
 			chunk.append(crcbytes & 0xff)
-			written = self.__write_chunk(addr, chunk)
+			written = self.__write_chunk(code, chunk)
 			ret = written == len(chunk)
 			if ret is False:
 				return ret
