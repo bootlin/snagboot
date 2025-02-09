@@ -29,6 +29,7 @@ default_usb_ids =  {
 	"sama5":    "03eb:6124",
 	"sunxi":    "1f3a:efe8",
 	"am6x":     "0451:6165",
+	"am62lx":   "0451:6165",
 	"zynqmp":   "03fd:0050",
 	"imx": {
 		"imx8qxp": "1fc9:012f",

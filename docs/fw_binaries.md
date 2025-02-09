@@ -228,7 +228,7 @@ SPL part, you can typically use u-boot.img for this
 configuration:
  * path
 
-## For TI AM62x/AM62Ax/AM62Px/AM64x devices
+## For TI AM62x/AM62Ax/AM62Px/AM64x/AM62Lx devices
 
 [example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
@@ -242,7 +242,9 @@ sure that your configuration supports booting from DFU.
 The following images are required for all AM6xx SoCs:
 
 **tiboot3:** X.509 certificate container with U-Boot SPL for R5, TIFS, and a FIT
-container with device tree blobs. SPL should support DFU.
+container with device tree blobs. SPL should support DFU. For AM62Lx, instead of
+U-Boot SPL for R5, it contains Pre-BL and there is no fit container with device
+tree blobs.
 
 configuration:
  * path
@@ -253,7 +255,9 @@ configuration:
  * path
 
 **tispl:** FIT container with ATF FOR A53, OPTEE (not necessary for recovery),
-DM firmware, U-Boot SPL for A53 and device tree blobs
+DM firmware, U-Boot SPL for A53 and device tree blobs. For AM62Lx, X.509 certificate
+container with ATF for A53, OPTEE, U-Boot SPL for A53, device tree blobs and
+TIFS.
 
 configuration:
  * path
