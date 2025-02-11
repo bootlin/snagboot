@@ -2,6 +2,8 @@ import sys
 import re
 import usb
 import time
+from dataclasses import astuple
+import struct
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -189,3 +191,25 @@ def get_recovery(soc_family: str):
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 
+
+
+class BinFileHeader():
+        """
+        Generic class representing a packed C struct embedded in a bytearray.
+        """
+
+        fmt = ""
+        class_size = 0
+        offset = 0
+
+        @classmethod
+        def read(cls, data, offset=0):
+                obj = cls(*struct.unpack(cls.fmt, data[offset:offset + cls.class_size]))
+                obj.offset = offset
+
+                return obj
+
+        @classmethod
+        def write(cls, self, data):
+                offset = self.offset
+                data[offset:offset + cls.class_size] = struct.pack(cls.fmt, *astuple(self))
