@@ -17,9 +17,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import os
 import usb
 import time
+import tempfile
 from snagrecover import utils
+from snagflash.android_sparse_file.utils import split
+
 import logging
 logger = logging.getLogger("snagrecover")
 
@@ -226,3 +230,41 @@ class Fastboot():
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
 
 
+	def flash_sparse(self, args: str):
+		"""
+		Download and flash an android sparse file.
+		If the file is too big, it's splitting into
+		smaller android sparse files.
+		"""
+		try:
+			maxsize = int(self.getvar("max-download-size"), 0)
+		except Exception as e:
+			raise FastbootError("Failed to get fastboot max-download-size variable") from e
+		if maxsize == 0:
+			raise FastbootError("Fastboot variable max-download-size is 0")
+		arg_list = args.split(':')
+		cnt = len(arg_list)
+		if cnt != 2:
+			raise FastbootError(f"Wrong arguments count {cnt}, expected 2. Given {args}")
+		fname = arg_list[0]
+		if not os.path.exists(fname):
+			raise FastbootError(f"File {fname} does not exist")
+		part = arg_list[1]
+		with tempfile.TemporaryDirectory() as tmp:
+			temppath = os.path.join(tmp, 'sparse.img')
+			try:
+				splitfiles = split(fname, temppath, maxsize)
+				logger.info(f"Split fastboot file into {len(splitfiles)} file(s)")
+				for f in splitfiles:
+					logger.info(f"Downloading {f}")
+					try:
+						self.download(f)
+					except Exception as e:
+						raise FastbootError(f"Failed to download: {e}") from e
+					logger.info(f"Flashing {f}")
+					try:
+						self.flash(part)
+					except Exception as e:
+						raise FastbootError(f"Failed to flash: {e}") from e
+			except Exception as e:
+				raise FastbootError(f"{e}") from e
