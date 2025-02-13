@@ -30,6 +30,14 @@ See doc/android/fastboot-protocol.rst in the U-Boot sources
 for more information on fastboot support in U-Boot.
 """
 
+class FastbootError(Exception):
+	def __init__(self, message):
+		self.message = message
+		super().__init__(self.message)
+
+	def __str__(self):
+		return f"Fastboot error: {self.message}"
+
 class Fastboot():
 	def __init__(self, dev: usb.core.Device, timeout: int = 10000):
 		self.dev = dev
@@ -53,7 +61,7 @@ class Fastboot():
 					break
 
 		if not eps_found:
-			raise Exception("No BULK IN/OUT endpoint pair found in device")
+			raise FastbootError("No BULK IN/OUT endpoint pair found in device")
 		self.ep_in = ep_in
 		self.ep_out = ep_out
 		self.timeout = timeout
@@ -79,7 +87,7 @@ class Fastboot():
 			elif status == b"TEXT":
 				logger.debug(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
-				raise Exception(f"Fastboot fail with message: {bytes(ret[4:256])}")
+				raise FastbootError(f"Fastboot fail with message: {bytes(ret[4:256])}")
 			elif status == b"OKAY":
 				logger.debug("fastboot OKAY")
 				return bytes(ret[4:])
@@ -87,7 +95,7 @@ class Fastboot():
 				length = int("0x" + (bytes(ret[4:12]).decode("ascii")), base=16)
 				logger.debug(f"fastboot DATA length: {length}")
 				return length
-		raise Exception("Timeout while completing fastboot transaction")
+		raise FastbootError("Timeout while completing fastboot transaction")
 
 	def response(self):
 		t0 = time.time()
@@ -97,11 +105,11 @@ class Fastboot():
 			if status in [b"INFO", b"TEXT"]:
 				logger.info(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
-				raise Exception(f"Fastboot fail with message: {bytes(ret[4:256])}")
+				raise FastbootError(f"Fastboot fail with message: {bytes(ret[4:256])}")
 			elif status == b"OKAY":
 				logger.info("fastboot OKAY")
 				return bytes(ret[4:])
-		raise Exception("Timeout while completing fastboot transaction")
+		raise FastbootError("Timeout while completing fastboot transaction")
 
 	def getvar(self, var: str):
 		packet = b"getvar:" + var.encode("ascii") + b"\x00"
