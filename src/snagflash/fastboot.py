@@ -65,7 +65,11 @@ def fastboot(args):
 		logger.info(f"Sending command {cmd} with args {cmd_args}")
 		if cmd == "continue":
 			cmd = "fbcontinue"
-		getattr(fast, cmd)(*cmd_args)
+		try:
+			getattr(fast, cmd)(*cmd_args)
+		except Exception as e:
+			logger.error(f"{e}")
+			sys.exit(-1)
 
 	logger.info("Done")
 
