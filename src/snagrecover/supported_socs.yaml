@@ -13,6 +13,8 @@ tested:
         family: am6x
   am62p:
         family: am6x
+  am62l3:
+        family: am62lx
   h2+:
         family: sunxi
   am6442:

@@ -183,6 +183,9 @@ def get_recovery(soc_family: str):
 	elif soc_family == "am6x":
 		from snagrecover.recoveries.am6x import main as am6x_recovery
 		return am6x_recovery
+	elif soc_family == "am62lx":
+		from snagrecover.recoveries.am62lx import main as am62lx_recovery
+		return am62lx_recovery
 	elif soc_family == "zynqmp":
 		from snagrecover.recoveries.zynqmp import main as zynqmp_recovery
 		return zynqmp_recovery

@@ -85,6 +85,28 @@ def am6x_run(dev, fw_name: str, fw_blob: bytes):
 		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 
+def am62lx_run(dev, fw_name: str, fw_blob: bytes):
+	# find firmware altsetting (i.e. partition id)
+	if fw_name == "tiboot3":
+		partname = "bootloader"
+	elif fw_name == "tispl":
+		partname = "bootloader"
+	elif fw_name == "u-boot":
+		partname = "u-boot.img"
+	else:
+		cli_error(f"unsupported firmware {fw_name}")
+	logger.info("Searching for partition id...")
+	partid = dfu.search_partid(dev, partname)
+	if partid is None:
+		raise Exception(f"No DFU altsetting found with iInterface='{partname}'")
+	dfu_cmd = dfu.DFU(dev, stm32=False)
+	logger.info("Downloading file...")
+	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
+	logger.info("Done")
+	if fw_name == "u-boot":
+		logger.info("Sending detach command...")
+		dfu_cmd.detach(partid)
+
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	"""
 	The "subfw_name" option allows selecting firmware
@@ -119,6 +141,8 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		sunxi_run(port, fw_name, fw_blob)
 	elif soc_family == "am6x":
 		am6x_run(port, fw_name, fw_blob)
+	elif soc_family == "am62lx":
+		am62lx_run(port, fw_name, fw_blob)
 	elif soc_family == "zynqmp":
 		from snagrecover.firmware.zynqmp_fw import zynqmp_run
 		zynqmp_run(port, fw_name, fw_blob, subfw_name)
