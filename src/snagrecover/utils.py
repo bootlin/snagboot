@@ -203,16 +203,16 @@ class BinFileHeader():
 
         fmt = ""
         class_size = 0
-        offset = 0
+        class_offset = 0
 
         @classmethod
         def read(cls, data, offset=0):
                 obj = cls(*struct.unpack(cls.fmt, data[offset:offset + cls.class_size]))
-                obj.offset = offset
+                obj.class_offset = offset
 
                 return obj
 
         @classmethod
         def write(cls, self, data):
-                offset = self.offset
+                offset = self.class_offset
                 data[offset:offset + cls.class_size] = struct.pack(cls.fmt, *astuple(self))
