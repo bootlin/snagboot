@@ -273,7 +273,7 @@ first boot image containing only the FSBL and PMUFW should not be required, as
 Snagboot is capable of extracting a working first-stage boot image from the
 full boot image.
 
-The following images are required for all AM6xx SoCs:
+The following images are required for all ZynqMP SoCs:
 
 **boot:** Xilinx ZynqMP boot image containing the Xilinx FSBL, PMUFW, ATF,
 control DT and U-Boot proper. The FSBL should be compiled with USB support
