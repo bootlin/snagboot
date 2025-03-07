@@ -24,6 +24,10 @@ USB device can be found in sysfs :
 
 `/sys/bus/usb/devices/...`.
 
+When recovering an AM335x SOC via UART using the snagrecover, you have to pass
+the --uart flag to the CLI. You can also pass the --baudrate flag in case the
+default 115200 baud rate does not fit your device.
+
 The rest of the command line arguments are optional.
 
 Examples:

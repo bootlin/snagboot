@@ -47,6 +47,8 @@ Templates:
 	mandatory.add_argument("-f", "--firmware-file", help="firmware configurations, passed as a yaml file", metavar="\"templates/colibri-imx7d.yaml\"", action="append")
 	mandatory.add_argument("-F", "--firmware", help="firmware configurations, formatted as a python3 dict", metavar="\"{'fw1': {'path': '/path/to', 'address': 0x00}}\"", action="append", type=ast.literal_eval)
 	optional = parser.add_argument_group("Optional")
+	optional.add_argument("--uart", help="use UART for AM335x recovery", metavar="/dev/ttyx")
+	optional.add_argument("--baudrate", help="UART baudrate", default=115200)
 	optional.add_argument("--netns", help="network namespace for AM335x USB recovery, defaults to 'snagbootnet'", default="snagbootnet")
 	optional.add_argument("--loglevel", help="set loglevel", choices=["silent","info","debug"], default="silent")
 	optional.add_argument("--logfile", help="set logfile", default="board_recovery.log")

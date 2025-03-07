@@ -24,9 +24,16 @@ import socket
 import time
 import logging
 logger = logging.getLogger("snagrecover")
+from xmodem import XMODEM
+# setting this logger to the same format as the main
+# logger since it sometimes prints out messages that seem
+# like fatal errors but are apparently benign
+xmodem_logger = logging.getLogger("xmodem.XMODEM")
+xmodem_logger.parent = logger
 import tftpy
 import threading
 import os.path
+import collections
 import errno
 
 server_config = {
@@ -80,7 +87,7 @@ class UDPHandler(socketserver.BaseRequestHandler):
 			else:
 				raise err
 
-def am335x_run(port, fw_name: str):
+def am335x_usb(port, fw_name: str):
 	tftp_start_timeout = server_config["tftp_start_timeout"]
 	tftp_complete_timeout = server_config["tftp_complete_timeout"]
 	# TFTP server thread
@@ -126,4 +133,56 @@ def am335x_run(port, fw_name: str):
 	bootp_thread.join()
 	logger.info("Waiting for TFTP shutdown...")
 	tftp_thread.join()
+
+xmodem_total_size = 0
+def xmodem_callback(total_packets: int, success_count: int, error_count: int):
+	"""
+	This is called during the xmodem transfer,
+	it prints a progress bar
+	"""
+	global xmodem_total_size
+	progress = int(100 * total_packets * 1.0 / xmodem_total_size)
+	print(f"\rprogress: {progress}%", end="")
+
+
+def am335x_uart(port, fw_name: str):
+	TRANSFER_WAIT_TIMEOUT = 30
+	global xmodem_total_size
+	if fw_name == "u-boot":
+		print("Transfering U-Boot over a UART connection, this could take a while...")
+	port.write_timeout = 5
+	port.timeout = 5
+
+	def getc(size, timeout=1):
+		return port.read(size) or None
+
+	def putc(data, timeout=1):
+		return port.write(data)
+
+	modem = XMODEM(getc, putc)
+	"""
+	snagrecover sometimes confuses standard SPL console output
+	with xmodem pings (see issue #14), we wait for three pings
+	to reduce the likelihood of this happening
+	"""
+	print("Waiting for three pings before xmodem transfer...")
+	ping_buf = collections.deque(maxlen=3)
+	t0 = time.time()
+	while list(ping_buf) != [b"C", b"C", b"C"]:
+		ping_buf.append(port.read(1))
+		if time.time() - t0 > TRANSFER_WAIT_TIMEOUT:
+			raise Exception("Timeout waiting for UART pings")
+	fw_path = recovery_config["firmware"][fw_name]["path"]
+	xmodem_total_size = int(os.path.getsize(fw_path) / 128)
+	with open(fw_path, "rb") as file:
+		logger.info(f"Transfering {fw_path} using xmodem...")
+		modem.send(file, callback=xmodem_callback)
+		print("")
+	logger.info("xmodem transfer done")
+
+def am335x_run(port, fw_name: str):
+	if recovery_config["args"]["uart"]:
+		am335x_uart(port, fw_name)
+	else:
+		am335x_usb(port, fw_name)
 
