@@ -107,6 +107,38 @@ def am62lx_run(dev, fw_name: str, fw_blob: bytes):
 		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 
+def check_fw_blob(fw_blob: bytes):
+	"""
+	Do a quick sanity check on the firmware contents.  If the file passed
+	to snagrecover looks like a text file, issue a warning. This can help
+	avoid troubleshooting obscure recovery errors caused by simply passing
+	the wrong file to snagrecover.
+	"""
+
+	first_512 = fw_blob[:512]
+
+	try:
+		first_512.decode("ascii")
+		first_512.decode("utf-8")
+	except UnicodeDecodeError:
+		return True
+
+	return False
+
+def load_fw(fw_name: str):
+	try:
+		fw_path = recovery_config["firmware"][fw_name]["path"]
+	except KeyError:
+		cli_error(f"Could not find firmware {fw_name}, please check your recovery config")
+
+	with open(fw_path, "rb") as file:
+		fw_blob = file.read(-1)
+
+	if not check_fw_blob(fw_blob):
+		logger.warning(f"File {fw_path} looks like a text file!")
+
+	return fw_blob
+
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	"""
 	The "subfw_name" option allows selecting firmware
@@ -114,17 +146,14 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	having the user pass the same binary in two different
 	configs.
 	"""
-	soc_family = recovery_config["soc_family"]
-	try:
-		fw_path = recovery_config["firmware"][fw_name]["path"]
-	except KeyError:
-		cli_error(f"Could not find firmware {fw_name}, please check your recovery config")
-	with open(fw_path, "rb") as file:
-		fw_blob = file.read(-1)
+
+	fw_blob = load_fw(fw_name)
 
 	logger.info(f"Installing firmware {fw_name}")
 	if subfw_name != "":
 		logger.info(f"Subfirmware: {subfw_name}")
+
+	soc_family = recovery_config["soc_family"]
 	if soc_family == "sama5":
 		from snagrecover.firmware.sama5_fw import sama5_run
 		sama5_run(port, fw_name, fw_blob)
