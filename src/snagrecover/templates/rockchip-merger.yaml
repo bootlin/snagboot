@@ -1,0 +1,6 @@
+xpl:
+  # u-boot TPL+SPL in SPL DFU mode
+  path: rk3399_uboot.bin
+u-boot-fit:
+  # proper u-boot
+  path: u-boot.itb
