@@ -25,11 +25,11 @@ def is_usb_path(usb_addr) -> bool:
 	return isinstance(usb_addr, tuple) and isinstance(usb_addr[1], tuple)
 
 def access_error(dev_type: str, dev_addr: str):
-	logger.info(f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights")
+	logger.error(f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights")
 	sys.exit(-1)
 
 def cli_error(error: str):
-	logger.info(f"CLI error: {error}")
+	logger.error(f"CLI error: {error}")
 	sys.exit(-1)
 
 def parse_usb_ids(usb_id: str) -> tuple:

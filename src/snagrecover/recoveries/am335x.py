@@ -39,7 +39,8 @@ def main():
 		process = subprocess.Popen(bash_cmd.split(), stdout=subprocess.PIPE)
 		output, error = process.communicate()
 		if output.decode("ascii") != f"{netns_name}\n":
-			logger.info(f"This recovery needs to be run in the {netns_name} namespace!\nDid you run sudo am335x_usb_setup.sh?", file=sys.stderr)
+			logger.error(f"This recovery needs to be run in the {netns_name} namespace!")
+			logger.error("Did you run sudo am335x_usb_setup.sh?")
 			sys.exit(-1)
 
 		# Install and run SPL
