@@ -110,3 +110,6 @@ def cli():
 	else:
 		cli_error(f"unrecognized protocol {args.protocol}")
 
+if __name__ == "__main__":
+	cli()
+

@@ -2,6 +2,7 @@
 # Kivy is an optional dependency for snagboot but snagfactory requires it
 import sys
 import os
+import platform
 import importlib.metadata
 import importlib.resources
 import packaging.requirements
@@ -23,6 +24,12 @@ for req in gui_reqs:
 		print("please install the snagboot[gui] package variant to run snagfactory! e.g. pip install snagboot[gui]")
 		print(f"underlying cause: {dep_error}")
 		sys.exit(1)
+
+from kivy import Config
+
+# workaround for OpenGL version detection failure on some Windows systems
+if platform.system() == "Windows":
+	Config.set('graphics', 'multisamples', '0')
 
 from kivy.logger import Logger as kivy_logger
 from kivy.app import App
@@ -376,7 +383,7 @@ class SnagFactory(App):
 		return self.ui
 
 
-def main():
+def gui():
 	multiprocessing.set_start_method('spawn')
 
 	factory_logger.setLevel("INFO")
@@ -390,4 +397,8 @@ def main():
 		kivy.resources.resource_add_path(str(assets_dir.resolve()))
 
 	SnagFactory().run()
+
+if __name__ == "__main__":
+	multiprocessing.freeze_support()
+	gui()
 

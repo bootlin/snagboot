@@ -47,7 +47,7 @@ dependencies = [
 [project.scripts]
 snagrecover = "snagrecover.cli:cli"
 snagflash = "snagflash.cli:cli"
-snagfactory = "snagfactory.gui:main"
+snagfactory = "snagfactory.gui:gui"
 
 [tool.ruff]
 # Enable pycodestyle (`E`), Pyflakes (`F`) codes and flake8-bugbear (`B`) rules
