@@ -18,10 +18,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
-from snagrecover.utils import cli_error, usb_addr_to_path, get_family, access_error
+from snagrecover.utils import cli_error, usb_addr_to_path, get_family, access_error, get_supported_socs
 import logging
 logger = logging.getLogger("snagrecover")
-import os
 
 default_usb_ids =  {
 	# default ROM code USB IDs
@@ -58,8 +57,8 @@ default_usb_ids =  {
 recovery_config = {} # Global immutable config to be initialized with CLI args
 
 def check_soc_model(soc_model: str):
-	with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
-		socs = yaml.safe_load(file)
+	socs = get_supported_socs()
+
 	if soc_model not in {**socs["tested"], **socs["untested"]}:
 		cli_error(f"unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs))
 	return None

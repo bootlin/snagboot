@@ -20,17 +20,17 @@
 import sys
 import argparse
 from snagrecover import __version__
-from snagrecover.utils import cli_error, get_recovery
+from snagrecover.utils import cli_error, get_recovery, get_supported_socs
 import snagrecover.config as config
-import yaml
 import os
 import logging
 import ast
+import importlib.resources
 
 def cli():
-	udev_path = os.path.dirname(__file__) + "/50-snagboot.rules"
-	am335x_script_path = os.path.dirname(__file__) + "/am335x_usb_setup.sh"
-	template_path = os.path.dirname(__file__) + "/templates"
+	with importlib.resources.path("snagrecover", "templates") as templates_dir:
+		template_path = str(templates_dir.resolve())
+
 	templates = [filename[:-5] for filename in os.listdir(template_path)]
 	templates.sort()
 	template_listing = "\n".join(templates)
@@ -92,26 +92,25 @@ Templates:
 		path = template_path + "/" + args.template + ".yaml"
 		if not os.path.exists(path):
 			cli_error(f"no template named {args.template}, please run snagrecover -h for a list of valid templates")
+
 		with open(path, "r") as file:
 			print(file.read(-1))
+
 		sys.exit(0)
 
 	# print udev rules
 	if args.udev:
-		with open(udev_path, "r") as file:
-			print(file.read(-1))
+		print(importlib.resources.read_text("snagrecover", "50-snagboot.rules"))
 		sys.exit(0)
 
 	# print am335x setup script
 	if args.am335x_setup:
-		with open(am335x_script_path, "r") as file:
-			print(file.read(-1))
+		print(importlib.resources.read_text("snagrecover", "am335x_usb_setup.sh"))
 		sys.exit(0)
 
 	# show supported socs
 	if args.list_socs:
-		with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
-			socs = yaml.safe_load(file)
+		socs = get_supported_socs()
 		print("SoCs that are supported and tested:\n")
 		[print(soc) for soc in socs["tested"]]
 		print("\nSoCs that are supported but untested:\n")

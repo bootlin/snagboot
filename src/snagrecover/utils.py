@@ -10,16 +10,20 @@ logger = logging.getLogger("snagrecover")
 from snagrecover.usb import SnagbootUSBContext
 
 import yaml
-import os
+import importlib.resources
 
 USB_RETRIES = 9
 USB_INTERVAL = 1
 
+def get_supported_socs():
+	yaml_text = importlib.resources.read_text("snagrecover", "supported_socs.yaml")
+
+	return yaml.safe_load(yaml_text)
+
 def get_family(soc_model: str) -> str:
-        with open(os.path.dirname(__file__) + "/supported_socs.yaml", "r") as file:
-                socs = yaml.safe_load(file)
-        family = {**socs["tested"], **socs["untested"]}[soc_model]["family"]
-        return family
+	socs = get_supported_socs()
+	family = {**socs["tested"], **socs["untested"]}[soc_model]["family"]
+	return family
 
 def is_usb_path(usb_addr) -> bool:
 	return isinstance(usb_addr, tuple) and isinstance(usb_addr[1], tuple)

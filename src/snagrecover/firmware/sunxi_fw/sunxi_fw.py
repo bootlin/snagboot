@@ -22,7 +22,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
-import os
 from snagrecover.config import recovery_config
 from snagrecover.protocols import memory_ops
 from snagrecover.protocols import fel
@@ -33,6 +32,7 @@ import crccheck.crc as crc
 import time
 import libfdt
 from math import floor
+import importlib.resources
 
 UBOOT_MIN_OFFSET = 0x8000
 MAX_DT_NAME_SIZE = 512
@@ -142,8 +142,8 @@ def write_fit(port: fel.FEL, fw_blob: bytes, dt_name: str):
 			entry_addr = entry.as_uint32()
 			entry_arch = dt.getprop(node, "arch").as_str()
 			arm64_entry = entry_arch == "arm64"
-		os = dt.getprop(node, "os", [libfdt.FDT_ERR_NOTFOUND])
-		if os != -1 and os.as_str() == "u-boot":
+		os_prop = dt.getprop(node, "os", [libfdt.FDT_ERR_NOTFOUND])
+		if os_prop != -1 and os_prop.as_str() == "u-boot":
 			dtb_addr = addr + img_size
 	if dtb_addr is None:
 		logger.warning("No DTB address found")
@@ -286,7 +286,10 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	this subject: https://linux-sunxi.org/FEL/USBBoot
 	"""
 	logger.info("Reading SoC info...")
-	with open(os.path.dirname(__file__) + "/soc_info.yaml", "r") as file:
+	with importlib.resources.path("snagrecover", "") as base_path:
+		sunxi_fw_path = str(base_path.resolve()) + "/firmware/sunxi_fw"
+
+	with open(sunxi_fw_path + "/soc_info.yaml", "r") as file:
 		soc_info = yaml.safe_load(file)[recovery_config["soc_model"]]
 	# check SPL header magic and checksum
 	logger.info("Checking header and checksum...")
@@ -356,8 +359,11 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	logger.info("Writing SPL fragments...")
 	overrun_regions = write_spl_fragments(port, fw_blob, spl_len, soc_info)
 
+	with importlib.resources.path("snagrecover", "") as base_path:
+		sunxi_fw_path = str(base_path.resolve()) + "/firmware/sunxi_fw"
+
 	# copy spl load address and ROM region info into thunk binary
-	with open(os.path.dirname(__file__) + "/fel-to-spl-thunk.bin", "rb") as file:
+	with open(sunxi_fw_path + "/fel-to-spl-thunk.bin", "rb") as file:
 		thunk_blob = file.read(-1)
 
 	# assemble and write thunk
@@ -397,7 +403,10 @@ def sunxi_uboot(port: fel.FEL, fw_blob: bytes, dt_name: str):
 
 	logger.info("Jumping to U-Boot...")
 	if arm64_entry:
-		with open(os.path.dirname(__file__) + "/soc_info.yaml", "r") as file:
+		with importlib.resources.path("snagrecover", "") as base_path:
+			sunxi_fw_path = str(base_path.resolve()) + "/firmware/sunxi_fw"
+
+		with open(sunxi_fw_path + "/soc_info.yaml", "r") as file:
 			soc_info = yaml.safe_load(file)[recovery_config["soc_model"]]
 		rmr_jump(port, entry_addr, soc_info)
 	else:

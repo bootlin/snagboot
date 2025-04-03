@@ -2,6 +2,8 @@ import yaml
 import os
 import re
 
+from snagrecover.utils import get_supported_socs
+
 from snagfactory.fastboot import task_table
 from snagfactory.utils import SnagFactoryConfigError
 
@@ -10,8 +12,7 @@ any_rule = {
 }
 
 def list_soc_models():
-	with open(os.path.dirname(__file__) + "/../snagrecover/supported_socs.yaml", "r") as file:
-		socs = yaml.safe_load(file)
+	socs = get_supported_socs()
 
 	return list(socs["tested"].keys()) + list(socs["untested"].keys())
 

@@ -3,12 +3,11 @@
 import sys
 import os
 import importlib.metadata
+import importlib.resources
 import packaging.requirements
 import packaging.version
 
-with open(os.path.dirname(__file__) + "/gui-requirements.txt", "r") as req_file:
-	gui_dependencies = req_file.read(-1).splitlines()
-
+gui_dependencies = importlib.resources.read_text("snagfactory", "gui-requirements.txt").splitlines()
 gui_reqs = [packaging.requirements.Requirement(req_str) for req_str in gui_dependencies]
 
 for req in gui_reqs:
@@ -364,9 +363,10 @@ class SnagFactory(App):
 		getattr(self.ui, method)(*args)
 
 	def build(self):
-		self.icon = os.path.dirname(__file__) + "/assets/lab_penguins.png"
-		Builder.load_file(os.path.dirname(__file__) + "/gui.kv")
-		Builder.load_file(os.path.dirname(__file__) + "/config.kv")
+		self.icon = "lab_penguins.ico"
+
+		Builder.load_string(importlib.resources.read_text("snagfactory", "gui.kv"))
+		Builder.load_string(importlib.resources.read_text("snagfactory", "config.kv"))
 
 		session = SnagFactorySession(None)
 		self.ui = SnagFactoryUI(session)
@@ -386,6 +386,8 @@ def main():
 	stdout_handler.setLevel(logging.WARNING)
 	factory_logger.addHandler(stdout_handler)
 
-	kivy.resources.resource_add_path(os.path.dirname(__file__) + "/assets")
+	with importlib.resources.path("snagfactory", "assets") as assets_dir:
+		kivy.resources.resource_add_path(str(assets_dir.resolve()))
+
 	SnagFactory().run()
 
