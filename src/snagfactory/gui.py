@@ -8,6 +8,11 @@ import importlib.resources
 import packaging.requirements
 import packaging.version
 
+# Hide outdated deprecation warnings from importlib.resources
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="importlib.resources")
+
 gui_dependencies = importlib.resources.read_text("snagfactory", "gui-requirements.txt").splitlines()
 gui_reqs = [packaging.requirements.Requirement(req_str) for req_str in gui_dependencies]
 

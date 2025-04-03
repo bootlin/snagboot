@@ -27,6 +27,11 @@ import logging
 import ast
 import importlib.resources
 
+# Hide outdated deprecation warnings from importlib.resources
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="importlib.resources")
+
 def cli():
 	with importlib.resources.path("snagrecover", "templates") as templates_dir:
 		template_path = str(templates_dir.resolve())
