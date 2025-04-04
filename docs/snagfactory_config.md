@@ -31,7 +31,7 @@ soc-models:
 
   am625-tasks:
     - target-device: mmc0
-      fb-buffer-size: 0x7000000
+      fb-buffer-addr: 0xd0000000
 
     ...
 ```
@@ -48,9 +48,9 @@ following values:
 
 ```yaml
 target-device: The device configured as the Fastboot flashing backend in U-Boot. Either 'mmc<num>' or 'nand'.
-fb-buffer-size: The size in bytes of the Fastboot buffer.
 fb-buffer-addr: The size in bytes of the Fastboot buffer.
 eraseblk-size: The size in bytes of an erase block for MTD targets
+fb-buffer-size: (optional) The size in bytes of the Fastboot buffer. This can only be used to reduce the default U-Boot buffer size.
 ```
 
 The following elements are standard Factory flashing tasks. They all have the

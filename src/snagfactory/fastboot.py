@@ -58,18 +58,23 @@ class FastbootTask():
 		self.pause_action = ""
 
 		fb_addr = self.require_global("fb-buffer-addr")
-		fb_size = self.require_global("fb-buffer-size")
+		fb_size = self.get_global("fb-buffer-size")
 		self.target_device = self.require_global("target-device")
 
 		self.cmds = [
 			f"set fb-addr {fb_addr}",
-			f"set fb-size {fb_size}",
 			f"set target {self.target_device}",
 		]
+
+		if fb_size is not None:
+			self.cmds.append(f"set fb-size {fb_size}")
 
 		if not self.target_device.startswith("mmc"):
 			self.eraseblk_size = self.require_global("eraseblk-size")
 			self.cmds.append(f"set eraseblk-size {self.eraseblk_size}")
+
+	def get_global(self, var: str):
+		return self.globals.get(var, None)
 
 	def require_global(self, var: str):
 		if var not in self.globals:

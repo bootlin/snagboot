@@ -154,27 +154,40 @@ commands:
 exit : exit snagflash
 quit : exit snagflash
 help : show this help text
+
 set <var> <value>: set the value of an environment variable
 print <var>: print the value of an environment variable
+
 run <fastboot_cmd>: run a Fastboot command given in Snagflash format
+
 gpt <partitions>: write a GPT partition table to the specified mmc device
+
 flash <image_path> <image_offset> [<partition_name>]
 	Write the file at <image_path> to an MTD device or partition.
-	The "fb-addr", "fb-size", and "target" environment
-	variables are required. For MTD targets, the "eraseblk-size" variable
-	is also required.
+	Required environment variables:
+		- target
+		- fb-addr
+		- eraseblk-size (only for MTD targets)
+
+	Optional environment variables:
+		- fb-size
+
 	If a file named "<image_path>.bmap" exists, snagflash will automatically
 	parse it and flash only the block ranges described.
 	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
 	by "hwpart <number>"
 
-environment:
+Environment variables:
 
 target: target device for flashing commands
 	must be an mmc or mtd device identifier
 	e.g. mmc0, mmc1, etc. or spi-nand0, nand0, etc.
+
 fb-addr: address in memory of the Fastboot buffer
-fb-size: size in bytes of the Fastboot buffer
+
 eraseblk-size: size in bytes of an erase block on the target Flash device
+
+fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
+         the U-Boot Fastboot buffer size, not increase it.
 
 ```

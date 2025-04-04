@@ -23,26 +23,41 @@ commands:
 exit : exit snagflash
 quit : exit snagflash
 help : show this help text
+
 set <var> <value>: set the value of an environment variable
 print <var>: print the value of an environment variable
+
 run <fastboot_cmd>: run a Fastboot command given in Snagflash format
+
 gpt <partitions>: write a GPT partition table to the specified mmc device
+
 flash <image_path> <image_offset> [<partition_name>]
 	Write the file at <image_path> to an MTD device or partition.
-	The "fb-addr", "fb-size", and "target" environment
-	variables are required. For MTD targets, the "eraseblk-size" variable
-	is also required.
+	Required environment variables:
+		- target
+		- fb-addr
+		- eraseblk-size (only for MTD targets)
+
+	Optional environment variables:
+		- fb-size
+
+	If a file named "<image_path>.bmap" exists, snagflash will automatically
+	parse it and flash only the block ranges described.
 	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
 	by "hwpart <number>"
 
-environment:
+Environment variables:
 
 target: target device for flashing commands
 	must be an mmc or mtd device identifier
 	e.g. mmc0, mmc1, etc. or spi-nand0, nand0, etc.
+
 fb-addr: address in memory of the Fastboot buffer
-fb-size: size in bytes of the Fastboot buffer
+
 eraseblk-size: size in bytes of an erase block on the target Flash device
+
+fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
+         the U-Boot Fastboot buffer size, not increase it.
 """
 
 	op_pattern = r"[\w\-]+"
@@ -127,10 +142,31 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		self.cmd_run(f"oem_run:gpt write mmc {device_num} '{partitions}'")
 		self.cmd_run(f"oem_run:part list mmc {device_num}")
 
+	def get_fb_size(self):
+		"""
+		Get the download buffer size from the Fastboot variables.
+		Reduce it if the "fb-size" Snagflash variable is set.
+		"""
+
+		self.fb_size = int(self.fast.getvar("downloadsize"), 16)
+
+		if self.fb_size == 0:
+			raise ValueError(f"Invalid Fastboot buffer size {self.fb_size}! Please check Fastboot gadget parameters!")
+
+		if "fb-size" in self.env:
+			new_fb_size = int(self.env["fb-size"])
+
+			if new_fb_size > self.fb_size:
+				raise ValueError(f"Cannot increase Fastboot buffer size! Default size is 0x{self.fb_size:x}, requested size is 0x{new_fb_size:x}")
+
+			self.fb_size = new_fb_size
+
+		logger.debug(f"Fastboot buffer size is 0x{self.fb_size:x}")
+
 	def preflash_checks(self):
 		"""
 		Run a few checks:
-		- fb-addr, fb-size and target are defined
+		- fb-addr and target are defined
 		- Fastboot buffer address seems correct
 		"""
 		if self.checked:
@@ -139,7 +175,7 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 		logger.info("Running pre-flash checks...")
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
-		self.request_env("fb-size")
+
 		self.request_env("target")
 
 		fast = self.fast
@@ -157,6 +193,8 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 
 	def cmd_flash(self, args: str):
 		self.preflash_checks()
+
+		self.get_fb_size()
 
 		path, sep, rest = args.partition(" ")
 		path = path.strip('"').strip('"')
@@ -213,10 +251,12 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			flash_func(file_size=file_size, file_offset=0, offset=offset)
 
 	def flash_mtd(self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0):
+		logger.info("Flashing to MTD device...")
+
 		fast = self.fast
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
-		fb_size = int(self.request_env("fb-size"), 0)
+		fb_size = self.fb_size
 		eraseblk_size = int(self.request_env("eraseblk-size"), 0)
 
 		if offset % eraseblk_size != 0:
@@ -268,10 +308,12 @@ eraseblk-size: size in bytes of an erase block on the target Flash device
 			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder:x}")
 
 	def flash_mmc(self, path: str, offset: int, device_num: int, file_size: int, file_offset: int = 0, part: str = None):
+		logger.info("Flashing to MMC device...")
+
 		fast = self.fast
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
-		fb_size = int(self.request_env("fb-size"), 0)
+		fb_size = self.fb_size
 
 		if offset % MMC_LBA_SIZE != 0:
 			raise ValueError(f"Given offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")

@@ -13,7 +13,6 @@ soc-models:
   am625-tasks:
     - target-device: mmc0
       fb-buffer-addr: 0xd0000000
-      fb-buffer-size: 0x7000000
 
     - task: gpt
       args:
