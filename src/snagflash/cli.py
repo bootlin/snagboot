@@ -28,12 +28,14 @@ import sys
 
 if platform.system() == "Linux":
 	from snagflash.ums import ums
-	protocols = ["dfu", "ums", "fastboot"]
+	protocols = ["dfu", "ums", "fastboot", "fastboot-uboot"]
 else:
-	protocols = ["dfu", "fastboot"]
+	protocols = ["dfu", "fastboot", "fastboot-uboot"]
 
 def cli():
 	example = '''Examples:
+	# U-Boot: fastboot usb 0
+	snagflash -P fastboot-uboot -p 0483:0afb -I flash.cmd
 	# U-Boot: fastboot usb 0
 	snagflash -P fastboot -p 0483:0afb -f download:boot.img -f flash:0:1 -f boot
 	# U-Boot: ums 0 mmc 0
@@ -56,10 +58,11 @@ def cli():
 	dfuargs.add_argument("--dfu-keep", help="Avoid detaching DFU mode after download and keep the mode active", action="store_true")
 	dfuargs.add_argument("--dfu-detach", help="Only request detaching DFU mode", action="store_true")
 	dfuargs.add_argument("--dfu-reset", help="Reset USB device after download and reboot the board", action="store_true")
+	fbubargs = parser.add_argument_group("Extended Fastboot for U-Boot")
+	fbubargs.add_argument("-i", "--interactive", help="Start interactive mode", action="store_true")
+	fbubargs.add_argument("-I", "--interactive-cmdfile", help="Read extended fastboot mode commands from a file")
 	fbargs = parser.add_argument_group("Fastboot")
 	fbargs.add_argument("-f", "--fastboot-cmd", help="A fastboot command.", action="append", metavar="cmd:args")
-	fbargs.add_argument("-i", "--interactive", help="Start interactive mode", action="store_true")
-	fbargs.add_argument("-I", "--interactive-cmdfile", help="Read interactive mode commands from file")
 	if platform.system() == "Linux":
 		umsargs = parser.add_argument_group("UMS")
 		umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
@@ -103,7 +106,7 @@ def cli():
 		if args.src is None or (args.blockdev is None and args.dest is None):
 			cli_error("missing an UMS config!")
 		ums(args)
-	elif args.protocol == "fastboot":
+	elif args.protocol in ["fastboot", "fastboot-uboot"]:
 		if args.fastboot_cmd is None:
 			args.fastboot_cmd = []
 		fastboot(args)

@@ -15,8 +15,8 @@ MMC_LBA_SIZE = 512
 class SnagflashCmdError(Exception):
 	pass
 
-class SnagflashInteractive():
-	help_text = """snagflash interactive mode
+class SnagflashFastbootUboot():
+	help_text = """snagflash extended Fastboot mode
 syntax: <cmd> <arg1> <arg2> ...
 commands:
 

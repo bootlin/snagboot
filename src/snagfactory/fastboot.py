@@ -103,6 +103,7 @@ class FastbootTask():
 		self.log_queue = board.log_queue
 
 		args = {
+			"protocol": "fastboot-uboot",
 			"loglevel": "info",
 			"timeout": 60000,
 			"factory": True,

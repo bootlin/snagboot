@@ -18,12 +18,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from snagrecover.protocols import fastboot as fb
-from snagrecover.utils import usb_addr_to_path, get_usb, access_error, prettify_usb_addr
+from snagrecover.utils import usb_addr_to_path, get_usb, cli_error, access_error, prettify_usb_addr
 import sys
 import logging
 logger = logging.getLogger("snagflash")
 
-from snagflash.interactive import SnagflashInteractive
+from snagflash.fastboot_uboot import SnagflashFastbootUboot
+import warnings
+
+def fb_interactive_deprecation():
+	warnings.warn("Using interactive mode with the '-P fastboot' option is deprecated and will be removed in a future release! Please use the '-P fastboot-uboot' option instead!",
+		FutureWarning,
+		stacklevel=1)
 
 def fastboot_ready_check(dev):
 	try:
@@ -54,9 +60,12 @@ def fastboot(args):
 	logger.info(args.fastboot_cmd)
 
 	if hasattr(args, "factory"):
-		session = SnagflashInteractive(fast)
+		session = SnagflashFastbootUboot(fast)
 		session.run(args.interactive_cmds)
 		return
+
+	if args.protocol == "fastboot-uboot" and args.fastboot_cmd != []:
+		cli_error("The '-f' option is not available with the fastboot_uboot protocol!")
 
 	for cmd in args.fastboot_cmd:
 		cmd = cmd.split(":", 1)
@@ -76,7 +85,10 @@ def fastboot(args):
 	session = None
 
 	if args.interactive_cmdfile is not None:
-		session = SnagflashInteractive(fast)
+		if args.protocol == "fastboot":
+			fb_interactive_deprecation()
+
+		session = SnagflashFastbootUboot(fast)
 		logger.info(f"running commands from file {args.interactive_cmdfile}")
 		with open(args.interactive_cmdfile, "r") as file:
 			cmds = file.read(-1).splitlines()
@@ -84,8 +96,11 @@ def fastboot(args):
 		session.run(cmds)
 
 	if args.interactive:
+		if args.protocol == "fastboot":
+			fb_interactive_deprecation()
+
 		if session is None:
-			session = SnagflashInteractive(fast)
+			session = SnagflashFastbootUboot(fast)
 
 		session.start()
 

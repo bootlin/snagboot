@@ -89,7 +89,6 @@ rules to create symlinks when a certain VID:PID pair is detected:
   SUBSYSTEMS=="usb", ATTRS{idVendor}=="...", ATTRS{idProduct}=="...",
   MODE="0660", TAG+="uaccess", SYMLINK+="myblockdev$attr{partition}"`
 
-
 ## Fastboot mode
 
 In fastboot mode, snagflash takes two additional arguments:
@@ -134,20 +133,21 @@ specification](https://android.googlesource.com/platform/system/core/+/refs/head
 and the [U-Boot
 docs](https://elixir.bootlin.com/u-boot/v2023.04/source/doc/android/fastboot.rst).
 
-### Interactive Fastboot mode
+### Extended Fastboot mode for U-Boot
 
-Interactive mode provides a set of more complex commands that leverage
-basic Fastboot commands to perform various flashing tasks. Interactive
-commands can be passed to a CLI prompt with the "-i" flag, and
-can also be read from a file using the "-I" option.
+This mode provides a set of enhanced Fastboot commands which leverage
+U-Boot-specific functionalities to perform various flashing tasks. Interactive
+commands can be passed to a CLI prompt with the "-i" flag, and can also be read
+from a file using the "-I" option.
 
-Interactive mode flashing commands handle writing files larger than the
-Fastboot memory buffer by slicing them up into sections.
+Extended Fastboot mode flashing commands handle writing files larger than the
+Fastboot memory buffer by slicing them up into sections. They also support bmap
+sparse files and GPT table formatting.
 
-The following command set is supported:
+The following set of commands are available:
 
 ```
-help_text = """snagflash interactive mode
+help_text = """snagflash extended Fastboot mode
 syntax: <cmd> <arg1> <arg2> ...
 commands:
 
