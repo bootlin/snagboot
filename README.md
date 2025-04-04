@@ -76,17 +76,32 @@ available.
 
 **Note:** Am335x devices are not supported on Windows!
 
+Snagboot requires the "libusb-win32" driver to be bound to any device it
+processes **apart from i.MX and SAMA5 devices, which already have their own
+s**. This can be done using the Zadig tool which you can obtain [here](https://github.com/pbatard/libwdi/releases/download/v1.5.1/zadig-2.9.exe).
+
+
+After opening Zadig, select the device entry corresponding to your board's
+VID:PID pair.
+
+Then, make sure the "libusb-win32" driver is selected and click on "Install
+driver". You should only have to do this once for a given VID:PID pair.
+
+Powershell is required by Snagboot, but it should already be installed.
+
+### Option 1: Using the snagboot installer
+
+An executable installer based on [PyInstaller](https://pyinstaller.org/en/stable/) and [InnoSetup](https://jrsoftware.org/isinfo.php) can be downloaded [from the latest Snagboot release](https://github.com/bootlin/snagboot/releases/latest/download/snagboot_installer.exe).
+
+### Option 2: Using pip
+
 Please install the following software:
 
 - Python 3.8 or later: https://www.python.org/downloads/windows/
 
 - Swig: http://prdownloads.sourceforge.net/swig/swigwin-4.2.1.zip
 
-- Zadig: https://github.com/pbatard/libwdi/releases/download/v1.5.1/zadig-2.9.exe
-
 - python3-libusb: run `pip install libusb`
-
-Powershell is also required but it should already be installed.
 
 After installing Python, Swig and libusb, you should add them to your PATH environment variable:
 
@@ -103,17 +118,6 @@ C:\Users\yourusername\AppData\Roaming\Python\Python312\Scripts
 ```
 
 setuptools: Run `pip install setuptools` then  `pip install snagboot` in powershell
-
-Snagboot requires the "libusb-win32" driver to be bound to any device it
-processes **apart from i.MX and SAMA5 devices, which already have their own
-system drivers**. This can be done using the Zadig tool which you previously
-installed.
-
-After opening Zadig, select the device entry corresponding to your board's
-VID:PID pair.
-
-Then, make sure the "libusb-win32" driver is selected and click on "Install
-driver". You should only have to do this once for a given VID:PID pair.
 
 ## Usage guide
 
