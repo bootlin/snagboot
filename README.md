@@ -91,7 +91,7 @@ Powershell is required by Snagboot, but it should already be installed.
 
 ### Option 1: Using the snagboot installer
 
-An executable installer based on [PyInstaller](https://pyinstaller.org/en/stable/) and [InnoSetup](https://jrsoftware.org/isinfo.php) can be downloaded [from the latest Snagboot release](https://github.com/bootlin/snagboot/releases/latest/download/snagboot_installer.exe).
+An executable installer based on [PyInstaller](https://pyinstaller.org/en/stable/) and [InnoSetup](https://jrsoftware.org/isinfo.php) can be downloaded [from the latest Snagboot release](https://github.com/bootlin/snagboot/releases/latest/download/snagboot_installer_win64.exe).
 
 ### Option 2: Using pip
 
