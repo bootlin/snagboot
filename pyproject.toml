@@ -21,7 +21,7 @@ authors = [
 ]
 description = "Generic recovery and reflashing tool for embedded platforms"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = "GPL-2.0-only"
 classifiers = [
     "Programming Language :: Python :: 3",
