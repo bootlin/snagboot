@@ -286,8 +286,8 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	this subject: https://linux-sunxi.org/FEL/USBBoot
 	"""
 	logger.info("Reading SoC info...")
-	with importlib.resources.path("snagrecover", "") as base_path:
-		sunxi_fw_path = str(base_path.resolve()) + "/firmware/sunxi_fw"
+
+	sunxi_fw_path = str(importlib.resources.files("snagrecover").joinpath("firmware").joinpath("sunxi_fw").resolve())
 
 	with open(sunxi_fw_path + "/soc_info.yaml", "r") as file:
 		soc_info = yaml.safe_load(file)[recovery_config["soc_model"]]
@@ -359,8 +359,7 @@ def sunxi_spl(port: fel.FEL, fw_blob: bytes) -> tuple:
 	logger.info("Writing SPL fragments...")
 	overrun_regions = write_spl_fragments(port, fw_blob, spl_len, soc_info)
 
-	with importlib.resources.path("snagrecover", "") as base_path:
-		sunxi_fw_path = str(base_path.resolve()) + "/firmware/sunxi_fw"
+	sunxi_fw_path = str(importlib.resources.files("snagrecover").joinpath("firmware").joinpath("sunxi_fw").resolve())
 
 	# copy spl load address and ROM region info into thunk binary
 	with open(sunxi_fw_path + "/fel-to-spl-thunk.bin", "rb") as file:
@@ -403,8 +402,7 @@ def sunxi_uboot(port: fel.FEL, fw_blob: bytes, dt_name: str):
 
 	logger.info("Jumping to U-Boot...")
 	if arm64_entry:
-		with importlib.resources.path("snagrecover", "") as base_path:
-			sunxi_fw_path = str(base_path.resolve()) + "/firmware/sunxi_fw"
+		sunxi_fw_path = str(importlib.resources.files("snagrecover").joinpath("firmware").joinpath("sunxi_fw").resolve())
 
 		with open(sunxi_fw_path + "/soc_info.yaml", "r") as file:
 			soc_info = yaml.safe_load(file)[recovery_config["soc_model"]]

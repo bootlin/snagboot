@@ -16,7 +16,7 @@ USB_RETRIES = 9
 USB_INTERVAL = 1
 
 def get_supported_socs():
-	yaml_text = importlib.resources.read_text("snagrecover", "supported_socs.yaml")
+	yaml_text = importlib.resources.files("snagrecover").joinpath("supported_socs.yaml").read_text()
 
 	return yaml.safe_load(yaml_text)
 

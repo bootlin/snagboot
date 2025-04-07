@@ -8,12 +8,7 @@ import importlib.resources
 import packaging.requirements
 import packaging.version
 
-# Hide outdated deprecation warnings from importlib.resources
-import warnings
-
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="importlib.resources")
-
-gui_dependencies = importlib.resources.read_text("snagfactory", "gui-requirements.txt").splitlines()
+gui_dependencies = importlib.resources.files("snagfactory").joinpath("gui-requirements.txt").read_text().splitlines()
 gui_reqs = [packaging.requirements.Requirement(req_str) for req_str in gui_dependencies]
 
 for req in gui_reqs:
@@ -377,8 +372,8 @@ class SnagFactory(App):
 	def build(self):
 		self.icon = "lab_penguins.ico"
 
-		Builder.load_string(importlib.resources.read_text("snagfactory", "gui.kv"))
-		Builder.load_string(importlib.resources.read_text("snagfactory", "config.kv"))
+		Builder.load_string(importlib.resources.files("snagfactory").joinpath("gui.kv").read_text())
+		Builder.load_string(importlib.resources.files("snagfactory").joinpath("config.kv").read_text())
 
 		session = SnagFactorySession(None)
 		self.ui = SnagFactoryUI(session)
@@ -398,8 +393,8 @@ def gui():
 	stdout_handler.setLevel(logging.WARNING)
 	factory_logger.addHandler(stdout_handler)
 
-	with importlib.resources.path("snagfactory", "assets") as assets_dir:
-		kivy.resources.resource_add_path(str(assets_dir.resolve()))
+	assets_path = str(importlib.resources.files("snagfactory").joinpath("assets").resolve())
+	kivy.resources.resource_add_path(assets_path)
 
 	SnagFactory().run()
 

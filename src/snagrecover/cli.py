@@ -22,23 +22,18 @@ import argparse
 from snagrecover import __version__
 from snagrecover.utils import cli_error, get_recovery, get_supported_socs
 import snagrecover.config as config
-import os
 import logging
 import ast
 import importlib.resources
 
-# Hide outdated deprecation warnings from importlib.resources
-import warnings
-
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="importlib.resources")
-
 def cli():
-	with importlib.resources.path("snagrecover", "templates") as templates_dir:
-		template_path = str(templates_dir.resolve())
+	templates = {}
 
-	templates = [filename[:-5] for filename in os.listdir(template_path)]
-	templates.sort()
-	template_listing = "\n".join(templates)
+	for file in importlib.resources.files("snagrecover").joinpath("templates").iterdir():
+		template_name = file.name[:-5]
+		templates[template_name] = file
+
+	template_listing = "\n".join(sorted(templates.keys()))
 	example = '''Examples:
 	snagrecover -s stm32mp15 -f stm32mp15.yaml
 	snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}"
@@ -94,11 +89,10 @@ Templates:
 
 	# print template
 	if args.template:
-		path = template_path + "/" + args.template + ".yaml"
-		if not os.path.exists(path):
+		if args.template not in templates:
 			cli_error(f"no template named {args.template}, please run snagrecover -h for a list of valid templates")
 
-		with open(path, "r") as file:
+		with templates[args.template].open("r") as file:
 			print(file.read(-1))
 
 		sys.exit(0)
