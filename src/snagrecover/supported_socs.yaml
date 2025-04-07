@@ -39,6 +39,8 @@ tested:
         family: imx
   imx8qxp:
         family: imx
+  imx91:
+        family: imx
   imx93:
         family: imx
   r8:

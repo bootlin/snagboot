@@ -27,8 +27,8 @@ quirks or particularities, it is recommended that you test them as well.
 
 Here is a nonexhaustive list of i.MX SoCs supported by Snagrecover:
 
-imx28, imx53, imx6q, imx6ull, imx7d, imx8mm, imx8qm, imx8qxp, imx93, imx6d,
-imx6sl, imx6sll, ...
+imx28, imx53, imx6q, imx6ull, imx7d, imx8mm, imx8qm, imx8qxp, imx91, imx93,
+imx6d, imx6sl, imx6sll, ...
 
 All of these devices are able to boot in USB recovery mode by exposing an HID
 gadget to the host machine. A vendor-specific variety of the SDP protocol is

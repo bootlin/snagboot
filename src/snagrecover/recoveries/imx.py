@@ -71,6 +71,7 @@ sdps_socs = [
 "imx28",
 "imx815",
 "imx865",
+"imx91",
 "imx93"
 ]
 
