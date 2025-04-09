@@ -27,7 +27,6 @@ System requirements:
  * libusb 1.x, libusb 0.1.x or OpenUSB
  * The ensurepip Python package. On Debian, you can install the
    python[your python version]-venv package
- * Swig is required to build pylibfdt. You can simply install the `swig` package on most distros.
 
 Snagboot is available on pip: `python3 -m pip install --user snagboot`.
 
@@ -99,11 +98,9 @@ Please install the following software:
 
 - Python 3.8 or later: https://www.python.org/downloads/windows/
 
-- Swig: http://prdownloads.sourceforge.net/swig/swigwin-4.2.1.zip
-
 - python3-libusb: run `pip install libusb`
 
-After installing Python, Swig and libusb, you should add them to your PATH environment variable:
+After installing Python and libusb, you should add them to your PATH environment variable:
 
 - Open the start menu and type « environment variable » into the search bar
 - click on « Edit environment variables for your account »
@@ -111,7 +108,6 @@ After installing Python, Swig and libusb, you should add them to your PATH envir
 - In the edit window, add four new paths:
 
 ```
-C:\Users\path\to\swigwin-4.2.1\swigwin-4.2.1
 C:\users\yourusername\appdata\roaming\python\python312\site-packages\libusb\_platform\_windows\x64
 C:\users\yourusername\appdata\roaming\python\python312\site-packages\libusb\_platform\_windows\x32
 C:\Users\yourusername\AppData\Roaming\Python\Python312\Scripts
