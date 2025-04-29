@@ -290,3 +290,28 @@ extract the FSBL and PMUFW from the complete boot image.
 configuration:
  * path
 
+## For Intel Keembay devices
+
+[example](../src/snagrecover/templates/keembay-generic.yaml)
+
+Intel Keembay boards use a two-stage recovery process. First,
+a Firmware Image Package (FIP) is flashed to the board in recovery mode.
+Then, the board reboots into fastboot mode, where OS images can be flashed.
+
+**fip:** Firmware Image Package containing the ATF and u-boot firmware
+necessary to initialize the board and boot into fastboot mode.
+
+configuration:
+ * path: Path to the FIP file. The filename should match the board model:
+   - For EVM boards: `fip-evm.bin`
+   - For M2 boards: `fip-m2.bin`
+   - For HDDL2 boards: `fip-hddl2.bin`
+
+After recovery, the board will be in fastboot mode, and you can use
+snagflash to flash OS images to the board. The standard partition names
+for Keembay boards are:
+
+- `boot_a` and `boot_b`: Boot partitions
+- `system_a` and `system_b`: System partitions
+- `syshash_a` and `syshash_b`: System hash partitions for verified boot
+- `data`: Data partition
