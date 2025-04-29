@@ -122,7 +122,13 @@ Example:
 ```bash
 # in U-Boot: fastboot usb 0
 snagflash -P fastboot -p 0483:0afb -f download:boot.img -f flash:0:1 -f boot
+
+# For Intel Keembay boards (after recovery with snagrecover)
+snagflash -P fastboot -p 8087:da00 -f flash:boot_a:boot.img -f flash:system_a:system.img -f flash:syshash_a:syshash.img -f flash:data:data.img
 ```
+
+For more detailed information about flashing specific SoC families, refer to the corresponding documentation:
+- [Intel Keembay](keembay.md)
 
 The ``flash_sparse`` command will download and flash a android sparse file with
 fastboot protocol. For details about the file format, see the [sparse file format
