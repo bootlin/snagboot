@@ -29,6 +29,11 @@ logger = logging.getLogger("snagrecover")
 
 MAX_LIBUSB_TRANSFER_SIZE = 0x40000
 
+# Intel Keembay USB VID:PID
+KEEMBAY_VID = 0x8087
+KEEMBAY_PID_RECOVERY = 0x0b39
+KEEMBAY_PID_FASTBOOT = 0xda00
+
 """
 See doc/android/fastboot-protocol.rst in the U-Boot sources
 for more information on fastboot support in U-Boot.
@@ -202,6 +207,13 @@ class Fastboot():
 		"""
 		packet = "oem format"
 		self.cmd(packet)
+		
+	def format(self):
+		"""
+		Format the device using oem format command.
+		This is an alias for oem_format for compatibility with other tools.
+		"""
+		return self.oem_format()
 
 	def oem_partconf(self, arg: str):
 		"""
@@ -230,6 +242,71 @@ class Fastboot():
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
 
 
+	def flashall(self, args: str):
+		"""
+		Flash multiple images to their respective partitions.
+		This is particularly useful for Keembay devices.
+		
+		Args:
+			args: Comma-separated list of image files to flash
+		"""
+		images = args.split(',')
+		if not images:
+			raise FastbootError("No images provided for flashall")
+		
+		# Keembay partition mapping
+		partition_img_mapping = {
+			"boot.img": "boot_a",
+			"system.img": "system_a",
+			"syshash.img": "syshash_a",
+			"data.img": "data",
+			"factory.img": "factory",
+		}
+		
+		# Secondary partition mapping for A/B partitioning
+		secondary_mapping = {
+			"boot.img": "boot_b",
+			"system.img": "system_b",
+			"syshash.img": "syshash_b",
+		}
+		
+		# Format the device first
+		try:
+			self.oem_format()
+			logger.info("Device formatted successfully")
+		except Exception as e:
+			logger.error(f"Failed to format device: {str(e)}")
+			raise FastbootError("Failed to format device") from e
+		
+		# Flash each image to its respective partition
+		for image in images:
+			image_name = os.path.basename(image)
+			if image_name not in partition_img_mapping:
+				logger.warning(f"Unknown image type: {image_name}, skipping")
+				continue
+			
+			part_name = partition_img_mapping[image_name]
+			logger.info(f"Flashing {image} to partition {part_name}")
+			
+			try:
+				# Download and flash the image
+				self.download(image)
+				self.flash(part_name)
+				logger.info(f"Partition {part_name} flashed successfully")
+				
+				# Flash to secondary partition if applicable
+				if image_name in secondary_mapping:
+					secondary_part = secondary_mapping[image_name]
+					logger.info(f"Flashing {image} to secondary partition {secondary_part}")
+					self.download(image)
+					self.flash(secondary_part)
+					logger.info(f"Secondary partition {secondary_part} flashed successfully")
+			except Exception as e:
+				logger.error(f"Failed to flash {image_name}: {str(e)}")
+				raise FastbootError(f"Failed to flash {image_name}") from e
+		
+		logger.info("All images flashed successfully")
+	
 	def flash_sparse(self, args: str):
 		"""
 		Download and flash an android sparse file.
@@ -268,3 +345,168 @@ class Fastboot():
 						raise FastbootError(f"Failed to flash: {e}") from e
 			except Exception as e:
 				raise FastbootError(f"{e}") from e
+
+
+class FastbootDevice:
+	"""
+	A higher-level class for interacting with a device in fastboot mode.
+	This class provides methods for common operations like flashing firmware.
+	"""
+	
+	def __init__(self, usb_dev: usb.core.Device, timeout: int = 10000):
+		"""
+		Initialize a FastbootDevice instance.
+		
+		Args:
+			usb_dev: The USB device in fastboot mode
+			timeout: Timeout for USB operations in milliseconds
+		"""
+		self.usb_dev = usb_dev
+		self.fastboot = Fastboot(usb_dev, timeout)
+		self.serialno = None
+		self._get_serial_number()
+	
+	def _get_serial_number(self):
+		"""Get the device serial number."""
+		try:
+			self.serialno = self.usb_dev.serial_number
+			if self.serialno:
+				self.serialno = self.serialno.upper()
+		except Exception as e:
+			logger.warning(f"Failed to get serial number: {str(e)}")
+			self.serialno = None
+	
+	def stage(self, fip_path: str):
+		"""
+		Stage a FIP (Firmware Image Package) to the device.
+		This is specific to Intel Keembay devices.
+		
+		Args:
+			fip_path: Path to the FIP file
+		
+		Returns:
+			True if successful
+		"""
+		logger.info(f"Staging FIP to device with serial: {self.serialno}")
+		
+		# Download the FIP file to the device
+		try:
+			self.fastboot.download(fip_path)
+			logger.info("FIP downloaded successfully")
+			return True
+		except Exception as e:
+			logger.error(f"Failed to stage FIP: {str(e)}")
+			raise
+	
+	def format(self):
+		"""
+		Format the device's storage.
+		
+		Returns:
+			True if successful
+		"""
+		logger.info("Formatting device storage")
+		try:
+			self.fastboot.oem_format()
+			logger.info("Device formatted successfully")
+			return True
+		except Exception as e:
+			logger.error(f"Failed to format device: {str(e)}")
+			raise
+	
+	def flash_partition(self, part_name: str, img_path: str):
+		"""
+		Flash an image to a specific partition.
+		
+		Args:
+			part_name: Name of the partition to flash
+			img_path: Path to the image file
+		
+		Returns:
+			True if successful
+		"""
+		logger.info(f"Flashing {img_path} to partition {part_name}")
+		try:
+			# Download the image to the device
+			self.fastboot.download(img_path)
+			# Flash the downloaded image to the specified partition
+			self.fastboot.flash(part_name)
+			logger.info(f"Partition {part_name} flashed successfully")
+			return True
+		except Exception as e:
+			logger.error(f"Failed to flash partition {part_name}: {str(e)}")
+			raise
+	
+	def erase_partition(self, part_name: str):
+		"""
+		Erase a specific partition.
+		
+		Args:
+			part_name: Name of the partition to erase
+		
+		Returns:
+			True if successful
+		"""
+		logger.info(f"Erasing partition {part_name}")
+		try:
+			self.fastboot.erase(part_name)
+			logger.info(f"Partition {part_name} erased successfully")
+			return True
+		except Exception as e:
+			logger.error(f"Failed to erase partition {part_name}: {str(e)}")
+			raise
+	
+	def reboot(self):
+		"""
+		Reboot the device.
+		
+		Returns:
+			True if successful
+		"""
+		logger.info("Rebooting device")
+		try:
+			self.fastboot.reboot()
+			logger.info("Device reboot initiated")
+			return True
+		except Exception as e:
+			logger.error(f"Failed to reboot device: {str(e)}")
+			raise
+	
+	def get_variable(self, var_name: str):
+		"""
+		Get a fastboot variable from the device.
+		
+		Args:
+			var_name: Name of the variable to get
+		
+		Returns:
+			The variable value as bytes
+		"""
+		try:
+			return self.fastboot.getvar(var_name)
+		except Exception as e:
+			logger.error(f"Failed to get variable {var_name}: {str(e)}")
+			raise
+	
+	def flashall(self, img_paths: list):
+		"""
+		Flash multiple images to their respective partitions.
+		This is particularly useful for Keembay devices.
+		
+		Args:
+			img_paths: List of image file paths to flash
+		
+		Returns:
+			True if successful
+		"""
+		logger.info(f"Flashing multiple images to device with serial: {self.serialno}")
+		
+		try:
+			# Convert list to comma-separated string
+			img_paths_str = ','.join(img_paths)
+			self.fastboot.flashall(img_paths_str)
+			logger.info("All images flashed successfully")
+			return True
+		except Exception as e:
+			logger.error(f"Failed to flash images: {str(e)}")
+			raise

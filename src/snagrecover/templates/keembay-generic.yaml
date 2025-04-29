@@ -1,0 +1,51 @@
+# Template for Intel Keembay boards
+# This template provides the basic configuration for recovering and flashing
+# Intel Keembay boards using snagboot.
+
+# Firmware configuration
+fip:
+  # Path to the FIP (Firmware Image Package) file
+  # This is required for the recovery process
+  path: fip-evm.bin
+
+# Partition configuration for flashing
+# These are the standard partitions for Keembay boards
+# You can modify these according to your specific board configuration
+boot:
+  # Path to the boot image
+  path: boot.img
+  # Partition name for the boot image
+  partition: boot_a
+
+system:
+  # Path to the system image
+  path: system.img
+  # Partition name for the system image
+  partition: system_a
+
+syshash:
+  # Path to the system hash image (for verified boot)
+  path: syshash.img
+  # Partition name for the system hash image
+  partition: syshash_a
+
+data:
+  # Path to the data image
+  path: data.img
+  # Partition name for the data image
+  partition: data
+
+# Additional configuration options
+# Uncomment and modify as needed
+
+# Skip formatting the device before flashing
+# skip_format: true
+
+# Skip flashing secondary partitions
+# skip_secondary: true
+
+# Skip booting the device after flashing
+# skip_boot: true
+
+# Wipe environment data
+# wipe: true
