@@ -56,6 +56,21 @@ the SoC is configured to boot from DFU. The SoC can also fall back to DFU if all
 other boot options fail. A few seconds after powering the board, a USB DFU
 device should appear on your host system. This can take several seconds.
 
+## Intel Keembay
+
+Intel Keembay boards have a recovery mode that can be accessed by setting
+the boot switch to the recovery position. The exact location and configuration
+of the boot switch varies by board model, so refer to your board's documentation
+for specific instructions.
+
+1. Power off the board
+2. Set the boot switch to the recovery position
+3. Connect the USB cable to the recovery port
+4. Power on the board
+
+After powering on, the board should be detected as a USB device
+with VID:PID `8087:0b39`.
+
 ## The special case of TI AM335x devices
 
 During initialization, the ROM code will set up a boot device list and for each
