@@ -43,6 +43,8 @@ tested:
         family: imx
   imx93:
         family: imx
+  keembay:
+        family: keembay
   r8:
         family: sunxi
   sama5d2:
@@ -146,4 +148,3 @@ untested:
         family: sunxi
   v853:
         family: sunxi
-
