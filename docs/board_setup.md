@@ -71,6 +71,28 @@ for specific instructions.
 After powering on, the board should be detected as a USB device
 with VID:PID `8087:0b39`.
 
+## Ambarella SoCs
+
+Ambarella SoCs have a USB boot mode that can be accessed by setting specific pins during reset. The exact configuration varies by board model, so refer to your board's documentation for specific instructions.
+
+1. Power off the board
+2. Set the boot mode pins to USB boot mode (typically by setting a jumper or DIP switch)
+3. Connect the USB cable to the USB port (usually the OTG port)
+4. Power on the board
+
+After powering on, the board should be detected as a USB device. The recovery process involves:
+1. Initializing DRAM using an ADS script
+2. Loading a bootloader
+3. Entering Amboot mode
+4. Loading and executing U-Boot
+
+You will need the following files:
+- DRAM initialization script (e.g., cv22_lpddr4_408MHz.ads)
+- Bootloader binary (e.g., cv22_bld_linux_emmc.bin)
+- U-Boot binary
+
+These files should be specified in your firmware configuration file.
+
 ## The special case of TI AM335x devices
 
 During initialization, the ROM code will set up a boot device list and for each
