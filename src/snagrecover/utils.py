@@ -245,6 +245,10 @@ def get_recovery(soc_family: str):
 		from snagrecover.recoveries.keembay import main as keembay_recovery
 
 		return keembay_recovery
+	elif soc_family == "ambarella":
+		from snagrecover.recoveries.ambarella import main as ambarella_recovery
+
+		return ambarella_recovery
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 
