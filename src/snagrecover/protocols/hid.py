@@ -155,7 +155,7 @@ class HIDDevice():
 
 		# ignore the optional interrupt OUT endpoint
 
-		logger.info("Finished initializing HID device {pretty_addr}")
+		logger.info(f"Finished initializing HID device {pretty_addr}")
 
 	def set_idle(self, report_id: int, duration: int):
 		bmRequestType = usb.util.CTRL_OUT | usb.util.CTRL_TYPE_CLASS | usb.util.CTRL_RECIPIENT_INTERFACE

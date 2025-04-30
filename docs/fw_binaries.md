@@ -158,7 +158,7 @@ You can generate this by compiling the u-boot.imx target in U-Boot.
 configuration:
  * path
 
-## For NXP i.MX8, i.MX28 and i.MX93 devices
+## For NXP i.MX8, i.MX28 , i.MX91 and i.MX93 devices
 
 [example](../src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
 
