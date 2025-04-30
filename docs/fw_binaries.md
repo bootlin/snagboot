@@ -306,7 +306,6 @@ configuration:
    - For M2 boards: `fip-m2.bin`
    - For HDDL2 boards: `fip-hddl2.bin`
 
-
 ## For Broadcom BCM devices
 
 [example](../src/snagrecover/templates/bcm2711.yaml)
@@ -352,3 +351,25 @@ configuration:
 
 configuration:
   * path
+
+## For Ambarella SoCs
+
+[example](../src/snagrecover/templates/ambarella-cv22.yaml)
+
+Ambarella SoCs use a multi-stage recovery process:
+1. Initialize DRAM using an ADS script
+2. Load a bootloader
+3. Enter Amboot mode
+4. Load and execute U-Boot
+
+The following files are required for Ambarella SoCs:
+
+**dram_init:** ADS script for DRAM initialization. This script contains commands to initialize the DRAM controller and configure the memory settings for the specific SoC and memory type.
+
+configuration:
+ * path: Path to the ADS script file, e.g., `cv22_lpddr4_408MHz.ads`
+
+**bootloader:** Bootloader binary that initializes the system and enters Amboot mode. This is typically a binary provided by Ambarella or your board vendor.
+
+configuration:
+ * path: Path to the bootloader binary, e.g., `cv22_bld_linux_emmc.bin`
