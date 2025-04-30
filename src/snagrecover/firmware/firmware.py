@@ -223,6 +223,10 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		from snagrecover.firmware.bcm import bcm_run
 
 		bcm_run(port, fw_name, fw_blob, subfw_name)
+	elif soc_family == "ambarella":
+		from snagrecover.firmware.amba_fw import run_firmware as amba_run
+
+		amba_run(port, fw_name, subfw_name)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")
