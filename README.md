@@ -18,6 +18,7 @@ ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts:
 Snagboot currently supports the following families of System-On-Chips (SoCs):
 
  * [Allwinner sunxi](https://linux-sunxi.org/) A10, A10S, A13, A20, A23, A31, A33, A63, A64, A80, A83T, AF1C100S, H2+, R8, R16, R40, R329, R528, T113-S3, V3S, V5S, V536, V831, V853
+ * [Ambarella](https://www.ambarella.com/products/consumer/) CV22, CV25, CV28, CV35
  * [STMicroelectronics](http://st.com/) [STM32MP1](https://www.st.com/en/microcontrollers-microprocessors/stm32mp1-series.html) and [STM32MP2](https://www.st.com/en/microcontrollers-microprocessors/stm32mp2-series.html)
  * [Microchip](https://www.microchip.com/) [SAMA5](https://www.microchip.com/en-us/products/microprocessors/32-bit-mpus/sama5)
  * [NXP](https://www.nxp.com/) [i.MX6](https://www.nxp.com/products/processors-and-microcontrollers/arm-processors/i-mx-applications-processors/i-mx-6-processors:IMX6X_SERIES), [i.MX7](https://www.nxp.com/products/processors-and-microcontrollers/arm-processors/i-mx-applications-processors/i-mx-7-processors:IMX7-SERIES), [i.MX8](https://www.nxp.com/products/processors-and-microcontrollers/arm-processors/i-mx-applications-processors/i-mx-8-applications-processors:IMX8-SERIES), [i.MX93](https://www.nxp.com/products/processors-and-microcontrollers/arm-processors/i-mx-applications-processors/i-mx-9-processors/i-mx-93-applications-processor-family-arm-cortex-a55-ml-acceleration-power-efficient-mpu:i.MX93)
