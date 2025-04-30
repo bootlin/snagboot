@@ -81,3 +81,6 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="03fd", ATTRS{idProduct}=="0050", MODE="0660"
 
 #Intel Keembay rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="8087", ATTRS{idProduct}=="0b39", MODE="0660", TAG+="uaccess"
+
+#Ambarella rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1d6b", ATTRS{idProduct}=="0104", MODE="0660", TAG+="uaccess"
