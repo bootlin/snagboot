@@ -1,0 +1,8 @@
+code471:
+  path: mkimage-in-simple-bin.mkimage-u-boot-tpl
+  delay: 1
+code472:
+  path: mkimage-in-simple-bin.mkimage-u-boot-spl
+  delay: 10000
+u-boot-fit:
+  path: u-boot.itb

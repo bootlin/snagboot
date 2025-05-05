@@ -1,0 +1,5 @@
+code471:
+  path: u-boot-rockchip-usb471.bin
+  delay: 1
+code472:
+  path: u-boot-rockchip-usb472.bin
