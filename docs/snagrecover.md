@@ -34,5 +34,9 @@ Examples:
 ```bash
 snagrecover -s stm32mp15 -f stm32mp15.yaml
 snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}"
+snagrecover -s keembay -f templates/keembay-generic.yaml
+snagrecover -s keembay -F "{'fip': {'path': 'binaries/fip-evm.bin'}}"
 ```
 
+For more detailed information about recovering specific SoC families, refer to the corresponding documentation:
+- [Intel Keembay](keembay.md)

@@ -195,6 +195,9 @@ def get_recovery(soc_family: str):
 	elif soc_family == "zynqmp":
 		from snagrecover.recoveries.zynqmp import main as zynqmp_recovery
 		return zynqmp_recovery
+	elif soc_family == "keembay":
+		from snagrecover.recoveries.keembay import main as keembay_recovery
+		return keembay_recovery
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 
