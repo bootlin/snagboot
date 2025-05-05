@@ -40,3 +40,10 @@ CONFIG_SPL_BANNER_PRINT=n
 CONFIG_SPL_DISPLAY_PRINT=n
 ```
 
+## Snagfactory fails with USB I/O errors when processing many boards
+
+These kinds of errors can sometimes be caused by overwhelmed USB hubs. In an
+ideal scenario, each board is plugged into a separate root hub port, but if an
+external hub is absolutely necessary, using one with a higher capacity or making
+sure that it is powered by an independent supply can help.
+
