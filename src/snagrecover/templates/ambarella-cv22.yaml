@@ -1,0 +1,51 @@
+# Ambarella CV22 recovery configuration
+
+# Device identification
+vid: 0x1b8e  # Ambarella vendor ID
+pid: 0xc022  # CV22 product ID
+
+# Recovery protocol
+protocol: amba
+
+# Required firmware files
+firmware:
+  # DRAM initialization script
+  dram_script:
+    path: cv22_lpddr4_408MHz.ads
+    description: DRAM initialization script for CV22 LPDDR4 at 408MHz
+
+  # Bootloader binary  
+  bootloader:
+    path: cv22_bld_linux_emmc.bin
+    description: CV22 bootloader for Linux eMMC boot
+
+# Recovery steps
+steps:
+  - name: Initialize DRAM
+    action: initialize_dram
+    description: Initialize device DRAM using ADS script
+
+  - name: Load bootloader
+    action: load_bootloader
+    description: Load bootloader to device memory
+
+  - name: Flash firmware
+    action: flash_firmware
+    description: Flash firmware image to device
+    args:
+      firmware: firmware.bin  # Firmware image to flash
+
+# Recovery flow description
+description: |
+  Recovery process for Ambarella CV22 devices:
+  1. Device enters USB recovery mode
+  2. Initialize DRAM using ADS script
+  3. Load bootloader to memory
+  4. Flash firmware image
+  5. Device boots from flashed firmware
+
+# Additional notes
+notes: |
+  - Ensure device is in USB recovery mode before starting
+  - DRAM script and bootloader files must be in firmware directory
+  - Firmware image should be compatible with CV22
