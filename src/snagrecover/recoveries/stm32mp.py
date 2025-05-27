@@ -35,11 +35,6 @@ def main():
 	# USB ENUMERATION
 	usb_addr = recovery_config["usb_path"]
 	dev = get_usb(usb_addr)
-	cfg = dev.get_active_configuration()
-	logger.debug("USB config:")
-	for line in str(cfg).splitlines():
-		logger.debug(line)
-	logger.debug("End of USB config:")
 
 	# DOWNLOAD TF-A
 	dfu_cmd = dfu.DFU(dev)
@@ -74,7 +69,6 @@ def main():
 
 	usb.util.dispose_resources(dev)
 	dev = get_usb(usb_addr)
-	cfg = dev.get_active_configuration()
 	dfu_cmd = dfu.DFU(dev)
 
 	if soc_model == "stm32mp25":
@@ -83,7 +77,6 @@ def main():
 
 	usb.util.dispose_resources(dev)
 	dev = get_usb(usb_addr)
-	cfg = dev.get_active_configuration()
 	dfu_cmd = dfu.DFU(dev)
 
 	run_firmware(dev, "fip")
