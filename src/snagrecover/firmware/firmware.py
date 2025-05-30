@@ -20,6 +20,7 @@
 import logging
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
+from snagrecover.protocols import fastboot
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
 
@@ -107,6 +108,21 @@ def am62lx_run(dev, fw_name: str, fw_blob: bytes):
 		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 
+def keembay_run(port, fw_name: str, fw_blob: bytes):
+	if fw_name == "fip":
+		pass
+	else:
+		cli_error(f"unsupported firmware {fw_name}")
+
+	logger.info("Searching for partition id...")
+
+	fb_cmd = fastboot.Fastboot(port)
+	logger.info("Downloading file...")
+	fb_cmd.send(fw_blob)
+	logger.info("Done")
+
+	return None
+
 def check_fw_blob(fw_blob: bytes):
 	"""
 	Do a quick sanity check on the firmware contents.  If the file passed
@@ -159,6 +175,8 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		sama5_run(port, fw_name, fw_blob)
 	elif soc_family == "stm32mp":
 		stm32mp_run(port, fw_name, fw_blob)
+	elif soc_family == "keembay":
+		keembay_run(port, fw_name, fw_blob)
 	elif soc_family == "imx":
 		from snagrecover.firmware.imx_fw import imx_run
 		imx_run(port, fw_name, fw_blob, subfw_name)
