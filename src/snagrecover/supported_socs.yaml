@@ -59,6 +59,10 @@ tested:
         family: stm32mp
   zynqmp:
         family: zynqmp
+  rk3399:
+        family: rockchip
+  rk3588:
+        family: rockchip
 untested:
   a10:
         family: sunxi
@@ -146,4 +150,29 @@ untested:
         family: sunxi
   v853:
         family: sunxi
-
+  rv1108:
+        family: rockchip
+  rv1126:
+        family: rockchip
+  rk3066:
+        family: rockchip
+  rk3036:
+        family: rockchip
+  rk3188:
+        family: rockchip
+  rk3128:
+        family: rockchip
+  rk3288:
+        family: rockchip
+  rk322x:
+        family: rockchip
+  rk3328:
+        family: rockchip
+  rk3368:
+        family: rockchip
+  px30:
+        family: rockchip
+  rk3308:
+        family: rockchip
+  rk3568:
+        family: rockchip
