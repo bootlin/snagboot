@@ -78,3 +78,6 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="d022", MODE="0660"
 
 #Xilinx rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="03fd", ATTRS{idProduct}=="0050", MODE="0660", TAG+="uaccess"
+
+#Intel Keembay rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="8087", ATTRS{idProduct}=="0b39", MODE="0660", TAG+="uaccess"

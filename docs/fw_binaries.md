@@ -290,3 +290,18 @@ extract the FSBL and PMUFW from the complete boot image.
 configuration:
  * path
 
+## For Intel Keembay devices
+
+[example](../src/snagrecover/templates/keembay-generic.yaml)
+
+Intel Keembay boards use a Firmware Image Package (FIP) to boot the board
+in recovery mode.
+
+**fip:** Firmware Image Package containing the ATF and u-boot firmware
+necessary to initialize the board.
+
+configuration:
+ * path: Path to the FIP file. The filename should match the board model:
+   - For EVM boards: `fip-evm.bin`
+   - For M2 boards: `fip-m2.bin`
+   - For HDDL2 boards: `fip-hddl2.bin`
