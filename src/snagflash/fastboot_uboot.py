@@ -154,7 +154,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			raise ValueError(f"Invalid Fastboot buffer size {self.fb_size}! Please check Fastboot gadget parameters!")
 
 		if "fb-size" in self.env:
-			new_fb_size = int(self.env["fb-size"])
+			new_fb_size = int(self.env["fb-size"], 0)
 
 			if new_fb_size > self.fb_size:
 				raise ValueError(f"Cannot increase Fastboot buffer size! Default size is 0x{self.fb_size:x}, requested size is 0x{new_fb_size:x}")
