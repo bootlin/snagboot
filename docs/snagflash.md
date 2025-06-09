@@ -138,7 +138,8 @@ docs](https://elixir.bootlin.com/u-boot/v2023.04/source/doc/android/fastboot.rst
 This mode provides a set of enhanced Fastboot commands which leverage
 U-Boot-specific functionalities to perform various flashing tasks. Interactive
 commands can be passed to a CLI prompt with the "-i" flag, and can also be read
-from a file using the "-I" option.
+from a file using the "-I" option. Lines starting with "#" are interpreted as
+comments.
 
 Extended Fastboot mode flashing commands handle writing files larger than the
 Fastboot memory buffer by slicing them up into sections. They also support bmap

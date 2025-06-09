@@ -371,7 +371,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		for cmd in cmds:
 			cmd = cmd.strip()
 
-			if cmd == "":
+			if cmd == "" or cmd[0] == "#":
 				continue
 
 			logger.info(f"running command {cmd}")
