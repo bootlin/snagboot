@@ -117,8 +117,8 @@ class SDPCommand():
 
 	def check_hab(self):
 		hab_status = self.dev.read(64, timeout=5)
-		if hab_status[:4] != __class__.hab_codes["HAB_OPEN"]:
-			raise ValueError(f"Error: status HAB_CLOSED or unknown: {hab_status} found on address ")
+		if hab_status[:4] not in [__class__.hab_codes["HAB_OPEN"], __class__.hab_codes["HAB_CLOSED"]]:
+			raise ValueError(f"Error: unknown HAB status: {hab_status} found")
 		return None
 
 	def read32(self, addr: int) -> int:
