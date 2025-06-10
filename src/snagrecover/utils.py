@@ -195,6 +195,9 @@ def get_recovery(soc_family: str):
 	elif soc_family == "zynqmp":
 		from snagrecover.recoveries.zynqmp import main as zynqmp_recovery
 		return zynqmp_recovery
+	elif soc_family == "rockchip":
+		from snagrecover.recoveries.rockchip import main as rockchip_recovery
+		return rockchip_recovery
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 
@@ -207,16 +210,16 @@ class BinFileHeader():
 
         fmt = ""
         class_size = 0
-        offset = 0
+        class_offset = 0
 
         @classmethod
         def read(cls, data, offset=0):
                 obj = cls(*struct.unpack(cls.fmt, data[offset:offset + cls.class_size]))
-                obj.offset = offset
+                obj.class_offset = offset
 
                 return obj
 
         @classmethod
         def write(cls, self, data):
-                offset = self.offset
+                offset = self.class_offset
                 data[offset:offset + cls.class_size] = struct.pack(cls.fmt, *astuple(self))

@@ -175,6 +175,9 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	elif soc_family == "zynqmp":
 		from snagrecover.firmware.zynqmp_fw import zynqmp_run
 		zynqmp_run(port, fw_name, fw_blob, subfw_name)
+	elif soc_family == "rockchip":
+		from snagrecover.firmware.rk_fw import rockchip_run
+		rockchip_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")
