@@ -24,11 +24,16 @@ import subprocess
 import os
 import sys
 import logging
+
 logger = logging.getLogger("snagrecover")
+
 
 def main():
 	if recovery_config["args"]["uart"]:
-		port = serial.Serial(recovery_config["args"]["uart"], baudrate=recovery_config["args"]["baudrate"])
+		port = serial.Serial(
+			recovery_config["args"]["uart"],
+			baudrate=recovery_config["args"]["baudrate"],
+		)
 		run_firmware(port, "spl")
 		run_firmware(port, "u-boot")
 		port.close()
@@ -39,7 +44,9 @@ def main():
 		process = subprocess.Popen(bash_cmd.split(), stdout=subprocess.PIPE)
 		output, error = process.communicate()
 		if output.decode("ascii") != f"{netns_name}\n":
-			logger.error(f"This recovery needs to be run in the {netns_name} namespace!")
+			logger.error(
+				f"This recovery needs to be run in the {netns_name} namespace!"
+			)
 			logger.error("Did you run sudo am335x_usb_setup.sh?")
 			sys.exit(-1)
 
@@ -47,4 +54,3 @@ def main():
 		run_firmware(None, "spl")
 		# Install and run U-Boot
 		run_firmware(None, "u-boot")
-

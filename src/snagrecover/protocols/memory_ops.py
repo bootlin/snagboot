@@ -18,12 +18,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 
-class MemoryOps():
+
+class MemoryOps:
 	"""
 	This is an interface for common I/O operations on device memory
 	"""
+
 	def __init__(self, backend):
 		self.backend = backend
 
@@ -40,9 +43,11 @@ class MemoryOps():
 
 	def write_blob(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
 		if len(blob) > 0:
-			logger.debug("[MemoryOps] write_blob "\
-				+f"0x{blob[offset]:x}...0x{blob[offset + size - 1]:x} "\
-				+f"addr 0x{addr:x} offset 0x{offset:x} size 0x{size:x}")
+			logger.debug(
+				"[MemoryOps] write_blob "
+				+ f"0x{blob[offset]:x}...0x{blob[offset + size - 1]:x} "
+				+ f"addr 0x{addr:x} offset 0x{offset:x} size 0x{size:x}"
+			)
 		ret = self.backend.write_blob(blob, addr, offset, size)
 		return ret
 
@@ -50,4 +55,3 @@ class MemoryOps():
 		logger.debug(f"[MemoryOps] jump to 0x{addr:x} ...")
 		ret = self.backend.jump(addr)
 		return ret
-

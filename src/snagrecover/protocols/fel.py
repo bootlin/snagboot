@@ -25,7 +25,8 @@
 import usb
 from snagrecover import utils
 
-class FEL():
+
+class FEL:
 	MAX_MSG_LEN = 65536
 	"""
 	For some of these requests, I haven't
@@ -33,14 +34,14 @@ class FEL():
 	documentation.
 	"""
 	standard_request_codes = {
-	"FEL_VERIFY_DEVICE": 0x1,
-	"FEL_SWITCH_ROLE": 0x2,
-	"FEL_IS_READY": 0x3,
-	"FEL_GET_CMD_SET_VER": 0x4,
-	"FEL_DISCONNECT": 0x10,
-	"FEL_DOWNLOAD": 0x101,
-	"FEL_RUN": 0x102,
-	"FEL_UPLOAD": 0x103,
+		"FEL_VERIFY_DEVICE": 0x1,
+		"FEL_SWITCH_ROLE": 0x2,
+		"FEL_IS_READY": 0x3,
+		"FEL_GET_CMD_SET_VER": 0x4,
+		"FEL_DISCONNECT": 0x10,
+		"FEL_DOWNLOAD": 0x101,
+		"FEL_RUN": 0x102,
+		"FEL_UPLOAD": 0x103,
 	}
 
 	def __init__(self, dev: usb.core.Device, timeout: int):
@@ -51,8 +52,12 @@ class FEL():
 		for intf in cfg.interfaces():
 			ep_in, ep_out = None, None
 			for ep in intf.endpoints():
-				is_bulk = (ep.bmAttributes & usb.ENDPOINT_TYPE_MASK) == usb.ENDPOINT_TYPE_BULK
-				is_in = (ep.bmAttributes & usb.ENDPOINT_TYPE_MASK) == usb.ENDPOINT_TYPE_BULK
+				is_bulk = (
+					ep.bmAttributes & usb.ENDPOINT_TYPE_MASK
+				) == usb.ENDPOINT_TYPE_BULK
+				is_in = (
+					ep.bmAttributes & usb.ENDPOINT_TYPE_MASK
+				) == usb.ENDPOINT_TYPE_BULK
 				if not is_bulk:
 					continue
 				is_in = (ep.bEndpointAddress & usb.ENDPOINT_DIR_MASK) == usb.ENDPOINT_IN
@@ -85,22 +90,26 @@ class FEL():
 		len2
 		reserved[10]
 		"""
-		packet0 = b"AWUC\x00\x00\x00\x00"\
-				+ length.to_bytes(4, "little")\
-				+ b"\x00\x00\x00"\
-				+ b"\x0c"\
-				+ cmd\
-				+ b"\x00"\
-				+ length.to_bytes(4, "little")\
-				+ (10 * b"\x00")
+		packet0 = (
+			b"AWUC\x00\x00\x00\x00"
+			+ length.to_bytes(4, "little")
+			+ b"\x00\x00\x00"
+			+ b"\x0c"
+			+ cmd
+			+ b"\x00"
+			+ length.to_bytes(4, "little")
+			+ (10 * b"\x00")
+		)
 		self.dev.write(self.ep_out, packet0, timeout=self.timeout)
 		# main action
 		if out:
-			ret = (self.dev.write(self.ep_out, packet, timeout=self.timeout)).to_bytes(4, "little")
+			ret = (self.dev.write(self.ep_out, packet, timeout=self.timeout)).to_bytes(
+				4, "little"
+			)
 		else:
 			ret = self.dev.read(self.ep_in, length, timeout=self.timeout)
 		# USB response
-		usb_ret = self.dev.read(self.ep_in, 13, timeout = self.timeout)
+		usb_ret = self.dev.read(self.ep_in, 13, timeout=self.timeout)
 		# check magic
 		if bytes(usb_ret[:4]) != b"AWUS":
 			raise Exception("Malformed packet received")
@@ -111,8 +120,9 @@ class FEL():
 
 	def request(self, request: str, response_len: int) -> bytes:
 		# send request
-		request = (FEL.standard_request_codes[request]).to_bytes(2, "little") \
-				+ (14 * b"\x00") # tag + reserved
+		request = (FEL.standard_request_codes[request]).to_bytes(2, "little") + (
+			14 * b"\x00"
+		)  # tag + reserved
 		self.aw_exchange(len(request), out=True, packet=request)
 		# get response
 		response = self.aw_exchange(length=response_len, out=False)
@@ -132,11 +142,13 @@ class FEL():
 		if request == "FEL_DOWNLOAD" and len(data) != length:
 			raise Exception("Data does not match length parameter")
 		# send message
-		message = (FEL.standard_request_codes[request]).to_bytes(2, "little") \
-				+ b"\x00\x00"\
-				+ addr.to_bytes(4, "little")\
-				+ length.to_bytes(4, "little")\
-				+ b"\x00\x00\x00\x00"
+		message = (
+			(FEL.standard_request_codes[request]).to_bytes(2, "little")
+			+ b"\x00\x00"
+			+ addr.to_bytes(4, "little")
+			+ length.to_bytes(4, "little")
+			+ b"\x00\x00\x00\x00"
+		)
 		self.aw_exchange(len(message), out=True, packet=message)
 		# get/send data
 		if request == "FEL_UPLOAD":
@@ -167,7 +179,7 @@ class FEL():
 			"mode": int.from_bytes(response[16:18], "little"),
 			"data_flag": response[18],
 			"data_length": response[19],
-			"data_start_address": int.from_bytes(response[20:24], "little")
+			"data_start_address": int.from_bytes(response[20:24], "little"),
 		}
 		return ret
 
@@ -184,7 +196,7 @@ class FEL():
 		# chop up download in muliple chunks if necessary
 		ret = True
 		chunk_addr = addr
-		for chunk in utils.dnload_iter(blob[offset:offset + size], FEL.MAX_MSG_LEN):
+		for chunk in utils.dnload_iter(blob[offset : offset + size], FEL.MAX_MSG_LEN):
 			N = len(chunk)
 			nbytes = self.message("FEL_DOWNLOAD", chunk_addr, N, chunk)
 			ret &= int.from_bytes(nbytes, "little") == N
@@ -194,4 +206,3 @@ class FEL():
 	def jump(self, addr: int) -> bool:
 		self.message("FEL_RUN", addr, 0)
 		return True
-

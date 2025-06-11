@@ -1,10 +1,12 @@
 import usb
 import logging
+
 logger = logging.getLogger("snagrecover")
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.utils import get_usb
 from snagrecover.config import recovery_config
 import time
+
 
 def send_firmware(dev, firmware):
 	run_firmware(dev, firmware)
@@ -12,6 +14,7 @@ def send_firmware(dev, firmware):
 	usb.util.dispose_resources(dev)
 	# without this delay, USB device will be present but not ready
 	time.sleep(1)
+
 
 def main():
 	usb_addr = recovery_config["usb_path"]
