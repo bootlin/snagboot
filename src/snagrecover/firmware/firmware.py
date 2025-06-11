@@ -20,6 +20,7 @@
 import logging
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
+from snagrecover.protocols.fastboot import Fastboot
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
 
