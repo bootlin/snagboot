@@ -30,6 +30,7 @@ default_usb_ids =  {
 	"am6x":     "0451:6165",
 	"am62lx":   "0451:6165",
 	"zynqmp":   "03fd:0050",
+	"keembay":  "8087:0b39",
 	"imx": {
 		"imx8qxp": "1fc9:012f",
 		"imx8qm": "1fc9:0129",
