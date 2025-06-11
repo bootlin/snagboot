@@ -15,12 +15,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import time
 import logging
 from snagrecover.config import recovery_config
-from snagrecover.utils import access_error, get_usb, prettify_usb_addr
+from snagrecover.utils import get_usb
 from snagrecover.firmware.firmware import run_firmware
-from snagrecover.protocols.fastboot import Fastboot
 
 logger = logging.getLogger("snagrecover")
 
