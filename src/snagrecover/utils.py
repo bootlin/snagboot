@@ -144,7 +144,7 @@ def get_usb(usb_path, error_on_fail=True, retries=USB_RETRIES, ready_check=activ
 			logger.info(f"Found too many ({nb_devs}) possible results matching {pretty_addr}!")
 			logger.warning(f"Too many results for address {pretty_addr}!\{str(dev_list)}")
 
-		logger.info(f"USB retry {i + 1}/{retries}")
+		logger.info(f"USB retry {i + 1}/{retries + 1}")
 		time.sleep(USB_INTERVAL)
 
 	if error_on_fail:
