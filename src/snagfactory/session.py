@@ -8,6 +8,7 @@ import re
 import copy
 
 import logging
+
 factory_logger = logging.getLogger("snagfactory")
 
 import snagrecover
@@ -27,11 +28,12 @@ results:
 """
 
 default_config = {
-"boards": {},
-"soc-models": {},
+	"boards": {},
+	"soc-models": {},
 }
 
-class SnagFactorySession():
+
+class SnagFactorySession:
 	MAX_LOG_SIZE = 1000
 
 	def update(self):
@@ -65,7 +67,11 @@ class SnagFactorySession():
 				else:
 					self.nb_failed += 1
 
-			if self.nb_recovering == 0 and self.nb_flashing == 0 and self.nb_paused == 0:
+			if (
+				self.nb_recovering == 0
+				and self.nb_flashing == 0
+				and self.nb_paused == 0
+			):
 				self.nb_other = len(self.board_list) - self.nb_done - self.nb_failed
 				self.close()
 
@@ -102,15 +108,15 @@ class SnagFactorySession():
 		if config_path is None:
 			self.config = default_config
 		else:
-			self.config,self.pipelines = read_config(config_path)
+			self.config, self.pipelines = read_config(config_path)
 
 		self.board_list = self.scan_for_boards()
 		self.phase = "scanning"
 
 		if platform.system() == "Windows":
-			snagboot_data = os.getenv('APPDATA') + "/snagboot"
+			snagboot_data = os.getenv("APPDATA") + "/snagboot"
 		else:
-			snagboot_data = os.getenv('HOME') + "/.config/snagboot"
+			snagboot_data = os.getenv("HOME") + "/.config/snagboot"
 
 		self.snagboot_data = snagboot_data
 		self.snagfactory_logs = self.snagboot_data + "/snagfactory/logs"
@@ -123,7 +129,9 @@ class SnagFactorySession():
 
 		self.session_log = queue.Queue(__class__.MAX_LOG_SIZE)
 		log_handler = logging.handlers.QueueHandler(self.session_log)
-		log_formatter = logging.Formatter("%(asctime)s,%(msecs)03d [%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
+		log_formatter = logging.Formatter(
+			"%(asctime)s,%(msecs)03d [%(levelname)-8s] %(message)s", datefmt="%H:%M:%S"
+		)
 		log_handler.setFormatter(log_formatter)
 		factory_logger.addHandler(log_handler)
 		factory_logger.info("Start")
@@ -136,7 +144,7 @@ class SnagFactorySession():
 
 	def scan_for_boards(self):
 		self.board_list = []
-		for (usb_ids, soc_model) in self.config["boards"].items():
+		for usb_ids, soc_model in self.config["boards"].items():
 			paths = snagrecover.utils.usb_addr_to_path(usb_ids, find_all=True)
 
 			if paths is None:
@@ -146,7 +154,16 @@ class SnagFactorySession():
 				fw_config = self.config["soc-models"][f"{soc_model}-firmware"]
 				tasks_config = self.config["soc-models"][f"{soc_model}-tasks"]
 				board_pipeline = copy.deepcopy(self.pipelines[soc_model])
-				self.board_list.append(Board(snagrecover.utils.prettify_usb_addr(path), soc_model, fw_config, tasks_config, usb_ids, board_pipeline))
+				self.board_list.append(
+					Board(
+						snagrecover.utils.prettify_usb_addr(path),
+						soc_model,
+						fw_config,
+						tasks_config,
+						usb_ids,
+						board_pipeline,
+					)
+				)
 
 	def format_session_logs(self):
 		timestamp = datetime.datetime.fromtimestamp(self.start_ts)
@@ -154,25 +171,35 @@ class SnagFactorySession():
 
 		board_list = self.board_list
 
-		board_statuses = "\n".join([f"{board.usb_ids} at {board.path}: {board.phase.name}" for board in board_list])
+		board_statuses = "\n".join(
+			[
+				f"{board.usb_ids} at {board.path}: {board.phase.name}"
+				for board in board_list
+			]
+		)
 
 		config = yaml.dump(self.config)
 
-		header = log_header.format( \
-		f"{timestamp.isoformat()} ({timezone})", \
-		self.nb_done, self.nb_failed, self.nb_other, \
-		"\t" + "\n\t".join(config.splitlines()), \
-		board_statuses)
+		header = log_header.format(
+			f"{timestamp.isoformat()} ({timezone})",
+			self.nb_done,
+			self.nb_failed,
+			self.nb_other,
+			"\t" + "\n\t".join(config.splitlines()),
+			board_statuses,
+		)
 
 		session_log = "\nFACTORY LOG:\n\n"
 
 		while not self.session_log.empty():
-				session_log += "\n" + self.session_log.get().msg
+			session_log += "\n" + self.session_log.get().msg
 
 		board_logs = ""
 
 		for board in board_list:
-			board_logs += f"\n\nBOARD LOG {board.path}:\n\n" + "\n".join(board.session_log)
+			board_logs += f"\n\nBOARD LOG {board.path}:\n\n" + "\n".join(
+				board.session_log
+			)
 
 		return header + session_log + board_logs
 
@@ -199,7 +226,9 @@ class SnagFactorySession():
 				soc_model = self.config["boards"][usb_ids]
 				fw_config = self.config["soc-models"][f"{soc_model}-firmware"]
 				tasks_config = self.config["soc-models"][f"{soc_model}-tasks"]
-				mock_board = Board(path, soc_model, fw_config, tasks_config, usb_ids, [])
+				mock_board = Board(
+					path, soc_model, fw_config, tasks_config, usb_ids, []
+				)
 				mock_board.phase = phase
 				self.board_dict[path] = mock_board
 		elif marker == "BOARD LOG":
@@ -207,7 +236,9 @@ class SnagFactorySession():
 			match = pattern.match(logs[0])
 			path = match.groups()[0]
 			if path not in self.board_dict:
-				raise KeyError(f"Log parsing error, no board with path {path} found in 'results' section")
+				raise KeyError(
+					f"Log parsing error, no board with path {path} found in 'results' section"
+				)
 			mock_board = self.board_dict[path]
 			mock_board.session_log = logs[1:]
 
@@ -239,11 +270,16 @@ class SnagFactorySession():
 
 			self.board_list = list(self.board_dict.values())
 
-
 	def save_log(self):
 		session_logs = self.format_session_logs()
 
-		self.logfile_path = self.snagfactory_logs + "/" + datetime.datetime.fromtimestamp(self.start_ts).strftime("%y-%m-%dT%H-%M-%S")
+		self.logfile_path = (
+			self.snagfactory_logs
+			+ "/"
+			+ datetime.datetime.fromtimestamp(self.start_ts).strftime(
+				"%y-%m-%dT%H-%M-%S"
+			)
+		)
 		if os.path.exists(self.logfile_path):
 			raise SystemError(f"logfile {self.logfile_path} already exists!")
 

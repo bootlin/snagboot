@@ -52,10 +52,11 @@ from snagrecover.config import recovery_config
 
 CONTAINER_HDR_ALIGNMENT = 0x400
 CONTAINER_TAG = 0x87
-V2X_BOOTIMG_FLAG = 0x0b
+V2X_BOOTIMG_FLAG = 0x0B
 
 ROM_CONTAINER_STRUCT_SIZE = 16
 ROM_BOOTIMG_STRUCT_SIZE = 128
+
 
 def get_container_size(boot_blob: bytes) -> int:
 	"""
@@ -71,7 +72,9 @@ def get_container_size(boot_blob: bytes) -> int:
 
 	cont_index = 1
 	romimg_offset = CONTAINER_HDR_ALIGNMENT + ROM_BOOTIMG_STRUCT_SIZE
-	romimg_flags = int.from_bytes(boot_blob[romimg_offset + 24:romimg_offset + 28], "little")
+	romimg_flags = int.from_bytes(
+		boot_blob[romimg_offset + 24 : romimg_offset + 28], "little"
+	)
 	if romimg_flags & 0x0F == V2X_BOOTIMG_FLAG:
 		# skip V2X container
 		cont_index = 2
@@ -80,13 +83,22 @@ def get_container_size(boot_blob: bytes) -> int:
 			return len(boot_blob)
 	container_offset = cont_index * CONTAINER_HDR_ALIGNMENT
 	num_images = int(boot_blob[container_offset + 11])
-	romimg_offset = container_offset + ROM_CONTAINER_STRUCT_SIZE + (num_images - 1) * ROM_BOOTIMG_STRUCT_SIZE
-	img_offset = int.from_bytes(boot_blob[romimg_offset: romimg_offset + 4], "little")
-	img_size = int.from_bytes(boot_blob[romimg_offset + 4: romimg_offset + 8], "little")
+	romimg_offset = (
+		container_offset
+		+ ROM_CONTAINER_STRUCT_SIZE
+		+ (num_images - 1) * ROM_BOOTIMG_STRUCT_SIZE
+	)
+	img_offset = int.from_bytes(boot_blob[romimg_offset : romimg_offset + 4], "little")
+	img_size = int.from_bytes(
+		boot_blob[romimg_offset + 4 : romimg_offset + 8], "little"
+	)
 	container_size = img_offset + img_size + cont_index * CONTAINER_HDR_ALIGNMENT
 	# round container size up
-	container_size = ceil(container_size / (1.0 * CONTAINER_HDR_ALIGNMENT)) * CONTAINER_HDR_ALIGNMENT
+	container_size = (
+		ceil(container_size / (1.0 * CONTAINER_HDR_ALIGNMENT)) * CONTAINER_HDR_ALIGNMENT
+	)
 	if container_size >= len(boot_blob):
-		raise ValueError("Error: unsupported image format or image does not contain u-boot proper")
+		raise ValueError(
+			"Error: unsupported image format or image does not contain u-boot proper"
+		)
 	return container_size
-

@@ -26,9 +26,11 @@ from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 from snagrecover.utils import get_usb
 import logging
+
 logger = logging.getLogger("snagrecover")
 
 USB_TIMEOUT = 10
+
 
 def main():
 	soc_model = recovery_config["soc_model"]
@@ -55,7 +57,9 @@ def main():
 		if phase_id == part0:
 			logger.info("Downloading flash layout...")
 			layout_blob = flashlayout.build_image()
-			dfu_cmd.download_and_run(layout_blob, part0, offset=0, size=len(layout_blob))
+			dfu_cmd.download_and_run(
+				layout_blob, part0, offset=0, size=len(layout_blob)
+			)
 
 	if soc_model == "stm32mp13":
 		time.sleep(1.5)
@@ -85,4 +89,3 @@ def main():
 	logger.info("Sending detach command to U-Boot...")
 	phase_id = dfu_cmd.stm32_get_phase()
 	dfu_cmd.detach(phase_id)
-

@@ -18,11 +18,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 from snagrecover.firmware import samba_applet
 from snagrecover.protocols import sambamon
 from snagrecover.protocols import memory_ops
 from snagrecover.config import recovery_config
+
 
 def sama5_run(port, fw_name: str, fw_blob: bytes):
 	backend = sambamon.SambaMon(port)
@@ -34,14 +36,18 @@ def sama5_run(port, fw_name: str, fw_blob: bytes):
 			raise ValueError("Error: unsupported board model")
 		extram_status = applet.run()
 		if extram_status != "APPLET_SUCCESS":
-			raise ValueError("Error: extram applet returned error status: " + extram_status)
+			raise ValueError(
+				"Error: extram applet returned error status: " + extram_status
+			)
 		logger.info("Done")
 	elif fw_name == "lowlevel":
 		logger.info("Initializing clock tree...")
 		applet = samba_applet.LowlevelApplet(memops, fw_blob)
 		lowlevel_status = applet.run()
 		if lowlevel_status != "APPLET_SUCCESS":
-			raise ValueError("Error: lowlevel applet returned error status: " + lowlevel_status)
+			raise ValueError(
+				"Error: lowlevel applet returned error status: " + lowlevel_status
+			)
 		logger.info("Done")
 	elif fw_name == "u-boot":
 		addr = recovery_config["firmware"]["u-boot"]["address"]
@@ -53,4 +59,3 @@ def sama5_run(port, fw_name: str, fw_blob: bytes):
 	else:
 		raise ValueError(f"Error: Unsupported firmware {fw_name}")
 	return None
-

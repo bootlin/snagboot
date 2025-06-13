@@ -18,32 +18,50 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from snagrecover.protocols import fastboot as fb
-from snagrecover.utils import usb_addr_to_path, get_usb, cli_error, access_error, prettify_usb_addr
+from snagrecover.utils import (
+	usb_addr_to_path,
+	get_usb,
+	cli_error,
+	access_error,
+	prettify_usb_addr,
+)
 import sys
 import logging
+
 logger = logging.getLogger("snagflash")
 
 from snagflash.fastboot_uboot import SnagflashFastbootUboot
 import warnings
 
+
 def fb_interactive_deprecation():
-	warnings.warn("Using interactive mode with the '-P fastboot' option is deprecated and will be removed in a future release! Please use the '-P fastboot-uboot' option instead!",
+	warnings.warn(
+		"Using interactive mode with the '-P fastboot' option is deprecated and will be removed in a future release! Please use the '-P fastboot-uboot' option instead!",
 		FutureWarning,
-		stacklevel=1)
+		stacklevel=1,
+	)
+
 
 def fastboot_ready_check(dev):
 	try:
 		fb.Fastboot(dev)
 	except Exception:
-		logger.warning(f"Failed to init Fastboot object from USB device at {prettify_usb_addr((dev.bus,dev.port_numbers))}")
+		logger.warning(
+			f"Failed to init Fastboot object from USB device at {prettify_usb_addr((dev.bus, dev.port_numbers))}"
+		)
 		return False
 
 	return True
 
+
 def fastboot(args):
-	if (args.port is None):
-		logger.info("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
-		logger.error("Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]")
+	if args.port is None:
+		logger.info(
+			"Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]"
+		)
+		logger.error(
+			"Error: Missing command line argument --port vid:pid|bus-port1.port2.[...]"
+		)
 		sys.exit(-1)
 
 	usb_addr = usb_addr_to_path(args.port)
@@ -53,7 +71,7 @@ def fastboot(args):
 	dev = get_usb(usb_addr, ready_check=fastboot_ready_check)
 	dev.default_timeout = int(args.timeout)
 
-	fast = fb.Fastboot(dev, timeout = dev.default_timeout)
+	fast = fb.Fastboot(dev, timeout=dev.default_timeout)
 
 	# this is mostly there to dodge a linter error
 	logger.debug(f"Fastboot object: eps {fast.ep_in} {fast.ep_out}")
@@ -103,4 +121,3 @@ def fastboot(args):
 			session = SnagflashFastbootUboot(fast)
 
 		session.start()
-

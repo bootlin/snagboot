@@ -20,6 +20,7 @@
 import usb
 import time
 import logging
+
 logger = logging.getLogger("snagrecover")
 
 from snagrecover.protocols import fel
@@ -29,6 +30,7 @@ from snagrecover.utils import get_usb, access_error, prettify_usb_addr
 
 USB_TIMEOUT = 5000
 USB_RETRY = 5
+
 
 def main():
 	# Try to reset device
@@ -88,4 +90,3 @@ def main():
 	else:
 		run_firmware(fel_dev, "spl")
 		run_firmware(fel_dev, "u-boot")
-

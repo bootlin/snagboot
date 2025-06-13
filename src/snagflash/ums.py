@@ -25,21 +25,26 @@ from snagflash.bmaptools import BmapCopy
 import sys
 import time
 import logging
+
 logger = logging.getLogger("snagflash")
 
 FILEPATH_RETRIES = 5
+
 
 def wait_filepath(path: str):
 	logger.info(f"Waiting for {path}...")
 	retries = 0
 	while not os.path.exists(path):
 		if retries >= FILEPATH_RETRIES:
-			logger.info(f"Timeout: file or directory {path} does not exist", file=sys.stderr)
+			logger.info(
+				f"Timeout: file or directory {path} does not exist", file=sys.stderr
+			)
 			sys.exit(-1)
 		time.sleep(2)
 		logger.info(f"Retrying: find {path} {retries}/{FILEPATH_RETRIES}")
 		retries += 1
 	logger.info("Done")
+
 
 def bmap_copy(filepath: str, dev, src_size: int):
 	mappath = filepath + ".bmap"
@@ -78,6 +83,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 	if mapfile is not None:
 		mapfile.close()
 
+
 def write_raw(args):
 	devpath = args.blockdev
 	filepath = args.src
@@ -94,11 +100,14 @@ def write_raw(args):
 		bmap_copy(filepath, dev, size)
 	logger.info("Done")
 
+
 def ums(args):
 	if args.dest:
 		if os.path.isdir(args.dest):
 			wait_filepath(args.dest)
-			logger.info(f"Copying {args.src} to {args.dest}/{os.path.basename(args.src)}...")
+			logger.info(
+				f"Copying {args.src} to {args.dest}/{os.path.basename(args.src)}..."
+			)
 		else:
 			dirname = os.path.dirname(args.dest)
 			if dirname != "":
@@ -108,5 +117,3 @@ def ums(args):
 		logger.info("Done")
 	elif args.blockdev:
 		write_raw(args)
-
-

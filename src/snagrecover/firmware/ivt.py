@@ -49,12 +49,14 @@
 
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 
 IVT_HEADER_1 = b"\xd1\x00\x20\x40"
 IVT_HEADER_2 = b"\xd1\x00\x20\x41"
 
-class IVT():
+
+class IVT:
 	def __init__(self):
 		self.header = None
 		self.entry = None
@@ -68,10 +70,10 @@ class IVT():
 		self.addr = None
 		self.csf = None
 		self.reserved2 = None
-		self.offset = None # offset in boot image, in bytes
+		self.offset = None  # offset in boot image, in bytes
 
 	def log(self):
-		for key,value in self.__dict__.items():
+		for key, value in self.__dict__.items():
 			if key == "boot_data":
 				for bkey, bvalue in value.items():
 					logger.debug(f"Boot data: {bkey}: 0x{bvalue:x}")
@@ -82,28 +84,35 @@ class IVT():
 	def from_blob(self, blob: bytes) -> bool:
 		offset = 0
 		while offset < len(blob):
-			word = blob[offset:offset+4]
+			word = blob[offset : offset + 4]
 			if word not in [IVT_HEADER_1, IVT_HEADER_2]:
 				offset += 4
 				continue
 			self.offset = offset
-			self.header =	 int.from_bytes(word, "little")
-			self.entry =	 int.from_bytes(blob[offset + 4:offset + 8], "little")
-			self.reserved1 = int.from_bytes(blob[offset + 8:offset + 12], "little")
-			self.dcd =		 int.from_bytes(blob[offset + 12:offset + 16], "little")
-			boot_datap =	 int.from_bytes(blob[offset + 16:offset + 20], "little")
-			self.addr =		 int.from_bytes(blob[offset + 20:offset + 24], "little")
-			self.csf =		 int.from_bytes(blob[offset + 24:offset + 28], "little")
-			self.reserved2 = int.from_bytes(blob[offset + 28:offset + 32], "little")
+			self.header = int.from_bytes(word, "little")
+			self.entry = int.from_bytes(blob[offset + 4 : offset + 8], "little")
+			self.reserved1 = int.from_bytes(blob[offset + 8 : offset + 12], "little")
+			self.dcd = int.from_bytes(blob[offset + 12 : offset + 16], "little")
+			boot_datap = int.from_bytes(blob[offset + 16 : offset + 20], "little")
+			self.addr = int.from_bytes(blob[offset + 20 : offset + 24], "little")
+			self.csf = int.from_bytes(blob[offset + 24 : offset + 28], "little")
+			self.reserved2 = int.from_bytes(blob[offset + 28 : offset + 32], "little")
 			# get boot data
 			bootd_offset = self.offset + boot_datap - self.addr
-			self.boot_data["start"] = int.from_bytes(blob[bootd_offset:bootd_offset + 4], "little")
-			self.boot_data["length"] = int.from_bytes(blob[bootd_offset + 4:bootd_offset + 8], "little")
-			self.boot_data["plugin_flag"] = int.from_bytes(blob[bootd_offset + 8:bootd_offset + 12], "little")
+			self.boot_data["start"] = int.from_bytes(
+				blob[bootd_offset : bootd_offset + 4], "little"
+			)
+			self.boot_data["length"] = int.from_bytes(
+				blob[bootd_offset + 4 : bootd_offset + 8], "little"
+			)
+			self.boot_data["plugin_flag"] = int.from_bytes(
+				blob[bootd_offset + 8 : bootd_offset + 12], "little"
+			)
 			# ignore HDMI firmware for MX8MQ*
-			if word == IVT_HEADER_2 and (self.boot_data["plugin_flag"] & 0xfffffffe > 0):
+			if word == IVT_HEADER_2 and (
+				self.boot_data["plugin_flag"] & 0xFFFFFFFE > 0
+			):
 				continue
 			self.log()
 			return True
 		return False
-

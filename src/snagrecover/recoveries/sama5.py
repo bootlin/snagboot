@@ -33,57 +33,54 @@ import platform
 logger = logging.getLogger("snagrecover")
 
 aximx_remap = {
-		"sama5d2": 0x600000,
-		"sama5d3": 0x800000,
-		"sama5d4": 0x700000,
+	"sama5d2": 0x600000,
+	"sama5d3": 0x800000,
+	"sama5d4": 0x700000,
 }
-SFR_L2CC_HRAMC = 0xf8030058
+SFR_L2CC_HRAMC = 0xF8030058
 
 SERIAL_PORT_TIMEOUT = 5
 
 # chipid config values are from Microchip SAM-BA v3.7 for Linux
 chipid_configs = {
-    "sama5d2": {
-            "CIDR_REG":      0xfc069000,
-            "CIDR_MASK": 0xffffffe0,
-            "CIDR_VAL":      0x8a5c08c0
-    },
-    "sama5d3": {
-            "CIDR_REG":      0xffffee40,
-            "CIDR_MASK": 0xfffffffe,
-            "CIDR_VAL":      0x8a5c07c2,
-            "EXID_REG": 0xffffee44,
-            "EXID_VAL": [
-                    0x00444300,
-                    0x00414300,
-                    0x00414301,
-                    0x00584300,
-                    0x00004301
-            ]
-    },
-    "sama5d4": {
-            "CIDR_REG":      0xfc069040,
-            "CIDR_MASK": 0xffffffe0,
-            "CIDR_VAL":      0x8a5c07c0
-    }
+	"sama5d2": {
+		"CIDR_REG": 0xFC069000,
+		"CIDR_MASK": 0xFFFFFFE0,
+		"CIDR_VAL": 0x8A5C08C0,
+	},
+	"sama5d3": {
+		"CIDR_REG": 0xFFFFEE40,
+		"CIDR_MASK": 0xFFFFFFFE,
+		"CIDR_VAL": 0x8A5C07C2,
+		"EXID_REG": 0xFFFFEE44,
+		"EXID_VAL": [0x00444300, 0x00414300, 0x00414301, 0x00584300, 0x00004301],
+	},
+	"sama5d4": {
+		"CIDR_REG": 0xFC069040,
+		"CIDR_MASK": 0xFFFFFFE0,
+		"CIDR_VAL": 0x8A5C07C0,
+	},
 }
 
+
 def check_id(memops: memory_ops.MemoryOps) -> bool:
-    soc_model = recovery_config["soc_model"]
-    cfg = chipid_configs[soc_model]
-    cidr = memops.read32(cfg["CIDR_REG"])
-    chip_id = cidr & cfg["CIDR_MASK"]
-    check = chip_id == cfg["CIDR_VAL"]
-    if soc_model == "sama5d3":
-            exid = memops.read32(cfg["EXID_REG"])
-            check &= exid in cfg["EXID_VAL"]
-    return check
+	soc_model = recovery_config["soc_model"]
+	cfg = chipid_configs[soc_model]
+	cidr = memops.read32(cfg["CIDR_REG"])
+	chip_id = cidr & cfg["CIDR_MASK"]
+	check = chip_id == cfg["CIDR_VAL"]
+	if soc_model == "sama5d3":
+		exid = memops.read32(cfg["EXID_REG"])
+		check &= exid in cfg["EXID_VAL"]
+	return check
+
 
 def get_serial_port_path(dev) -> str:
 	if platform.system() == "Windows":
 		return get_windows_serial_port_path(dev)
 
 	return get_linux_serial_port_path(dev)
+
 
 def get_windows_serial_port_path(dev) -> str:
 	"""
@@ -103,7 +100,11 @@ def get_windows_serial_port_path(dev) -> str:
 
 		win_bus_num, sep, port_numbers = port_info.location.partition("-")
 		port_numbers = tuple([int(p) for p in port_numbers.split(".")])
-		if port_numbers == dev.port_numbers and port_info.vid == dev.idVendor and port_info.pid == dev.idProduct:
+		if (
+			port_numbers == dev.port_numbers
+			and port_info.vid == dev.idVendor
+			and port_info.pid == dev.idProduct
+		):
 			matching_ports.append(port_info)
 
 	if len(matching_ports) == 0:
@@ -112,7 +113,10 @@ def get_windows_serial_port_path(dev) -> str:
 	if len(matching_ports) == 1:
 		return matching_ports[0].device
 
-	raise SystemError(f"USB path {pretty_path} maps to {len(matching_ports)} possible COM ports: {[port.name for port in matching_ports]}. Please move these serial devices to different physical USB ports or plug them behind an additional USB hub")
+	raise SystemError(
+		f"USB path {pretty_path} maps to {len(matching_ports)} possible COM ports: {[port.name for port in matching_ports]}. Please move these serial devices to different physical USB ports or plug them behind an additional USB hub"
+	)
+
 
 def get_linux_serial_port_path(dev) -> str:
 	cfg = dev.get_active_configuration()
@@ -120,14 +124,17 @@ def get_linux_serial_port_path(dev) -> str:
 	if cfg.bNumInterfaces == 0:
 		raise ValueError(f"Error: usb device at {pretty_path} has no active interfaces")
 	intf = cfg.interfaces()[0]
-	intf_path =  "/sys/bus/usb/devices/"\
+	intf_path = (
+		"/sys/bus/usb/devices/"
 		+ f"{pretty_path}:{cfg.bConfigurationValue}.{intf.bInterfaceNumber}"
+	)
 	tty_paths = glob.glob(intf_path + "/tty/tty*")
 	if len(tty_paths) == 0:
 		raise ValueError(f"Error: no tty devices were found at {intf_path}")
 
 	tty_path = tty_paths[0]
 	return os.path.realpath(f"/dev/{os.path.basename(tty_path)}")
+
 
 def main():
 	# CONNECT TO SAM-BA MONITOR
@@ -154,7 +161,9 @@ def main():
 	# CHECK BOARD ID
 	logger.info("Checking chip id...")
 	if not check_id(memops):
-		raise ValueError("Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument")
+		raise ValueError(
+			"Error: Invalid CIDR or EXID, chip model not recognized, please check your soc model argument"
+		)
 
 	logger.info("Done checking")
 	if soc_model == "sama5d2":
@@ -166,14 +175,13 @@ def main():
 	run_firmware(port, "lowlevel")
 	logger.info("Done initializing clock tree")
 
-
 	# INITIALIZE EXTRAM
 	logger.info("Initializing external RAM...")
 	run_firmware(port, "extram")
 	logger.info("Done initializing RAM")
 
 	# REMAP ROM ADDRESSES
-	memops.write32(aximx_remap[soc_model], 0x01)# remap ROM addresses to SRAM0
+	memops.write32(aximx_remap[soc_model], 0x01)  # remap ROM addresses to SRAM0
 
 	# DOWNLOAD U-BOOT
 	logger.info("Installing U-Boot...")

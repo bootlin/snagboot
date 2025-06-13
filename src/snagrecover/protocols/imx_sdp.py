@@ -53,6 +53,7 @@ reference manual
 """
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 from snagrecover import utils
 from snagrecover.protocols import hab_constants
@@ -62,29 +63,21 @@ from usb.core import USBError
 import struct
 
 
-class SDPCommand():
-
+class SDPCommand:
 	command_codes = {
-	"READ_REGISTER": b"\x01\x01",
-	"WRITE_REGISTER": b"\x02\x02",
-	"WRITE_FILE": b"\x04\x04",
-	"ERROR_STATUS": b"\x05\x05",
-	"DCD_WRITE": b"\x0a\x0a",
-	"JUMP_ADDRESS": b"\x0b\x0b",
-	"SKIP_DCD_HEADER": b"\x0c\x0c"
+		"READ_REGISTER": b"\x01\x01",
+		"WRITE_REGISTER": b"\x02\x02",
+		"WRITE_FILE": b"\x04\x04",
+		"ERROR_STATUS": b"\x05\x05",
+		"DCD_WRITE": b"\x0a\x0a",
+		"JUMP_ADDRESS": b"\x0b\x0b",
+		"SKIP_DCD_HEADER": b"\x0c\x0c",
 	}
 
-	format_codes = {
-	"FORMAT_8":	 b"\x08",
-	"FORMAT_16": b"\x10",
-	"FORMAT_32": b"\x20"
-	}
+	format_codes = {"FORMAT_8": b"\x08", "FORMAT_16": b"\x10", "FORMAT_32": b"\x20"}
 
 	# High Assurance Boot status codes
-	hab_codes = {
-	"HAB_OPEN": b"\x56\x78\x78\x56",
-	"HAB_CLOSED": b"\x12\x34\x34\x12"
-	}
+	hab_codes = {"HAB_OPEN": b"\x56\x78\x78\x56", "HAB_CLOSED": b"\x12\x34\x34\x12"}
 
 	REPORT2_PACKET_SIZE = 1025
 
@@ -92,7 +85,7 @@ class SDPCommand():
 	CBW_HOST_TO_DEVICE_FLAGS = 0x00
 	BLTC_DOWNLOAD_FW = 0x02
 	FT_APP = b"\xaa"
-	FT_UNUSED =b"\x00"
+	FT_UNUSED = b"\x00"
 
 	def __init__(self, dev):
 		self.dev = dev
@@ -111,13 +104,22 @@ class SDPCommand():
 		self.file_type = self.FT_UNUSED
 
 	def build_packet(self) -> bytes:
-		return self._hid_report + self.cmd + self.addr.to_bytes(4, "big") \
-		+ self.format + self.data_count.to_bytes(4, "big") \
-		+ self.data.to_bytes(4, "big") + self.file_type
+		return (
+			self._hid_report
+			+ self.cmd
+			+ self.addr.to_bytes(4, "big")
+			+ self.format
+			+ self.data_count.to_bytes(4, "big")
+			+ self.data.to_bytes(4, "big")
+			+ self.file_type
+		)
 
 	def check_hab(self):
 		hab_status = self.dev.read(64, timeout=5)
-		if hab_status[:4] not in [__class__.hab_codes["HAB_OPEN"], __class__.hab_codes["HAB_CLOSED"]]:
+		if hab_status[:4] not in [
+			__class__.hab_codes["HAB_OPEN"],
+			__class__.hab_codes["HAB_CLOSED"],
+		]:
 			raise ValueError(f"Error: unknown HAB status: {hab_status} found")
 		return None
 
@@ -146,7 +148,7 @@ class SDPCommand():
 		self.dev.write(packet)
 		self.check_hab()
 		complete_status = self.dev.read(64, timeout=5)[:4]
-		return complete_status == b"\x12\x8A\x8A\x12"
+		return complete_status == b"\x12\x8a\x8a\x12"
 
 	def write_dcd(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
 		if self.is_hid():
@@ -169,11 +171,15 @@ class SDPCommand():
 		while pos < end:
 			(tag, lg), _ = self._unpack_from_blob(">BH", blob, pos)
 
-			if tag == 0xcc:
-				self._invoke_for_each_dcd_element_addr_data(self._process_dcd_write_data, blob, pos)
-			elif tag == 0xcf:
-				self._invoke_for_each_dcd_element_addr_data(self._process_dcd_check_data, blob, pos)
-			elif tag == 0xc0: # nop
+			if tag == 0xCC:
+				self._invoke_for_each_dcd_element_addr_data(
+					self._process_dcd_write_data, blob, pos
+				)
+			elif tag == 0xCF:
+				self._invoke_for_each_dcd_element_addr_data(
+					self._process_dcd_check_data, blob, pos
+				)
+			elif tag == 0xC0:  # nop
 				pass
 			else:
 				raise ValueError("Invalid DCD command tag %02x" % tag)
@@ -183,7 +189,7 @@ class SDPCommand():
 	# unpack binaary data defined by struct format from blob at offset return as (unpacked eltts), total_size
 	def _unpack_from_blob(self, fmt, blob, offset):
 		s = struct.Struct(fmt)
-		return s.unpack(blob[offset:offset + s.size]), s.size
+		return s.unpack(blob[offset : offset + s.size]), s.size
 
 	# Invoke fn for each addr, data pair in the DCD element starting at offset pos of blob
 	def _invoke_for_each_dcd_element_addr_data(self, fn, blob, pos):
@@ -196,7 +202,7 @@ class SDPCommand():
 		cur = pos + hdr_len
 		last = pos + lg
 		while cur < last:
-			addr, val = fmt.unpack(blob[cur:cur + fmt.size])
+			addr, val = fmt.unpack(blob[cur : cur + fmt.size])
 			ret = fn(addr, val, param)
 			if not ret:
 				raise RuntimeError("Failed addr=%08x val=%08x" % (addr, val))
@@ -244,7 +250,9 @@ class SDPCommand():
 
 		return True
 
-	def write_blob(self, blob: bytes, addr: int, offset: int, size: int, write_dcd: bool = False) -> bool:
+	def write_blob(
+		self, blob: bytes, addr: int, offset: int, size: int, write_dcd: bool = False
+	) -> bool:
 		self.clear()
 		self.addr = addr
 		self.data_count = size
@@ -261,17 +269,22 @@ class SDPCommand():
 		self.dev.write(packet1)
 
 		if self.is_hid():
-			for chunk in utils.dnload_iter(blob[offset:offset + size], __class__.REPORT2_PACKET_SIZE - 1):
+			for chunk in utils.dnload_iter(
+				blob[offset : offset + size], __class__.REPORT2_PACKET_SIZE - 1
+			):
 				packet2 = b"\x02" + chunk
 				if len(packet2) < __class__.REPORT2_PACKET_SIZE:
-					packet2 = packet2 + b"\x00" * (__class__.REPORT2_PACKET_SIZE - (len(packet2) % __class__.REPORT2_PACKET_SIZE))
+					packet2 = packet2 + b"\x00" * (
+						__class__.REPORT2_PACKET_SIZE
+						- (len(packet2) % __class__.REPORT2_PACKET_SIZE)
+					)
 				self.dev.write(packet2)
 
 			self.check_hab()
 			complete_status = self.dev.read(64, timeout=5)[:4]
 		else:
 			self.check_hab()
-			self.dev.write(blob[offset:offset + size])
+			self.dev.write(blob[offset : offset + size])
 
 			self.clear()
 			self.cmd = __class__.command_codes["ERROR_STATUS"]
@@ -282,7 +295,7 @@ class SDPCommand():
 
 		logger.info(f"write_blob finished with complete status {complete_status}")
 		if write_dcd:
-			return complete_status == b"\x12\x8A\x8A\x12"
+			return complete_status == b"\x12\x8a\x8a\x12"
 		else:
 			return complete_status == b"\x88\x88\x88\x88"
 
@@ -302,13 +315,20 @@ class SDPCommand():
 		"""
 		try:
 			self.check_hab()
-			status = self.dev.read(64, timeout = 5)
+			status = self.dev.read(64, timeout=5)
 			if status != b"":
-				decoded_err = hab_constants.status_codes[int(status[0])] \
-					+ " | " + hab_constants.reason_codes[int(status[1])]\
-					+ " | " + hab_constants.context_codes[int(status[2])]\
-					+ " | " + hab_constants.engine_tags[int(status[3])]
-				logger.warning(f"error status {decoded_err} returned after jump to 0x{addr:x}")
+				decoded_err = (
+					hab_constants.status_codes[int(status[0])]
+					+ " | "
+					+ hab_constants.reason_codes[int(status[1])]
+					+ " | "
+					+ hab_constants.context_codes[int(status[2])]
+					+ " | "
+					+ hab_constants.engine_tags[int(status[3])]
+				)
+				logger.warning(
+					f"error status {decoded_err} returned after jump to 0x{addr:x}"
+				)
 		except (USBError, HIDError, OSError) as err:
 			logger.warning(f"Caught (USB/HID)Error {str(err)}")
 		return None
@@ -334,15 +354,15 @@ class SDPCommand():
 		if soc_model not in ["imx8qm", "imx8qxp", "imx815", "imx865", "imx91", "imx93"]:
 			# only some mpu models require a preliminary command before the report 2
 			# transfer
-			packet1_arr = bytearray(b"\x01") # report 1
+			packet1_arr = bytearray(b"\x01")  # report 1
 			packet1_arr += __class__.CBW_BLTC_SIGNATURE.to_bytes(4, "little")
-			packet1_arr += b"\x01\x00\x00\x00" # tag
-			packet1_arr += size.to_bytes(4, "little") # XferLength
+			packet1_arr += b"\x01\x00\x00\x00"  # tag
+			packet1_arr += size.to_bytes(4, "little")  # XferLength
 			packet1_arr += __class__.CBW_HOST_TO_DEVICE_FLAGS.to_bytes(1, "little")
-			packet1_arr += b"\x00\x00" # reserved
-			packet1_arr += __class__.BLTC_DOWNLOAD_FW.to_bytes(1, "little") # Command
-			packet1_arr += size.to_bytes(4, "big") # Length
-			packet1_arr += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" # reserved
+			packet1_arr += b"\x00\x00"  # reserved
+			packet1_arr += __class__.BLTC_DOWNLOAD_FW.to_bytes(1, "little")  # Command
+			packet1_arr += size.to_bytes(4, "big")  # Length
+			packet1_arr += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"  # reserved
 			packet1 = bytes(packet1_arr)
 			self.dev.write(packet1)
 		if soc_model in ["imx815", "imx865", "imx91", "imx93"]:

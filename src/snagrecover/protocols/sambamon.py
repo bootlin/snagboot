@@ -18,9 +18,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 
-class SambaMon():
+
+class SambaMon:
 	def __init__(self, port):
 		self.port = port
 		# set sam-ba monitor to binary mode
@@ -48,20 +50,23 @@ class SambaMon():
 
 	def write_blob(self, blob: bytes, addr: int, offset: int, size: int) -> bool:
 		# write binary blob to address
-		PAYLOAD_SIZE = 0x4000 # got this value from packet dumps
+		PAYLOAD_SIZE = 0x4000  # got this value from packet dumps
 		N = size // PAYLOAD_SIZE
 		R = size % PAYLOAD_SIZE
 		nbytes = 0
 		for i in range(N):
 			logger.debug(f"Sending sambamon command S{addr:x},{PAYLOAD_SIZE:x}#")
 			self.port.write(bytes(f"S{addr:x},{PAYLOAD_SIZE:x}#", "ascii"))
-			nbytes += self.port.write(blob[offset + i * PAYLOAD_SIZE: offset + (i + 1) * PAYLOAD_SIZE])
+			nbytes += self.port.write(
+				blob[offset + i * PAYLOAD_SIZE : offset + (i + 1) * PAYLOAD_SIZE]
+			)
 			addr += PAYLOAD_SIZE
 		if R > 0:
 			logger.debug(f"Sending sambamon command S{addr:x},{R:x}#")
 			self.port.write(bytes(f"S{addr:x},{R:x}#", "ascii"))
-			nbytes += self.port.write(blob[offset + PAYLOAD_SIZE * N: offset\
-				+ PAYLOAD_SIZE * N + R])
+			nbytes += self.port.write(
+				blob[offset + PAYLOAD_SIZE * N : offset + PAYLOAD_SIZE * N + R]
+			)
 		return nbytes == size
 
 	def jump(self, addr: int) -> bool:
@@ -69,4 +74,3 @@ class SambaMon():
 		packet = bytes(f"G{addr:x}#", "ascii")
 		nbytes = self.port.write(packet)
 		return nbytes == len(packet)
-
