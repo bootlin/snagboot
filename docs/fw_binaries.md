@@ -229,7 +229,7 @@ SPL part, you can typically use u-boot.img for this
 configuration:
  * path
 
-## For TI AM62x/AM62Ax/AM62Px/AM64x/AM62Lx devices
+## For TI AM62x/AM62Ax/AM62Px/AM64x/AM62Lx/AM62Dx devices
 
 [example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
