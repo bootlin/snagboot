@@ -8,7 +8,12 @@ import importlib.resources
 import packaging.requirements
 import packaging.version
 
-gui_dependencies = importlib.resources.files("snagfactory").joinpath("gui-requirements.txt").read_text().splitlines()
+gui_dependencies = (
+	importlib.resources.files("snagfactory")
+	.joinpath("gui-requirements.txt")
+	.read_text()
+	.splitlines()
+)
 gui_reqs = [packaging.requirements.Requirement(req_str) for req_str in gui_dependencies]
 
 for req in gui_reqs:
@@ -16,12 +21,18 @@ for req in gui_reqs:
 	try:
 		version = importlib.metadata.version(req.name)
 		if version not in req.specifier:
-			dep_error = f"{req} is required by snagfactory but version {version} is installed"
+			dep_error = (
+				f"{req} is required by snagfactory but version {version} is installed"
+			)
 	except importlib.metadata.PackageNotFoundError:
-		dep_error = f"{req} is required by snagfactory but this package is not installed"
+		dep_error = (
+			f"{req} is required by snagfactory but this package is not installed"
+		)
 
 	if dep_error != "":
-		print("please install the snagboot[gui] package variant to run snagfactory! e.g. pip install snagboot[gui]")
+		print(
+			"please install the snagboot[gui] package variant to run snagfactory! e.g. pip install snagboot[gui]"
+		)
 		print(f"underlying cause: {dep_error}")
 		sys.exit(1)
 
@@ -29,7 +40,7 @@ from kivy import Config
 
 # workaround for OpenGL version detection failure on some Windows systems
 if platform.system() == "Windows":
-	Config.set('graphics', 'multisamples', '0')
+	Config.set("graphics", "multisamples", "0")
 
 from kivy.logger import Logger as kivy_logger
 from kivy.app import App
@@ -40,9 +51,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.accordion import AccordionItem
 from kivy.uix.button import Button
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
-from kivy.properties import (
-    ListProperty, ObjectProperty, StringProperty, ColorProperty
-)
+from kivy.properties import ListProperty, ObjectProperty, StringProperty, ColorProperty
 from kivy.clock import Clock
 from kivy.lang import Builder
 import kivy.resources
@@ -55,17 +64,21 @@ from snagfactory.config import SnagFactoryConfigError
 
 import multiprocessing
 import logging
+
 factory_logger = logging.getLogger("snagfactory")
 
 LOG_VIEW_CAPACITY = 100
 PROGBAR_TICKS = 20
 
+
 class SnagFactoryPanelItem(TabbedPanelItem):
 	content_text = StringProperty("")
+
 
 class SnagFactoryBoardID(BoxLayout):
 	usb_ids = StringProperty("")
 	soc_model = StringProperty("")
+
 
 class SnagFactorySoCFamily(TabbedPanel):
 	name = StringProperty("")
@@ -82,45 +95,51 @@ class SnagFactorySoCFamily(TabbedPanel):
 		for config in tasks_config[1:]:
 			tabs["task: " + config["task"]] = yaml.dump(config.get("args", ""))
 
-		panel_items = [SnagFactoryPanelItem(text=key, content_text=value) for key,value in tabs.items()]
+		panel_items = [
+			SnagFactoryPanelItem(text=key, content_text=value)
+			for key, value in tabs.items()
+		]
 
 		for panel_item in panel_items:
 			self.add_widget(panel_item)
 
 		self.default_tab = panel_items[0]
 
+
 class SnagFactoryFileDialog(FloatLayout):
 	rootpath = StringProperty("")
 	path = StringProperty("")
-	sort_func = ObjectProperty(lambda files,fs_class: sorted(files))
+	sort_func = ObjectProperty(lambda files, fs_class: sorted(files))
 	filters = ListProperty([])
 
 	def handle_load(self):
 		pass
 
+
 class SnagFactoryErrorDialog(FloatLayout):
 	msg = StringProperty("")
 	filepath = StringProperty("")
+
 
 class SnagFactoryBoard(Widget):
 	path = StringProperty("")
 	soc_model = StringProperty("")
 
 	phase = StringProperty("")
-	phase_color = ListProperty([0,1,0])
+	phase_color = ListProperty([0, 1, 0])
 	progbar = StringProperty("|" + PROGBAR_TICKS * "-" + "|")
 	status = StringProperty("")
-	status_color = ListProperty([0,0,0])
+	status_color = ListProperty([0, 0, 0])
 	ui = ObjectProperty(None)
 
 	phase_colors = {
-		"ROM": [0.8,0.8,0.8],
-		"RECOVERING": [0,0.2,0.8],
-		"FLASHER": [0,0,1],
-		"FLASHING": [0,0,1],
-		"DONE": [0,1,0],
-		"FAILURE": [1,0,0],
-		"PAUSED": [1,0.5,0.5],
+		"ROM": [0.8, 0.8, 0.8],
+		"RECOVERING": [0, 0.2, 0.8],
+		"FLASHER": [0, 0, 1],
+		"FLASHING": [0, 0, 1],
+		"DONE": [0, 1, 0],
+		"FAILURE": [1, 0, 0],
+		"PAUSED": [1, 0.5, 0.5],
 	}
 
 	def show_verbose_log(self, btn):
@@ -141,7 +160,7 @@ class SnagFactoryBoard(Widget):
 		self.phase = board.phase.name
 		self.status = ""
 		self.ui = ui
-		self.spinner_symbols = ["\\","-","/","|"]
+		self.spinner_symbols = ["\\", "-", "/", "|"]
 		self.spinner_cur = 0
 		self.resume_btn = None
 
@@ -157,7 +176,13 @@ class SnagFactoryBoard(Widget):
 	def update(self):
 		if self.is_paused() and self.resume_btn is None:
 			self.status_color = [1, 0.5, 0.5]
-			self.resume_btn = Button(text="resume",on_press=self.unpause, background_normal="", background_color=(0,1,0), size_hint_x=0.2)
+			self.resume_btn = Button(
+				text="resume",
+				on_press=self.unpause,
+				background_normal="",
+				background_color=(0, 1, 0),
+				size_hint_x=0.2,
+			)
 			self.board_box.add_widget(self.resume_btn)
 
 		self.status = self.board.status
@@ -170,7 +195,13 @@ class SnagFactoryBoard(Widget):
 
 		progress = self.board.progress
 		num_prog_ticks = ceil(PROGBAR_TICKS * progress / 100)
-		self.progbar = f"{ceil(progress)}% |" + num_prog_ticks * "#" + (PROGBAR_TICKS - num_prog_ticks) * "—" + "|"
+		self.progbar = (
+			f"{ceil(progress)}% |"
+			+ num_prog_ticks * "#"
+			+ (PROGBAR_TICKS - num_prog_ticks) * "—"
+			+ "|"
+		)
+
 
 class SnagFactoryUI(Widget):
 	widget_container = ObjectProperty(None)
@@ -216,19 +247,23 @@ class SnagFactoryUI(Widget):
 		content = SnagFactoryFileDialog()
 		content.rootpath = self.session.snagfactory_logs
 		content.handle_load = self.load_log
-		content.sort_func = lambda files,fs_class: sorted(files, reverse=True)
+		content.sort_func = lambda files, fs_class: sorted(files, reverse=True)
 		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._popup.open()
 
 	def load_config(self, filenames):
 		try:
 			session = SnagFactorySession(filenames[0])
-			session.write_session_store("last_config_dir", os.path.dirname(filenames[0]))
+			session.write_session_store(
+				"last_config_dir", os.path.dirname(filenames[0])
+			)
 		except SnagFactoryConfigError as e:
 			self.dismiss_popup()
 
 			content = SnagFactoryErrorDialog(filepath=filenames[0], msg=str(e))
-			self._popup = Popup(title="Config error", content=content, size_hint=(0.7,0.7))
+			self._popup = Popup(
+				title="Config error", content=content, size_hint=(0.7, 0.7)
+			)
 			self._popup.open()
 
 			return
@@ -253,7 +288,11 @@ class SnagFactoryUI(Widget):
 		soc_families_view = self.session_config.soc_families_view
 		board_ids_view = self.session_config.board_ids_view
 
-		board_ids_items = [widget for widget in board_ids_view.children if isinstance(widget, SnagFactoryBoardID)]
+		board_ids_items = [
+			widget
+			for widget in board_ids_view.children
+			if isinstance(widget, SnagFactoryBoardID)
+		]
 		for board_ids_item in board_ids_items:
 			board_ids_view.remove_widget(board_ids_item)
 
@@ -261,12 +300,12 @@ class SnagFactoryUI(Widget):
 		for accordion_item in accordion_items:
 			soc_families_view.remove_widget(accordion_item)
 
-		for usb_ids,soc_model in self.session.config["boards"].items():
+		for usb_ids, soc_model in self.session.config["boards"].items():
 			board_ids_item = SnagFactoryBoardID(usb_ids=usb_ids, soc_model=soc_model)
 			board_ids_view.add_widget(board_ids_item)
 
-		for name,config in self.session.config["soc-models"].items():
-			soc_model,sep,suffix = name.partition("-")
+		for name, config in self.session.config["soc-models"].items():
+			soc_model, sep, suffix = name.partition("-")
 
 			if suffix == "firmware":
 				continue
@@ -332,7 +371,13 @@ class SnagFactoryUI(Widget):
 			self.hide_verbose_logs()
 		elif self.session.phase == "running":
 			ts = time.time()
-			self.phase_label = "running factory session... |" + "  " * int(ts % 3) + "==" + "  " * int(3 - (ts % 3))  + "|"
+			self.phase_label = (
+				"running factory session... |"
+				+ "  " * int(ts % 3)
+				+ "=="
+				+ "  " * int(3 - (ts % 3))
+				+ "|"
+			)
 			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    paused: {self.session.nb_paused}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
 
 			for board_widget in self.board_widgets:
@@ -344,11 +389,12 @@ class SnagFactoryUI(Widget):
 				for board_widget in self.board_widgets:
 					board_widget.update()
 
-			self.phase_label = "viewing session logs: " + os.path.basename(self.session.logfile_path)
+			self.phase_label = "viewing session logs: " + os.path.basename(
+				self.session.logfile_path
+			)
 			self.status = f"done: {self.session.nb_done}    failed: {self.session.nb_failed}    other: {self.session.nb_other}"
 
 		if self.session.phase != "scanning" and self.verbose_log_target is not None:
-
 			self.log_boxlayout.size_hint_x = 0.5
 
 			log_target = None
@@ -359,7 +405,9 @@ class SnagFactoryUI(Widget):
 
 			if log_target is not None:
 				self.log_board_path.text = self.verbose_log_target
-				self.log_area.text = "\n".join(log_target.session_log[-LOG_VIEW_CAPACITY:])
+				self.log_area.text = "\n".join(
+					log_target.session_log[-LOG_VIEW_CAPACITY:]
+				)
 
 
 class SnagFactory(App):
@@ -372,8 +420,12 @@ class SnagFactory(App):
 	def build(self):
 		self.icon = "lab_penguins.ico"
 
-		Builder.load_string(importlib.resources.files("snagfactory").joinpath("gui.kv").read_text())
-		Builder.load_string(importlib.resources.files("snagfactory").joinpath("config.kv").read_text())
+		Builder.load_string(
+			importlib.resources.files("snagfactory").joinpath("gui.kv").read_text()
+		)
+		Builder.load_string(
+			importlib.resources.files("snagfactory").joinpath("config.kv").read_text()
+		)
 
 		session = SnagFactorySession(None)
 		self.ui = SnagFactoryUI(session)
@@ -384,7 +436,7 @@ class SnagFactory(App):
 
 
 def gui():
-	multiprocessing.set_start_method('spawn')
+	multiprocessing.set_start_method("spawn")
 
 	factory_logger.setLevel("INFO")
 	kivy_logger.parent = factory_logger
@@ -393,12 +445,14 @@ def gui():
 	stdout_handler.setLevel(logging.WARNING)
 	factory_logger.addHandler(stdout_handler)
 
-	assets_path = str(importlib.resources.files("snagfactory").joinpath("assets").resolve())
+	assets_path = str(
+		importlib.resources.files("snagfactory").joinpath("assets").resolve()
+	)
 	kivy.resources.resource_add_path(assets_path)
 
 	SnagFactory().run()
 
+
 if __name__ == "__main__":
 	multiprocessing.freeze_support()
 	gui()
-

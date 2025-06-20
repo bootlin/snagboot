@@ -4,6 +4,7 @@ import logging
 import functools
 import random
 import os
+
 logger = logging.getLogger("snagflash")
 
 from math import ceil
@@ -12,10 +13,12 @@ from snagflash.bmaptools.BmapCopy import Bmap
 
 MMC_LBA_SIZE = 512
 
+
 class SnagflashCmdError(Exception):
 	pass
 
-class SnagflashFastbootUboot():
+
+class SnagflashFastbootUboot:
 	help_text = """snagflash extended Fastboot mode
 syntax: <cmd> <arg1> <arg2> ...
 commands:
@@ -62,7 +65,6 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 	op_pattern = r"[\w\-]+"
 	cmd_pattern = re.compile("^(" + op_pattern + r")(.*)$")
-
 
 	def __init__(self, fast):
 		self.fast = fast
@@ -151,13 +153,17 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		self.fb_size = int(self.fast.getvar("downloadsize"), 16)
 
 		if self.fb_size == 0:
-			raise ValueError(f"Invalid Fastboot buffer size {self.fb_size}! Please check Fastboot gadget parameters!")
+			raise ValueError(
+				f"Invalid Fastboot buffer size {self.fb_size}! Please check Fastboot gadget parameters!"
+			)
 
 		if "fb-size" in self.env:
 			new_fb_size = int(self.env["fb-size"], 0)
 
 			if new_fb_size > self.fb_size:
-				raise ValueError(f"Cannot increase Fastboot buffer size! Default size is 0x{self.fb_size:x}, requested size is 0x{new_fb_size:x}")
+				raise ValueError(
+					f"Cannot increase Fastboot buffer size! Default size is 0x{self.fb_size:x}, requested size is 0x{new_fb_size:x}"
+				)
 
 			self.fb_size = new_fb_size
 
@@ -187,7 +193,9 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		try:
 			fast.oem_run(f"cmp.b 0x{fb_addr:x} 0x{(fb_addr + 1):x} 1")
 		except Exception:
-			raise ValueError(f"The given value for fb-addr: 0x{fb_addr:x} seems incorrect! comparison of written check pattern failed") from None
+			raise ValueError(
+				f"The given value for fb-addr: 0x{fb_addr:x} seems incorrect! comparison of written check pattern failed"
+			) from None
 
 		self.checked = True
 
@@ -215,15 +223,18 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		if target.startswith("mmc"):
 			device_num = int(target[-1])
-			flash_func = functools.partial(self.flash_mmc,
-							path=path, offset=offset,
-							device_num=device_num, part=part)
+			flash_func = functools.partial(
+				self.flash_mmc,
+				path=path,
+				offset=offset,
+				device_num=device_num,
+				part=part,
+			)
 		else:
 			if part is None:
 				part = target
 
-			flash_func = functools.partial(self.flash_mtd,
-							path=path, part=part)
+			flash_func = functools.partial(self.flash_mtd, path=path, part=part)
 
 		bmap_path = path + ".bmap"
 		if os.path.exists(bmap_path):
@@ -236,21 +247,27 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 					list(bmap._get_data(verify=True))
 
 					ranges = []
-					for (start, end, _) in bmap._get_block_ranges():
+					for start, end, _ in bmap._get_block_ranges():
 						range_offset = bmap.block_size * start
 						size = (end - start + 1) * bmap.block_size
 						ranges.append((size, range_offset))
 
 			i = 0
-			for (size, range_offset) in ranges:
+			for size, range_offset in ranges:
 				logger.info(f"Flashing sparse range {i}/{len(ranges)}")
-				flash_func(file_size=size, file_offset=range_offset, offset=offset + range_offset)
+				flash_func(
+					file_size=size,
+					file_offset=range_offset,
+					offset=offset + range_offset,
+				)
 				i += 1
 		else:
 			logger.info("No bmap file found, flashing in non-sparse mode")
 			flash_func(file_size=file_size, file_offset=0, offset=offset)
 
-	def flash_mtd(self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0):
+	def flash_mtd(
+		self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0
+	):
 		logger.info("Flashing to MTD device...")
 
 		fast = self.fast
@@ -260,7 +277,9 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		eraseblk_size = int(self.request_env("eraseblk-size"), 0)
 
 		if offset % eraseblk_size != 0:
-			raise SnagflashCmdError(f"offset 0x{offset:x} is not aligned with an eraseblock")
+			raise SnagflashCmdError(
+				f"offset 0x{offset:x} is not aligned with an eraseblock"
+			)
 
 		if file_size % eraseblk_size != 0:
 			logger.info("padding file size to align it with an eraseblock...")
@@ -271,16 +290,24 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			flash_size = file_size
 
 		if flash_size <= fb_size:
-			logger.debug(f"erasing flash area part {part} offset 0x{offset:x} size 0x{flash_size:x}...")
+			logger.debug(
+				f"erasing flash area part {part} offset 0x{offset:x} size 0x{flash_size:x}..."
+			)
 			fast.oem_run(f"mtd erase {part} 0x{offset:x} 0x{flash_size:x}")
 
-			logger.info(f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size}")
+			logger.info(
+				f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size}"
+			)
 			fast.download_section(path, file_offset, file_size, padding=padding)
-			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{offset:x} 0x{flash_size:x}")
+			fast.oem_run(
+				f"mtd write {part} 0x{fb_addr:x} 0x{offset:x} 0x{flash_size:x}"
+			)
 			return
 
 		if fb_size % eraseblk_size != 0:
-			logger.debug("clipping fastboot buffer size to align it with an eraseblock...")
+			logger.debug(
+				"clipping fastboot buffer size to align it with an eraseblock..."
+			)
 			fb_size = eraseblk_size * (fb_size // eraseblk_size)
 
 		nchunks = flash_size // fb_size
@@ -291,23 +318,39 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			fast.download_section(path, file_offset + i * fb_size, fb_size)
 
 			target_offset = offset + i * fb_size
-			logger.info(f"erasing flash area offset 0x{target_offset:x} size 0x{fb_size:x}...")
+			logger.info(
+				f"erasing flash area offset 0x{target_offset:x} size 0x{fb_size:x}..."
+			)
 			fast.oem_run(f"mtd erase {part} {target_offset:x} {fb_size:x}")
 
 			logger.info(f"writing section {i + 1}/{nchunks}")
-			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size:x}")
+			fast.oem_run(
+				f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size:x}"
+			)
 
 		if remainder > 0:
 			logger.info("downloading remainder")
 			fast.download_section(path, file_offset + nchunks * fb_size, remainder)
 
 			target_offset = offset + nchunks * fb_size
-			logger.info(f"erasing flash area offset 0x{target_offset} size 0x{remainder:x}...")
+			logger.info(
+				f"erasing flash area offset 0x{target_offset} size 0x{remainder:x}..."
+			)
 			fast.oem_run(f"mtd erase {part} {target_offset:x} {remainder:x}")
 
-			fast.oem_run(f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder:x}")
+			fast.oem_run(
+				f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder:x}"
+			)
 
-	def flash_mmc(self, path: str, offset: int, device_num: int, file_size: int, file_offset: int = 0, part: str = None):
+	def flash_mmc(
+		self,
+		path: str,
+		offset: int,
+		device_num: int,
+		file_size: int,
+		file_offset: int = 0,
+		part: str = None,
+	):
 		logger.info("Flashing to MMC device...")
 
 		fast = self.fast
@@ -316,7 +359,9 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		fb_size = self.fb_size
 
 		if offset % MMC_LBA_SIZE != 0:
-			raise ValueError(f"Given offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!")
+			raise ValueError(
+				f"Given offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
+			)
 
 		fb_size_lba = fb_size // MMC_LBA_SIZE
 		file_size_lba = ceil(file_size / MMC_LBA_SIZE)
@@ -329,7 +374,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			fast.oem_run(f"mmc dev {device_num}")
 			part_start = 0
 		elif "hwpart" in part:
-			hwpart,sep,hwpart_num = part.partition(" ")
+			hwpart, sep, hwpart_num = part.partition(" ")
 			hwpart_num = int(hwpart_num.strip(" "))
 			logger.debug(f"setting MMC device to {device_num} {hwpart_num}")
 			fast.oem_run(f"mmc dev {device_num} {hwpart_num}")
@@ -338,14 +383,21 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			logger.debug(f"setting MMC device to {device_num}")
 			fast.oem_run(f"mmc dev {device_num}; part list mmc {device_num}")
 			logger.debug("fetching partition start")
-			fast.oem_run(f"gpt setenv mmc {device_num} {part};setenv fastboot.part_start $" + "{gpt_partition_addr}")
+			fast.oem_run(
+				f"gpt setenv mmc {device_num} {part};setenv fastboot.part_start $"
+				+ "{gpt_partition_addr}"
+			)
 			part_start = int(fast.getvar("part_start"), 16)
 
 		if file_size <= fb_size:
-			logger.info(f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size:x}")
+			logger.info(
+				f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size:x}"
+			)
 			fast.download_section(path, file_offset, file_size)
 
-			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{part_start + offset_lba:x} 0x{file_size_lba:x}")
+			fast.oem_run(
+				f"mmc write 0x{fb_addr:x} 0x{part_start + offset_lba:x} 0x{file_size_lba:x}"
+			)
 			return
 
 		logger.info("huge file detected, flashing in sections")
@@ -356,16 +408,24 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		for i in range(nchunks):
 			logger.info(f"flashing section {i + 1}/{nchunks}")
 			target_offset = part_start + offset_lba + i * fb_size_lba
-			fast.download_section(path, file_offset + i * fb_size_aligned, fb_size_aligned)
+			fast.download_section(
+				path, file_offset + i * fb_size_aligned, fb_size_aligned
+			)
 
-			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size_lba:x}")
+			fast.oem_run(
+				f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size_lba:x}"
+			)
 
 		if remainder > 0:
 			logger.info("flashing remainder")
 			target_offset = part_start + offset_lba + nchunks * fb_size_lba
-			fast.download_section(path, file_offset + nchunks * fb_size_aligned, remainder)
+			fast.download_section(
+				path, file_offset + nchunks * fb_size_aligned, remainder
+			)
 
-			fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder_lba:x}")
+			fast.oem_run(
+				f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder_lba:x}"
+			)
 
 	def run(self, cmds: list):
 		for cmd in cmds:
@@ -380,14 +440,14 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				raise ValueError("Invalid input syntax")
 
 			cur_cmd = match.groups()[0]
-			if not hasattr(self, f"cmd_{cur_cmd.replace('-','_')}"):
+			if not hasattr(self, f"cmd_{cur_cmd.replace('-', '_')}"):
 				raise ValueError("Invalid command {cmd}")
 
 			args = match.groups()[1].strip(" ")
 			if args is None:
 				args = ""
 
-			getattr(self, f"cmd_{cur_cmd.replace('-','_')}")(args)
+			getattr(self, f"cmd_{cur_cmd.replace('-', '_')}")(args)
 
 	def start(self):
 		self.stop = False
@@ -401,7 +461,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				continue
 
 			cur_cmd = match.groups()[0]
-			if not hasattr(self, f"cmd_{cur_cmd.replace('-','_')}"):
+			if not hasattr(self, f"cmd_{cur_cmd.replace('-', '_')}"):
 				self.err(f"Invalid command {cur_cmd}, type 'help' for help")
 				continue
 
@@ -410,8 +470,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				args = ""
 
 			try:
-				getattr(self, f"cmd_{cur_cmd.replace('-','_')}")(args)
+				getattr(self, f"cmd_{cur_cmd.replace('-', '_')}")(args)
 			except SnagflashCmdError as e:
 				self.err(f"{cur_cmd} failed, {str(e)}")
 				continue
-

@@ -18,25 +18,28 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+
 logger = logging.getLogger("snagrecover")
+
 
 def parse_ipv4(addr: bytes) -> str:
 	return f"{addr[0]}.{addr[1]}.{addr[2]}.{addr[3]}"
 
+
 def parse_mac(addr: bytes) -> str:
 	return f"{addr[0]:02x}:{addr[1]:02x}:{addr[2]:02x}:{addr[3]:02x}:{addr[4]:02x}:{addr[5]:02x}"
+
 
 def encode_ipv4(addr: str) -> str:
 	return bytes([int(x) for x in addr.split(".")])
 
-def encode_filename(filename: str) -> bytes:
-	return filename.encode('ascii') + b'\x00' * (128 - len(filename))
 
-class BootpRequest():
-	op_field = {
-	1: "BOOT_REQUEST",
-	2: "BOOT_REPLY"
-	}
+def encode_filename(filename: str) -> bytes:
+	return filename.encode("ascii") + b"\x00" * (128 - len(filename))
+
+
+class BootpRequest:
+	op_field = {1: "BOOT_REQUEST", 2: "BOOT_REPLY"}
 
 	DHCP_MSG_TYPE_TAG = 53
 	DHCPACK = 5
@@ -51,21 +54,21 @@ class BootpRequest():
 		# packet[1]: htype, should be 1
 		# packet[2]: hlen, should be 6
 		# packet[3]: hops, should be 0
-		self.xid = packet[4:8] # transaction id
-		self.secs = int.from_bytes(packet[8:10], "big") # seconds since boot
+		self.xid = packet[4:8]  # transaction id
+		self.secs = int.from_bytes(packet[8:10], "big")  # seconds since boot
 		# packet[10:12]: unused
-		self.ciaddr = parse_ipv4(packet[12:16]) # client ip, written by client
-		self.yiaddr = parse_ipv4(packet[16:20]) #'your' (client) ip, written by server
-		self.siaddr = parse_ipv4(packet[20:24]) # server ip
+		self.ciaddr = parse_ipv4(packet[12:16])  # client ip, written by client
+		self.yiaddr = parse_ipv4(packet[16:20])  #'your' (client) ip, written by server
+		self.siaddr = parse_ipv4(packet[20:24])  # server ip
 		# packet[24:28]: giaddr, gateway ip
-		self.chaddr = parse_mac(packet[28:44]) # client mac address w/o padding
+		self.chaddr = parse_mac(packet[28:44])  # client mac address w/o padding
 		# sname[44:108] optional server name
-		self.file = packet[108:236] # boot file name
+		self.file = packet[108:236]  # boot file name
 		# the rest of the packet contains vendor data and padding
 
-	def build_reply(self, client_ip: str, server_ip:str, filename: str) -> bytes:
+	def build_reply(self, client_ip: str, server_ip: str, filename: str) -> bytes:
 		reply = bytearray(self.packet)
-		reply[0] = 2 # BOOTP_REPLY
+		reply[0] = 2  # BOOTP_REPLY
 		reply[16:20] = encode_ipv4(client_ip)
 		reply[20:24] = encode_ipv4(server_ip)
 		reply[108:236] = encode_filename(filename)
@@ -81,8 +84,8 @@ class BootpRequest():
 		reply[240:300] = b"\x00" * 60
 		# write DHCP ACK expected by SPL
 		reply[240] = BootpRequest.DHCP_MSG_TYPE_TAG
-		reply[241] = 1 # length of the field
-		reply[242] = BootpRequest.DHCPACK # len
+		reply[241] = 1  # length of the field
+		reply[242] = BootpRequest.DHCPACK  # len
 		# write stop tag
 		reply[243] = BootpRequest.STOP_TAG
 		return bytes(reply)
@@ -97,4 +100,3 @@ class BootpRequest():
 		logger.debug(f"client hardware address: {self.chaddr}\n")
 		logger.debug(f"boot file name: {self.file}\n")
 		logger.debug("End of BootpRequest received packet")
-

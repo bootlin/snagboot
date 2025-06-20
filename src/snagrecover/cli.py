@@ -26,40 +26,89 @@ import logging
 import ast
 import importlib.resources
 
+
 def cli():
 	templates = {}
 
-	for file in importlib.resources.files("snagrecover").joinpath("templates").iterdir():
+	for file in (
+		importlib.resources.files("snagrecover").joinpath("templates").iterdir()
+	):
 		template_name = file.name[:-5]
 		templates[template_name] = file
 
 	template_listing = "\n".join(sorted(templates.keys()))
-	example = '''Examples:
+	example = (
+		"""Examples:
 	snagrecover -s stm32mp15 -f stm32mp15.yaml
 	snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}"
 
 Templates:
-''' + template_listing
+"""
+		+ template_listing
+	)
 
-	parser = argparse.ArgumentParser(epilog=example, formatter_class=argparse.RawDescriptionHelpFormatter)
+	parser = argparse.ArgumentParser(
+		epilog=example, formatter_class=argparse.RawDescriptionHelpFormatter
+	)
 	mandatory = parser.add_argument_group("Mandatory")
 	mandatory.add_argument("-s", "--soc", help="soc model")
-	mandatory.add_argument("-f", "--firmware-file", help="firmware configurations, passed as a yaml file", metavar="\"templates/colibri-imx7d.yaml\"", action="append")
-	mandatory.add_argument("-F", "--firmware", help="firmware configurations, formatted as a python3 dict", metavar="\"{'fw1': {'path': '/path/to', 'address': 0x00}}\"", action="append", type=ast.literal_eval)
+	mandatory.add_argument(
+		"-f",
+		"--firmware-file",
+		help="firmware configurations, passed as a yaml file",
+		metavar='"templates/colibri-imx7d.yaml"',
+		action="append",
+	)
+	mandatory.add_argument(
+		"-F",
+		"--firmware",
+		help="firmware configurations, formatted as a python3 dict",
+		metavar="\"{'fw1': {'path': '/path/to', 'address': 0x00}}\"",
+		action="append",
+		type=ast.literal_eval,
+	)
 	optional = parser.add_argument_group("Optional")
-	optional.add_argument("--uart", help="use UART for AM335x recovery", metavar="/dev/ttyx")
+	optional.add_argument(
+		"--uart", help="use UART for AM335x recovery", metavar="/dev/ttyx"
+	)
 	optional.add_argument("--baudrate", help="UART baudrate", default=115200)
-	optional.add_argument("--netns", help="network namespace for AM335x USB recovery, defaults to 'snagbootnet'", default="snagbootnet")
-	optional.add_argument("--loglevel", help="set loglevel", choices=["silent","info","debug"], default="silent")
+	optional.add_argument(
+		"--netns",
+		help="network namespace for AM335x USB recovery, defaults to 'snagbootnet'",
+		default="snagbootnet",
+	)
+	optional.add_argument(
+		"--loglevel",
+		help="set loglevel",
+		choices=["silent", "info", "debug"],
+		default="silent",
+	)
 	optional.add_argument("--logfile", help="set logfile", default="board_recovery.log")
 	optional.add_argument("--rom-usb", help="legacy, please use --usb-path")
-	optional.add_argument("--usb-path", help="address of recovery USB device", metavar="vid:pid|bus-port1.port2.[...]")
+	optional.add_argument(
+		"--usb-path",
+		help="address of recovery USB device",
+		metavar="vid:pid|bus-port1.port2.[...]",
+	)
 	utilargs = parser.add_argument_group("Utilities")
-	utilargs.add_argument("--list-socs", help="list supported socs", action="store_true")
+	utilargs.add_argument(
+		"--list-socs", help="list supported socs", action="store_true"
+	)
 	utilargs.add_argument("--version", help="show version", action="store_true")
-	utilargs.add_argument("-t", "--template", help="get an example firmware configuration file", metavar="name")
-	utilargs.add_argument("--udev", help="get required udev rules for snagrecover", action="store_true")
-	utilargs.add_argument("--am335x-setup", help="get setup script for am335x USB recovery", action="store_true")
+	utilargs.add_argument(
+		"-t",
+		"--template",
+		help="get an example firmware configuration file",
+		metavar="name",
+	)
+	utilargs.add_argument(
+		"--udev", help="get required udev rules for snagrecover", action="store_true"
+	)
+	utilargs.add_argument(
+		"--am335x-setup",
+		help="get setup script for am335x USB recovery",
+		action="store_true",
+	)
 
 	args = parser.parse_args()
 
@@ -90,7 +139,9 @@ Templates:
 	# print template
 	if args.template:
 		if args.template not in templates:
-			cli_error(f"no template named {args.template}, please run snagrecover -h for a list of valid templates")
+			cli_error(
+				f"no template named {args.template}, please run snagrecover -h for a list of valid templates"
+			)
 
 		with templates[args.template].open("r") as file:
 			print(file.read(-1))
@@ -138,6 +189,6 @@ Templates:
 		logger.info(f"Logs were appended to {args.logfile}")
 	logger.info(f"Done recovering {soc_model} board")
 
+
 if __name__ == "__main__":
 	cli()
-

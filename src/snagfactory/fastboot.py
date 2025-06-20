@@ -10,20 +10,25 @@ from snagfactory.utils import SnagFactoryConfigError
 DEFAULT_FB_BUFFER_SIZE = 0x7000000
 MMC_LBA_SIZE = 512
 
+
 def fb_config_bytes_to_lbas(num: int):
 	if num % MMC_LBA_SIZE != 0:
-		raise SnagFactoryConfigError(f"Value {num} is not a multiple of {MMC_LBA_SIZE} bytes!")
+		raise SnagFactoryConfigError(
+			f"Value {num} is not a multiple of {MMC_LBA_SIZE} bytes!"
+		)
 
 	return num // MMC_LBA_SIZE
+
 
 class FastbootArgs:
 	def __init__(self, d):
 		for key, value in d.items():
 			setattr(self, key, value)
 
+
 def run_fastboot_task(args, log_queue):
-	sys.stdout = open(os.devnull, 'w')
-	sys.stderr = open(os.devnull, 'w')
+	sys.stdout = open(os.devnull, "w")
+	sys.stderr = open(os.devnull, "w")
 
 	logger = logging.getLogger("snagflash")
 	snagrecover_logger = logging.getLogger("snagrecover")
@@ -32,7 +37,10 @@ def run_fastboot_task(args, log_queue):
 	logger.propagate = False
 	logger.handlers.clear()
 	log_handler = logging.handlers.QueueHandler(log_queue)
-	log_formatter = logging.Formatter(f"%(asctime)s,%(msecs)03d [{args.port}][%(levelname)-8s] %(message)s", datefmt="%H:%M:%S")
+	log_formatter = logging.Formatter(
+		f"%(asctime)s,%(msecs)03d [{args.port}][%(levelname)-8s] %(message)s",
+		datefmt="%H:%M:%S",
+	)
 	log_handler.setFormatter(log_formatter)
 	logger.addHandler(log_handler)
 	logger.setLevel(logging.INFO)
@@ -45,7 +53,8 @@ def run_fastboot_task(args, log_queue):
 
 	logger.handlers.clear()
 
-class FastbootTask():
+
+class FastbootTask:
 	def __init__(self, config: dict, num: int, globals: dict):
 		self.name = type(self).__name__[12:].lower()
 		self.config = config
@@ -120,7 +129,9 @@ class FastbootTask():
 		self.args = FastbootArgs(args)
 
 	def get_process(self):
-		self.process = Process(target=run_fastboot_task, args=(self.args, self.log_queue))
+		self.process = Process(
+			target=run_fastboot_task, args=(self.args, self.log_queue)
+		)
 		return self.process
 
 	def flash_partition_images(self):
@@ -146,7 +157,10 @@ class FastbootMTDTask(FastbootTask):
 		super().__init__(config, num, globals)
 
 		if self.target_device.startswith("mmc"):
-			raise SnagFactoryConfigError(f"the '{self.name}' task is only supported on mtd backends")
+			raise SnagFactoryConfigError(
+				f"the '{self.name}' task is only supported on mtd backends"
+			)
+
 
 class FastbootTaskMTDParts(FastbootMTDTask):
 	def set_partition_table(self):
@@ -154,7 +168,9 @@ class FastbootTaskMTDParts(FastbootMTDTask):
 
 		for partition in self.config:
 			if "size" not in partition or "name" not in partition:
-				raise SnagFactoryConfigError("Invalid partition table entry found in config file, partition size and name must be specified!")
+				raise SnagFactoryConfigError(
+					"Invalid partition table entry found in config file, partition size and name must be specified!"
+				)
 
 			size = int(partition["size"])
 			name = partition["name"]
@@ -178,14 +194,18 @@ class FastbootTaskMTDParts(FastbootMTDTask):
 		self.set_partition_table()
 		self.flash_partition_images()
 
+
 class FastbootMMCTask(FastbootTask):
 	def __init__(self, config: dict, num: int, globals: dict):
 		super().__init__(config, num, globals)
 
 		if not self.target_device.startswith("mmc"):
-			raise SnagFactoryConfigError(f"the '{self.name}' task is only supported on mmc backends")
+			raise SnagFactoryConfigError(
+				f"the '{self.name}' task is only supported on mmc backends"
+			)
 
 		self.device_num = int(self.target_device[-1])
+
 
 class FastbootTaskGPT(FastbootMMCTask):
 	def flash_partition_table(self):
@@ -193,7 +213,9 @@ class FastbootTaskGPT(FastbootMMCTask):
 
 		for partition in self.config:
 			if "size" not in partition or "name" not in partition:
-				raise SnagFactoryConfigError("Invalid partition table entry found in config file, partition size and name must be specified!")
+				raise SnagFactoryConfigError(
+					"Invalid partition table entry found in config file, partition size and name must be specified!"
+				)
 
 			for key, value in partition.items():
 				if key == "image":
@@ -209,9 +231,11 @@ class FastbootTaskGPT(FastbootMMCTask):
 		self.flash_partition_table()
 		self.flash_partition_images()
 
+
 class FastbootTaskRun(FastbootTask):
 	def get_cmds(self):
 		self.cmds += [f"run {cmd}" for cmd in self.config]
+
 
 class FastbootTaskFlash(FastbootTask):
 	def get_cmds(self):
@@ -221,6 +245,7 @@ class FastbootTaskFlash(FastbootTask):
 			image_offset = entry.get("image-offset", 0)
 
 			self.cmds.append(f"flash {image} {image_offset} {part}")
+
 
 class FastbootTaskVirtualPart(FastbootMMCTask):
 	def get_cmds(self):
@@ -235,6 +260,7 @@ class FastbootTaskVirtualPart(FastbootMMCTask):
 
 			self.cmd_setenv(f"fastboot_raw_partition_{name}", raw_part)
 
+
 class FastbootTaskReset(FastbootTask):
 	def __init__(self, config: dict, num: int, globals: dict):
 		super().__init__(config, num, globals)
@@ -243,6 +269,7 @@ class FastbootTaskReset(FastbootTask):
 	def get_cmds(self):
 		self.cmd_reset()
 
+
 class FastbootTaskPromptOperator(FastbootTask):
 	def __init__(self, config: dict, num: int, globals: dict):
 		super().__init__(config, num, globals)
@@ -250,13 +277,16 @@ class FastbootTaskPromptOperator(FastbootTask):
 		self.pauses_board = True
 
 		if "prompt" not in config:
-			raise SnagFactoryConfigError("Missing parameter 'prompt' for task 'prompt-operator'!")
+			raise SnagFactoryConfigError(
+				"Missing parameter 'prompt' for task 'prompt-operator'!"
+			)
 
 		self.pause_action = config["prompt"]
 
 	def get_cmds(self):
 		if self.resets_board:
 			self.cmd_reset()
+
 
 class FastbootTaskEmmcHwpart(FastbootMMCTask):
 	def __init__(self, config: dict, num: int, globals: dict):
@@ -266,48 +296,60 @@ class FastbootTaskEmmcHwpart(FastbootMMCTask):
 		self.pause_action = "please power-cycle the board"
 
 		if "euda" not in config:
-			raise SnagFactoryConfigError("Missing 'euda' configuration for emmc-hwpart task!")
+			raise SnagFactoryConfigError(
+				"Missing 'euda' configuration for emmc-hwpart task!"
+			)
 
 	def get_cmds(self):
 		euda = self.config["euda"]
 
 		if "start" not in euda or "size" not in euda:
-			raise SnagFactoryConfigError("Missing start and/or size parameters for emmc-hwpart euda section")
+			raise SnagFactoryConfigError(
+				"Missing start and/or size parameters for emmc-hwpart euda section"
+			)
 
 		euda_start = fb_config_bytes_to_lbas(euda["start"])
 		euda_size = fb_config_bytes_to_lbas(euda["size"])
 
-		self.cmd_setenv("hwpart_usr", f"user enh 0x{euda_start:x} 0x{euda_size:x} wrrel {'on' if euda.get('wrrel', False) else 'off'}")
+		self.cmd_setenv(
+			"hwpart_usr",
+			f"user enh 0x{euda_start:x} 0x{euda_size:x} wrrel {'on' if euda.get('wrrel', False) else 'off'}",
+		)
 
-		hwpart_args = '${hwpart_usr}'
+		hwpart_args = "${hwpart_usr}"
 
 		i = 1
 		while f"gp{i}" in self.config:
 			gp = self.config[f"gp{i}"]
 
 			if "size" not in gp or "enh" not in gp:
-				raise SnagFactoryConfigError(f"Missing size and/or enh parameters for emmc-hwpart gp{i} section")
+				raise SnagFactoryConfigError(
+					f"Missing size and/or enh parameters for emmc-hwpart gp{i} section"
+				)
 			gp_size = fb_config_bytes_to_lbas(gp["size"])
 
-			self.cmd_setenv(f"hwpart_gp{i}", f"gp{i} 0x{gp_size:x} {'enh' if gp['enh'] else ''} wrrel {'on' if gp.get('wrrel', False) else 'off'}")
+			self.cmd_setenv(
+				f"hwpart_gp{i}",
+				f"gp{i} 0x{gp_size:x} {'enh' if gp['enh'] else ''} wrrel {'on' if gp.get('wrrel', False) else 'off'}",
+			)
 
-			hwpart_args += ' ${' + f"hwpart_gp{i}" + '}'
+			hwpart_args += " ${" + f"hwpart_gp{i}" + "}"
 
 			i += 1
 
 		self.cmd_setenv("hwpart_args", hwpart_args)
-		self.cmd_run('mmc hwpartition ${hwpart_args} check')
-		self.cmd_run('mmc hwpartition ${hwpart_args} set')
-		self.cmd_run('mmc hwpartition ${hwpart_args} complete')
+		self.cmd_run("mmc hwpartition ${hwpart_args} check")
+		self.cmd_run("mmc hwpartition ${hwpart_args} set")
+		self.cmd_run("mmc hwpartition ${hwpart_args} complete")
 		self.cmd_reset()
 
-task_table = {
-"gpt": FastbootTaskGPT,
-"mtd-parts": FastbootTaskMTDParts,
-"run": FastbootTaskRun,
-"flash": FastbootTaskFlash,
-"reset": FastbootTaskReset,
-"prompt-operator": FastbootTaskPromptOperator,
-"emmc-hwpart": FastbootTaskEmmcHwpart,
-}
 
+task_table = {
+	"gpt": FastbootTaskGPT,
+	"mtd-parts": FastbootTaskMTDParts,
+	"run": FastbootTaskRun,
+	"flash": FastbootTaskFlash,
+	"reset": FastbootTaskReset,
+	"prompt-operator": FastbootTaskPromptOperator,
+	"emmc-hwpart": FastbootTaskEmmcHwpart,
+}

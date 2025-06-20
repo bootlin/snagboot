@@ -23,8 +23,10 @@ import socketserver
 import socket
 import time
 import logging
+
 logger = logging.getLogger("snagrecover")
 from xmodem import XMODEM
+
 # setting this logger to the same format as the main
 # logger since it sometimes prints out messages that seem
 # like fatal errors but are apparently benign
@@ -52,19 +54,21 @@ server_config = {
 	"tftp_complete_timeout": 180,
 }
 
+
 def tftp_proc(server: tftpy.TftpServer):
 	logger.info("Starting TFTP server...")
 	tftp_port = server_config["tftp_port"]
 	server.listen(server_config["listen"], tftp_port, timeout=1)
 	logger.info("TFTP server finished")
 
+
 def bootp_proc(server: socketserver.UDPServer):
 	logger.info("Starting BOOTP server...")
 	server.serve_forever()
 	logger.info("BOOTP server finished")
 
-class UDPHandler(socketserver.BaseRequestHandler):
 
+class UDPHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		data = self.request[0].strip()
 		sock = self.request[1]
@@ -87,12 +91,17 @@ class UDPHandler(socketserver.BaseRequestHandler):
 			else:
 				raise err
 
+
 def am335x_usb(port, fw_name: str):
 	tftp_start_timeout = server_config["tftp_start_timeout"]
 	tftp_complete_timeout = server_config["tftp_complete_timeout"]
 	# TFTP server thread
-	tftp_server = tftpy.TftpServer(os.path.dirname(recovery_config["firmware"][fw_name]["path"]))
-	tftp_thread = threading.Thread(name="Recovery TFTP server for AM335x", target=tftp_proc, args=[tftp_server])
+	tftp_server = tftpy.TftpServer(
+		os.path.dirname(recovery_config["firmware"][fw_name]["path"])
+	)
+	tftp_thread = threading.Thread(
+		name="Recovery TFTP server for AM335x", target=tftp_proc, args=[tftp_server]
+	)
 	tftp_thread.daemon = True
 
 	# BOOTP server thread
@@ -101,7 +110,9 @@ def am335x_usb(port, fw_name: str):
 	bootp_server = socketserver.UDPServer((listen_address, bootp_port), UDPHandler)
 	bootp_server.timeout = server_config["bootp_timeout"]
 	bootp_server.fw_name = fw_name
-	bootp_thread = threading.Thread(name="Recovery BOOTP server for AM335x", target=bootp_proc, args=[bootp_server])
+	bootp_thread = threading.Thread(
+		name="Recovery BOOTP server for AM335x", target=bootp_proc, args=[bootp_server]
+	)
 	bootp_thread.daemon = True
 
 	logger.info("Starting TFTP server...")
@@ -134,7 +145,10 @@ def am335x_usb(port, fw_name: str):
 	logger.info("Waiting for TFTP shutdown...")
 	tftp_thread.join()
 
+
 xmodem_total_size = 0
+
+
 def xmodem_callback(total_packets: int, success_count: int, error_count: int):
 	"""
 	This is called during the xmodem transfer,
@@ -180,9 +194,9 @@ def am335x_uart(port, fw_name: str):
 		print("")
 	logger.info("xmodem transfer done")
 
+
 def am335x_run(port, fw_name: str):
 	if recovery_config["args"]["uart"]:
 		am335x_uart(port, fw_name)
 	else:
 		am335x_usb(port, fw_name)
-

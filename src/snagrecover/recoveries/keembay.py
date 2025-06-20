@@ -22,10 +22,11 @@ from snagrecover.firmware.firmware import run_firmware
 
 logger = logging.getLogger("snagrecover")
 
-def main():
-    # USB ENUMERATION
-    usb_addr = recovery_config["usb_path"]
-    usb_dev = get_usb(usb_addr)
 
-    # Download FIP
-    run_firmware(usb_dev, "fip")
+def main():
+	# USB ENUMERATION
+	usb_addr = recovery_config["usb_path"]
+	usb_dev = get_usb(usb_addr)
+
+	# Download FIP
+	run_firmware(usb_dev, "fip")
