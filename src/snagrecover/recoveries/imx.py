@@ -55,6 +55,7 @@ from snagrecover.config import recovery_config
 from snagrecover.utils import access_error, get_usb, prettify_usb_addr
 from snagrecover.protocols.imx_sdp import SDPCommand
 import logging
+
 logger = logging.getLogger("snagrecover")
 
 
@@ -65,47 +66,62 @@ SDPV_MAX_BCDVER = 0x9998
 
 # SoCs that use the SDPS protocol instead of SDP
 sdps_socs = [
-"imx8qxp",
-"imx8qm",
-"imx8dxl",
-"imx28",
-"imx815",
-"imx865",
-"imx91",
-"imx93"
+	"imx8qxp",
+	"imx8qm",
+	"imx8dxl",
+	"imx28",
+	"imx815",
+	"imx865",
+	"imx91",
+	"imx93",
 ]
 
 # SoCs that use raw bulk endpoints rather than HID
 raw_bulk_ep_socs = [
-"imx53",
+	"imx53",
 ]
+
 
 def dev_uses_sdpv(usb_dev):
 	bcdversion = usb_dev.bcdDevice
 	return bcdversion >= SDPV_MIN_BCDVER and bcdversion <= SDPV_MAX_BCDVER
+
 
 def build_raw_ep_dev(dev: usb.core.Device):
 	class Adapter:
 		# The protocol code was written to expect a HID device rather
 		# than raw USB.
 		# This adapter makes it compatible by
-		#		- Adding the endpoint numbers to the calls
-		#		- Converting read results from an array to bytes
+		# - Adding the endpoint numbers to the calls
+		# - Converting read results from an array to bytes
 		def __init__(self, dev):
 			def is_bulk(ep):
-				return usb.util.endpoint_type(ep.bmAttributes) == usb.util.ENDPOINT_TYPE_BULK
+				return (
+					usb.util.endpoint_type(ep.bmAttributes)
+					== usb.util.ENDPOINT_TYPE_BULK
+				)
+
 			def is_bulk_in(ep):
-				return  is_bulk(ep) and usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_IN
+				return (
+					is_bulk(ep)
+					and usb.util.endpoint_direction(ep.bEndpointAddress)
+					== usb.util.ENDPOINT_IN
+				)
+
 			def is_bulk_out(ep):
-				return is_bulk(ep) and usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_OUT
+				return (
+					is_bulk(ep)
+					and usb.util.endpoint_direction(ep.bEndpointAddress)
+					== usb.util.ENDPOINT_OUT
+				)
 
 			cfg = dev.get_active_configuration()
-			intf = cfg[(0,0)]
-			ep_in = usb.util.find_descriptor(intf, custom_match = is_bulk_in)
+			intf = cfg[(0, 0)]
+			ep_in = usb.util.find_descriptor(intf, custom_match=is_bulk_in)
 			if ep_in is None:
 				access_error("USB RAW: cannot find BULK IN endpoint")
 
-			ep_out = usb.util.find_descriptor(intf, custom_match = is_bulk_out)
+			ep_out = usb.util.find_descriptor(intf, custom_match=is_bulk_out)
 			if ep_out is None:
 				access_error("USB RAW: cannot find BULK OUT endpoint")
 
@@ -121,7 +137,9 @@ def build_raw_ep_dev(dev: usb.core.Device):
 
 	return Adapter(dev)
 
+
 ###################### main ##################################
+
 
 def main():
 	soc_model = recovery_config["soc_model"]
@@ -157,7 +175,9 @@ def main():
 		# The SPL device should be found at the same USB path as the ROM device
 		usb_dev = get_usb(rom_path, error_on_fail=False)
 		if usb_dev is not None and usb_dev.address != rom_devnum:
-			logger.info(f"Found USB device at {prettify_usb_addr(rom_path)} for SPL stage!")
+			logger.info(
+				f"Found USB device at {prettify_usb_addr(rom_path)} for SPL stage!"
+			)
 			break
 
 		time.sleep(1)
@@ -170,11 +190,12 @@ def main():
 	# packaged in a single blob
 	if "imx8" in soc_model:
 		if not dev_uses_sdpv(usb_dev):
-			raise Exception("Error: The installed SPL version does not support autofinding U-Boot")
+			raise Exception(
+				"Error: The installed SPL version does not support autofinding U-Boot"
+			)
 		run_firmware(sdp_cmd, "flash-bin", "u-boot")
 	else:
 		run_firmware(sdp_cmd, "u-boot")
 
 	sdp_cmd.close()
 	logger.info("DONE")
-

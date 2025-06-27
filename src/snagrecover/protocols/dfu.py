@@ -21,9 +21,11 @@ import usb.core
 import usb.util
 import time
 import logging
+
 logger = logging.getLogger("snagrecover")
-from errno import EIO,ENODEV,EPIPE
+from errno import EIO, ENODEV, EPIPE
 from snagrecover import utils
+
 
 def list_partids(dev: usb.core.Device):
 	cfg = dev.get_active_configuration()
@@ -34,6 +36,7 @@ def list_partids(dev: usb.core.Device):
 		partids.append(intf.bAlternateSetting)
 
 	return partids
+
 
 def search_partid(dev: usb.core.Device, partname: str, match_prefix=False) -> int:
 	# search for an altsetting associated with a partition name
@@ -48,7 +51,8 @@ def search_partid(dev: usb.core.Device, partname: str, match_prefix=False) -> in
 			partid = intf.bAlternateSetting
 	return partid
 
-class DFU():
+
+class DFU:
 	DESC_TYPE_DFU = 0x21
 	MAN_TOLERANT_MASK = 4
 
@@ -63,7 +67,7 @@ class DFU():
 		"dfuMANIFEST": 7,
 		"dfuMANIFEST-WAIT-RESET": 8,
 		"dfuUPLOAD-IDLE": 9,
-		"dfuERROR": 10
+		"dfuERROR": 10,
 	}
 
 	status_codes = {
@@ -82,21 +86,23 @@ class DFU():
 		0x0C: "errUSBR",
 		0x0D: "errPOR",
 		0x0E: "errUNKNOWN",
-		0x0F: "errSTALLEDPKT"
+		0x0F: "errSTALLEDPKT",
 	}
 
 	def __init__(self, dev: usb.core.Device, stm32: bool = True):
 		self.dev = dev
-		self.stm32 = stm32 # set when dfu is used to recover stm32mp boards
+		self.stm32 = stm32  # set when dfu is used to recover stm32mp boards
 		# try to find wTransferSize
 		bMaxPacketSize0 = dev.bMaxPacketSize0
 		self.transfer_size = bMaxPacketSize0
 		cfg = dev.get_active_configuration()
 		intfs = cfg.interfaces()
 		for intf in intfs:
-			if len(intf.extra_descriptors) >= 9 and (intf.extra_descriptors[1] == DFU.DESC_TYPE_DFU):
+			if len(intf.extra_descriptors) >= 9 and (
+				intf.extra_descriptors[1] == DFU.DESC_TYPE_DFU
+			):
 				desc = intf.extra_descriptors
-				wTransferSize = desc[6] * 0x100  + desc[5]
+				wTransferSize = desc[6] * 0x100 + desc[5]
 				"""
 				Control transfer sizes should be in the range
 				from bMaxPacketSize0 to wTransferSize as per DFU
@@ -104,34 +110,46 @@ class DFU():
 				transfers that aren't a multiple of
 				bMaxPacketSize0 in size.
 				"""
-				self.transfer_size = bMaxPacketSize0 * (wTransferSize // bMaxPacketSize0)
-				logger.info(f"Found DFU Functional descriptor: wTransferSize = {self.transfer_size}")
+				self.transfer_size = bMaxPacketSize0 * (
+					wTransferSize // bMaxPacketSize0
+				)
+				logger.info(
+					f"Found DFU Functional descriptor: wTransferSize = {self.transfer_size}"
+				)
 		self.status_timeout = 100
 
 	def get_status(self) -> tuple:
 		# make sure to wait long enough after last get_status()
 		time.sleep(self.status_timeout / 1000.0)
 		# status = status polltimeout state iString
-		status = self.dev.ctrl_transfer(0xa1, 3, wValue=0, wIndex=0, data_or_wLength=6)# DFU_GETSTATUS
+		status = self.dev.ctrl_transfer(
+			0xA1, 3, wValue=0, wIndex=0, data_or_wLength=6
+		)  # DFU_GETSTATUS
 		state = status[4]
 		self.status_timeout = int.from_bytes(bytes(status[1:3]), "little")
 		logger.debug(f"DFU state: {state} DFU status: {DFU.status_codes[status[0]]}")
 		return state
 
-	def download_and_run(self, blob: bytes, partid: int, offset: int, size: int, show_progress=False) -> bool:
+	def download_and_run(
+		self, blob: bytes, partid: int, offset: int, size: int, show_progress=False
+	) -> bool:
 		self.set_partition(partid)
 		state = self.get_status()
 		if state != DFU.state_codes["dfuIDLE"]:
 			raise ValueError(f"Incompatible state {state} detected")
 
 		if self.stm32:
-			block_index = 2 # wValue 0 and 1 seem to be reserved
+			block_index = 2  # wValue 0 and 1 seem to be reserved
 		else:
 			block_index = 0
 		# for other commands (erase, set exec address, etc.)
 		bytes_written = 0
-		for chunk in utils.dnload_iter(blob[offset:offset + size], self.transfer_size):
-			bytes_written += self.dev.ctrl_transfer(0x21, 1, wValue=block_index, wIndex=0, data_or_wLength=chunk)
+		for chunk in utils.dnload_iter(
+			blob[offset : offset + size], self.transfer_size
+		):
+			bytes_written += self.dev.ctrl_transfer(
+				0x21, 1, wValue=block_index, wIndex=0, data_or_wLength=chunk
+			)
 
 			# make sure to wait enough before sending next get_status
 			state = self.get_status()
@@ -143,7 +161,9 @@ class DFU():
 
 		# send zero-length download command to leave DFU mode and manifest
 		# firmware
-		bytes_written += self.dev.ctrl_transfer(0x21, 1, wValue=block_index, wIndex=0, data_or_wLength=None)
+		bytes_written += self.dev.ctrl_transfer(
+			0x21, 1, wValue=block_index, wIndex=0, data_or_wLength=None
+		)
 		state = self.get_status()
 		while state != DFU.state_codes["dfuIDLE"]:
 			if state == DFU.state_codes["dfuMANIFEST"]:
@@ -173,7 +193,7 @@ class DFU():
 		self.get_status()
 		logger.info("Sending DFU_DETACH...")
 		try:
-			self.dev.ctrl_transfer(0xa1, 0, wValue=0x7530, wIndex=0, data_or_wLength=0)
+			self.dev.ctrl_transfer(0xA1, 0, wValue=0x7530, wIndex=0, data_or_wLength=0)
 		except usb.core.USBError as e:
 			if e.errno in [EIO, ENODEV, EPIPE]:
 				logger.warning(f"EIO, ENODEV or EPIPE: {e.errno} on DFU_DETACH")
@@ -182,9 +202,8 @@ class DFU():
 		return None
 
 	def set_partition(self, partid: int):
-		self.dev.set_interface_altsetting(interface = 0, alternate_setting = partid)
+		self.dev.set_interface_altsetting(interface=0, alternate_setting=partid)
 		return None
-
 
 	def stm32_get_phase(self) -> int:
 		"""
@@ -193,13 +212,14 @@ class DFU():
 		"""
 		partid = search_partid(self.dev, "@virtual", match_prefix=True)
 		if partid is None:
-				raise Exception("No DFU altsetting found with iInterface='@virtual*'")
+			raise Exception("No DFU altsetting found with iInterface='@virtual*'")
 		self.set_partition(partid)
 		self.get_status()
 		# phase = phase_id dnload_addr offset additional_info
-		phase = self.dev.ctrl_transfer(0xa1, 2, wValue=0, wIndex=0, data_or_wLength=512)# DFU_UPLOAD
+		phase = self.dev.ctrl_transfer(
+			0xA1, 2, wValue=0, wIndex=0, data_or_wLength=512
+		)  # DFU_UPLOAD
 		phase_id = phase[0]
 		logger.info(f"Phase id: {phase_id}")
 		self.get_status()
 		return phase_id
-

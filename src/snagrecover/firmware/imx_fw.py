@@ -48,6 +48,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import memory_ops
 from snagrecover.firmware import ivt
@@ -56,20 +57,21 @@ from snagrecover.config import recovery_config
 from snagrecover import utils
 
 dcd_addr = {
-"imx53": 0xf8006000,
-"imx6q": 0x00910000,
-"imx6sx": 0x00910000,
-"imx6d": 0x00910000,
-"imx6sl": 0x00910000,
-"imx7d": 0x00911000,
-"imx6ul": 0x00910000,
-"imx6ull": 0x00910000,
-"imx6sll": 0x00910000,
-"imx8mq": 0x00910000,
-"imx8mm": 0x00910000,
-"imx7ulp": 0x2f018000,
-"imxrt106x": 0x1000
+	"imx53": 0xF8006000,
+	"imx6q": 0x00910000,
+	"imx6sx": 0x00910000,
+	"imx6d": 0x00910000,
+	"imx6sl": 0x00910000,
+	"imx7d": 0x00911000,
+	"imx6ul": 0x00910000,
+	"imx6ull": 0x00910000,
+	"imx6sll": 0x00910000,
+	"imx8mq": 0x00910000,
+	"imx8mm": 0x00910000,
+	"imx7ulp": 0x2F018000,
+	"imxrt106x": 0x1000,
 }
+
 
 def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 	MAX_DOWNLOAD_SIZE = 0x200000
@@ -77,7 +79,9 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 
 	memops = memory_ops.MemoryOps(sdp_cmd)
 	dcd_cleared = False
-	need_dcd_clear = fw_name in ["u-boot-with-dcd", "SPL"] or (fw_name == "flash-bin" and subfw_name == "spl")
+	need_dcd_clear = fw_name in ["u-boot-with-dcd", "SPL"] or (
+		fw_name == "flash-bin" and subfw_name == "spl"
+	)
 
 	if fw_name == "flash-bin" and subfw_name == "spl-sdps":
 		write_size = rom_container.get_container_size(fw_blob)
@@ -100,13 +104,17 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			raise ValueError("Error: No DCD data in boot image")
 		logger.info("Writing DCD...")
 		dcd_offset = ivtable.offset + ivtable.dcd - ivtable.addr
-		if fw_blob[dcd_offset] != 0xd2:
+		if fw_blob[dcd_offset] != 0xD2:
 			raise ValueError("Error: Invalid DCD tag")
 		write_addr = dcd_addr.get(soc_model, None)
 		if write_addr is None:
-			raise ValueError("Error: DCD is not supported for this chip, please choose a boot image without DCD.")
-		dcd_size = int.from_bytes(fw_blob[dcd_offset + 1:dcd_offset + 3], "big")
-		sdp_cmd.write_dcd(fw_blob[dcd_offset:dcd_offset + dcd_size], write_addr, 0, dcd_size)
+			raise ValueError(
+				"Error: DCD is not supported for this chip, please choose a boot image without DCD."
+			)
+		dcd_size = int.from_bytes(fw_blob[dcd_offset + 1 : dcd_offset + 3], "big")
+		sdp_cmd.write_dcd(
+			fw_blob[dcd_offset : dcd_offset + dcd_size], write_addr, 0, dcd_size
+		)
 		dcd_offset = ivtable.offset + ivtable.dcd - ivtable.addr
 		logger.info("Done")
 		logger.info("Done writing DCD")
@@ -118,13 +126,19 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		section of the boot image that we previously downloaded to the board
 		"""
 		if ivtable.header is not None:
-			write_offset = ivtable.offset + ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
+			write_offset = (
+				ivtable.offset
+				+ ivtable.boot_data["length"]
+				- (ivtable.addr - ivtable.boot_data["start"])
+			)
 		else:
 			logger.warning("IVT header not found, extracting size from raw blob")
 			write_offset = rom_container.get_container_size(fw_blob)
 		write_size = len(fw_blob) - write_offset
-		if	write_size <= 0:
-			raise ValueError("Error: Invalid offset found for U-BOOT proper in boot image")
+		if write_size <= 0:
+			raise ValueError(
+				"Error: Invalid offset found for U-BOOT proper in boot image"
+			)
 		# We ask for a write at 0 but SPL should determine u-boot proper's
 		# write address on its own
 		logger.info("Downloading file...")
@@ -134,7 +148,9 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		return None
 	else:
 		if ivtable.header is not None:
-			write_size = ivtable.boot_data["length"] - (ivtable.addr - ivtable.boot_data["start"])
+			write_size = ivtable.boot_data["length"] - (
+				ivtable.addr - ivtable.boot_data["start"]
+			)
 			# If the IVT offset is large enough, the write can overflow the source buffer
 			if write_size > len(fw_blob) - ivtable.offset:
 				logger.warning("Write size is too large, truncating...")
@@ -148,7 +164,9 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			# Non HID devices automatically start after download so cannot update IVT
 			# So patch it before writing
 			fw_blob_mod = bytearray(fw_blob)
-			fw_blob_mod[ivtable.offset + 12 : ivtable.offset + 16] = bytearray(b"\x00\x00\x00\x00")
+			fw_blob_mod[ivtable.offset + 12 : ivtable.offset + 16] = bytearray(
+				b"\x00\x00\x00\x00"
+			)
 			fw_blob = bytes(fw_blob_mod)
 			dcd_cleared = True
 
@@ -156,13 +174,17 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 		# split download into chunks < MAX_DOWNLOAD_SIZE
 		chunk_offset = 0
 		logger.info("Downloading file...")
-		for chunk in utils.dnload_iter(fw_blob[ivtable.offset:ivtable.offset + write_size], 0x200000):
-			memops.write_blob(chunk, ivtable.addr + chunk_offset, chunk_offset, len(chunk))
+		for chunk in utils.dnload_iter(
+			fw_blob[ivtable.offset : ivtable.offset + write_size], 0x200000
+		):
+			memops.write_blob(
+				chunk, ivtable.addr + chunk_offset, chunk_offset, len(chunk)
+			)
 			chunk_offset += MAX_DOWNLOAD_SIZE
 		logger.info("Done")
 
 	if need_dcd_clear and not dcd_cleared:
-		if soc_model in ["imx6q","imx6d","imx6sl"]:
+		if soc_model in ["imx6q", "imx6d", "imx6sl"]:
 			# CLEAR DCD
 			logger.info("Clearing Device Configuration Data...")
 			logger.info("Clearing DCD...")
@@ -172,10 +194,10 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 			so we have to copy more than just the ivt to avoid overriting other
 			data.
 			"""
-			if len(fw_blob[ivtable.offset:]) < 1024:
+			if len(fw_blob[ivtable.offset :]) < 1024:
 				logger.warning("Boot image is too small to clear DCD")
 			else:
-				new_ivt = bytearray(fw_blob[ivtable.offset:ivtable.offset + 1024])
+				new_ivt = bytearray(fw_blob[ivtable.offset : ivtable.offset + 1024])
 				new_ivt[12:16] = bytearray(b"\x00\x00\x00\x00")
 				memops.write_blob(new_ivt, ivtable.addr, 0, 1024)
 			logger.info("Done clearing DCD")
@@ -193,4 +215,3 @@ def imx_run(sdp_cmd, fw_name: str, fw_blob: bytes, subfw_name: str = ""):
 	logger.info(f"Jumping to {fw_name}...")
 	memops.jump(ivtable.addr)
 	return None
-

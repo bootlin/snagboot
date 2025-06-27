@@ -11,18 +11,22 @@ any_rule = {
 	"type": object,
 }
 
+
 def list_soc_models():
 	socs = get_supported_socs()
 
 	return list(socs["tested"].keys()) + list(socs["untested"].keys())
 
+
 soc_model_pattern = "(" + "|".join(list_soc_models()) + ")"
+
 
 def str_rule(pattern: str):
 	return {
 		"type": str,
 		"pattern": pattern,
 	}
+
 
 name_rule = str_rule("[\w\-]+")
 path_rule = str_rule("[\w\-\/\.:]+")
@@ -54,7 +58,7 @@ emmc_hwpart_task_rule = {
 		"euda": euda_rule,
 		"gp\d": gp_rule,
 		"skip-pwr-cycle": bool_rule,
-	}
+	},
 }
 
 prompt_operator_task_rule = {
@@ -64,7 +68,7 @@ prompt_operator_task_rule = {
 		"type": dict,
 		"prompt": str_rule(".+"),
 		"reset-before": bool_rule,
-	}
+	},
 }
 
 reset_task_rule = {
@@ -87,7 +91,7 @@ flash_task_rule = {
 		"rules": [
 			flash_rule,
 		],
-	}
+	},
 }
 
 mtd_part_rule = {
@@ -120,7 +124,7 @@ run_task_rule = {
 		"rules": [
 			fastboot_cmd_rule,
 		],
-	}
+	},
 }
 
 mtd_parts_task_rule = {
@@ -131,7 +135,7 @@ mtd_parts_task_rule = {
 		"rules": [
 			mtd_part_rule,
 		],
-	}
+	},
 }
 
 gpt_task_rule = {
@@ -142,7 +146,7 @@ gpt_task_rule = {
 		"rules": [
 			partition_rule,
 		],
-	}
+	},
 }
 
 globals_rule = {
@@ -169,23 +173,20 @@ tasks_rule = {
 
 config_rule = {
 	"type": dict,
-
 	"boards": {
 		"type": dict,
 		"[\da-fA-F]{4}:[\da-fA-F]{4}": str_rule(soc_model_pattern),
 	},
-
 	"soc-models": {
 		"type": dict,
-
 		f"{soc_model_pattern}-firmware": {
 			"type": dict,
 			".+": any_rule,
 		},
-
 		f"{soc_model_pattern}-tasks": tasks_rule,
 	},
 }
+
 
 def map_config(config, modify):
 	if isinstance(config, dict):
@@ -207,6 +208,7 @@ def map_config(config, modify):
 			else:
 				config[i] = modify(value)
 
+
 def suffixed_num_to_int(param) -> int:
 	pattern = re.compile("^\d+[GMKgmk]?$")
 
@@ -216,16 +218,17 @@ def suffixed_num_to_int(param) -> int:
 	suffix = param[-1]
 	num = param[:-1]
 
-	if suffix in ["k","K"]:
+	if suffix in ["k", "K"]:
 		multiplier = 1024
-	elif suffix in ["m","M"]:
-		multiplier = 1024 ** 2
-	elif suffix in ["g","G"]:
-		multiplier = 1024 ** 3
+	elif suffix in ["m", "M"]:
+		multiplier = 1024**2
+	elif suffix in ["g", "G"]:
+		multiplier = 1024**3
 	else:
 		raise SnagFactoryConfigError(f"Invalid suffix {suffix}")
 
 	return int(num) * multiplier
+
 
 def preprocess_config(config):
 	"""
@@ -234,6 +237,7 @@ def preprocess_config(config):
 	"""
 
 	map_config(config, suffixed_num_to_int)
+
 
 def read_config(path, check_paths=True):
 	with open(path, "r") as file:
@@ -244,8 +248,8 @@ def read_config(path, check_paths=True):
 	check_config(config, check_paths)
 
 	pipelines = {}
-	for soc_key,soc_config in config["soc-models"].items():
-		soc_model,sep,suffix = soc_key.partition("-")
+	for soc_key, soc_config in config["soc-models"].items():
+		soc_model, sep, suffix = soc_key.partition("-")
 
 		if suffix == "firmware":
 			continue
@@ -257,9 +261,13 @@ def read_config(path, check_paths=True):
 		i = 0
 		for entry in soc_config[1:]:
 			if "task" not in entry:
-				raise SnagFactoryConfigError(f"Invalid entry {entry}: missing task name")
+				raise SnagFactoryConfigError(
+					f"Invalid entry {entry}: missing task name"
+				)
 			elif (task_object := task_table.get(entry["task"], None)) is None:
-				raise SnagFactoryConfigError(f"Invalid entry {entry}: unknown task {entry['task']}")
+				raise SnagFactoryConfigError(
+					f"Invalid entry {entry}: unknown task {entry['task']}"
+				)
 
 			task = task_object(entry.get("args", None), i, globals)
 			task.get_cmds()
@@ -267,6 +275,7 @@ def read_config(path, check_paths=True):
 			i += 1
 
 	return config, pipelines
+
 
 def check_entry(entry, rule):
 	if rule["type"] is object:
@@ -290,19 +299,23 @@ def check_entry(entry, rule):
 						matching_keys.add(key)
 
 			if matching_keys != suspicious_keys:
-				raise SnagFactoryConfigError(f"Found unknown parameter(s): {suspicious_keys - matching_keys}")
+				raise SnagFactoryConfigError(
+					f"Found unknown parameter(s): {suspicious_keys - matching_keys}"
+				)
 
 		# check parameter types
-		for key,value in entry.items():
+		for key, value in entry.items():
 			param_type = rule[key]["type"]
 			if param_type is object:
 				continue
 
 			if not isinstance(value, param_type):
-				raise SnagFactoryConfigError(f"Parameter {key} has invalid type! {type(value)} instead of {param_type}")
+				raise SnagFactoryConfigError(
+					f"Parameter {key} has invalid type! {type(value)} instead of {param_type}"
+				)
 
 		# check parameter values
-		for key,value in entry.items():
+		for key, value in entry.items():
 			check_entry(value, rule[key])
 			param_type = rule[key]["type"]
 
@@ -310,7 +323,9 @@ def check_entry(entry, rule):
 		pattern = re.compile(f"^{rule['pattern']}$")
 		match = pattern.match(entry)
 		if match is None:
-			raise SnagFactoryConfigError(f"Parameter with pattern {pattern.pattern} has invalid value {entry}")
+			raise SnagFactoryConfigError(
+				f"Parameter with pattern {pattern.pattern} has invalid value {entry}"
+			)
 
 	elif entry_type is list:
 		for sub_entry in entry:
@@ -324,15 +339,18 @@ def check_entry(entry, rule):
 					error_msgs.append(e)
 
 			if not matched:
-				raise SnagFactoryConfigError(f"Invalid list item {sub_entry}, all possible matches failed: {error_msgs}")
+				raise SnagFactoryConfigError(
+					f"Invalid list item {sub_entry}, all possible matches failed: {error_msgs}"
+				)
+
 
 def check_config(config, check_paths=True):
 	# Check config syntax
 	check_entry(config, config_rule)
 
-	for soc_key,soc_config in config["soc-models"].items():
+	for soc_key, soc_config in config["soc-models"].items():
 		# check that each soc has a task section and a firmware section
-		soc_model,sep,suffix = soc_key.partition("-")
+		soc_model, sep, suffix = soc_key.partition("-")
 
 		if suffix != "firmware":
 			if f"{soc_model}-tasks" not in config["soc-models"]:
@@ -348,5 +366,6 @@ def check_config(config, check_paths=True):
 
 		for firmware in soc_config.values():
 			if not os.path.exists(firmware["path"]):
-				raise SnagFactoryConfigError(f"firmware file {firmware['path']} does not exist!")
-
+				raise SnagFactoryConfigError(
+					f"firmware file {firmware['path']} does not exist!"
+				)

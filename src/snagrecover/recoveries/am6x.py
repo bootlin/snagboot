@@ -1,5 +1,6 @@
 import usb
 import logging
+
 logger = logging.getLogger("snagrecover")
 from snagrecover.firmware.firmware import run_firmware
 from snagrecover.utils import get_usb
@@ -7,12 +8,14 @@ from snagrecover.config import recovery_config
 from snagrecover.protocols import dfu
 import time
 
+
 def send_tiboot3(dev):
 	run_firmware(dev, "tiboot3")
 	# USB device should re-enumerate at this point
 	usb.util.dispose_resources(dev)
 	# without this delay, USB device will be present but not ready
 	time.sleep(1)
+
 
 def main():
 	usb_addr = recovery_config["usb_path"]
@@ -39,4 +42,3 @@ def main():
 	dev = get_usb(usb_addr, error_on_fail=False)
 	if dev is not None:
 		run_firmware(dev, "u-boot")
-

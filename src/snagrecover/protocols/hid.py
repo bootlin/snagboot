@@ -33,22 +33,33 @@ import platform
 import select
 import re
 import logging
+
 logger = logging.getLogger("snagrecover")
 
-CTRL_HID_GET_REPORT   = 0x1
-CTRL_HID_SET_REPORT   = 0x9
-CTRL_HID_SET_IDLE     = 0xa
+CTRL_HID_GET_REPORT = 0x1
+CTRL_HID_SET_REPORT = 0x9
+CTRL_HID_SET_IDLE = 0xA
 
 # Used by (GET/SET)_REPORT
-REPORT_TYPE_INPUT    = 0x1
-REPORT_TYPE_OUTPUT   = 0x2
+REPORT_TYPE_INPUT = 0x1
+REPORT_TYPE_OUTPUT = 0x2
+
 
 def get_descriptor(dev, desc_size, desc_type, desc_index):
-	return dev.ctrl_transfer(0x81 if desc_type == usb.DT_REPORT else 0x80, 6, (desc_type << 8) | desc_index, 0, desc_size)
+	return dev.ctrl_transfer(
+		0x81 if desc_type == usb.DT_REPORT else 0x80,
+		6,
+		(desc_type << 8) | desc_index,
+		0,
+		desc_size,
+	)
+
 
 class HIDError(Exception):
 	"Raised to signal failed I/O or invalid HID data in USB descriptors"
+
 	pass
+
 
 def is_hid(dev: usb.core.Device):
 	if dev.bDeviceClass == usb.CLASS_HID:
@@ -58,13 +69,15 @@ def is_hid(dev: usb.core.Device):
 			return True
 	return False
 
+
 def match_intr_in(desc) -> bool:
 	match = bool(desc.bDescriptorType & usb.DT_ENDPOINT)
 	match &= bool(desc.bmAttributes & usb.ENDPOINT_TYPE_INTERRUPT)
 	match &= bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
 	return match
 
-class HIDDevice():
+
+class HIDDevice:
 	def err(self, msg):
 		err = f"Error while handling HID device {self.pretty_addr}:"
 		err += msg
@@ -108,17 +121,22 @@ class HIDDevice():
 				self.main_intf = intf
 				break
 
-
 		cur_cfg = self.usb_dev.get_active_configuration()
 		if cur_cfg.bConfigurationValue != self.main_cfg.bConfigurationValue:
-			logger.info(f"Expected cfg {self.main_cfg.bConfigurationValue} but device {pretty_addr} has cfg {cur_cfg.bConfigurationValue} instead, attempting to set cfg...")
+			logger.info(
+				f"Expected cfg {self.main_cfg.bConfigurationValue} but device {pretty_addr} has cfg {cur_cfg.bConfigurationValue} instead, attempting to set cfg..."
+			)
 			self.usb_dev.set_configuration(self.main_cfg.bConfigurationValue)
 
-		if platform.system() == "Linux" and self.usb_dev.is_kernel_driver_active(self.main_intf.bInterfaceNumber):
+		if platform.system() == "Linux" and self.usb_dev.is_kernel_driver_active(
+			self.main_intf.bInterfaceNumber
+		):
 			# The kernel driver in question should be usbhid
 			hidraw_path = self.get_hidraw_device()
 			if hidraw_path is None:
-				raise OSError(f"Failed to find an hidraw device associated with {self.pretty_addr}")
+				raise OSError(
+					f"Failed to find an hidraw device associated with {self.pretty_addr}"
+				)
 			self.read = self.hidraw_read
 			self.write = self.hidraw_write
 			self.hidraw_path = hidraw_path
@@ -134,7 +152,9 @@ class HIDDevice():
 			try:
 				usb.util.claim_interface(self.usb_dev, self.main_intf.bInterfaceNumber)
 			except usb.USBError as err:
-				raise OSError(f"Failed to claim interface {self.main_intf.bInterfaceNumber} of USB device {pretty_addr}, maybe something else is using this device?") from err
+				raise OSError(
+					f"Failed to claim interface {self.main_intf.bInterfaceNumber} of USB device {pretty_addr}, maybe something else is using this device?"
+				) from err
 
 			# Set reporting frequency to 0 for all reports
 			try:
@@ -149,7 +169,9 @@ class HIDDevice():
 			logger.info(f"HID device {pretty_addr} has no hidraw dev")
 
 		# get interrupt IN endpoint
-		self.intr_in = usb.util.find_descriptor(self.main_intf, custom_match=match_intr_in)
+		self.intr_in = usb.util.find_descriptor(
+			self.main_intf, custom_match=match_intr_in
+		)
 		if self.intr_in is None:
 			self.err("Could not find interrupt IN endpoint!")
 
@@ -158,20 +180,30 @@ class HIDDevice():
 		logger.info(f"Finished initializing HID device {pretty_addr}")
 
 	def set_idle(self, report_id: int, duration: int):
-		bmRequestType = usb.util.CTRL_OUT | usb.util.CTRL_TYPE_CLASS | usb.util.CTRL_RECIPIENT_INTERFACE
+		bmRequestType = (
+			usb.util.CTRL_OUT
+			| usb.util.CTRL_TYPE_CLASS
+			| usb.util.CTRL_RECIPIENT_INTERFACE
+		)
 		bRequest = CTRL_HID_SET_IDLE
-		wValue = duration & 0xff00
-		wValue |= report_id & 0x00ff
+		wValue = duration & 0xFF00
+		wValue |= report_id & 0x00FF
 		wIndex = self.main_intf.bInterfaceNumber
 		wLength = 0
 
-		return self.usb_dev.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, wLength)
+		return self.usb_dev.ctrl_transfer(
+			bmRequestType, bRequest, wValue, wIndex, wLength
+		)
 
 	def set_report(self, report_id: int, data: bytes):
-		bmRequestType = usb.util.CTRL_OUT | usb.util.CTRL_TYPE_CLASS | usb.util.CTRL_RECIPIENT_INTERFACE
+		bmRequestType = (
+			usb.util.CTRL_OUT
+			| usb.util.CTRL_TYPE_CLASS
+			| usb.util.CTRL_RECIPIENT_INTERFACE
+		)
 		bRequest = CTRL_HID_SET_REPORT
-		wValue = (REPORT_TYPE_OUTPUT << 8) & 0xff00
-		wValue |= report_id & 0x00ff
+		wValue = (REPORT_TYPE_OUTPUT << 8) & 0xFF00
+		wValue |= report_id & 0x00FF
 		wIndex = self.main_intf.bInterfaceNumber
 		logger.debug(f"set_report id {report_id} data length: {len(data)}")
 
@@ -192,9 +224,11 @@ class HIDDevice():
 			usb.util.release_interface(self.usb_dev, self.main_intf.bInterfaceNumber)
 
 	def hidraw_read(self, length: int, timeout: int):
-		r,w,e = select.select([self.hidraw], [], [], timeout)
+		r, w, e = select.select([self.hidraw], [], [], timeout)
 		if self.hidraw not in r:
-			raise HIDError(f"Timeout while attempting to read {length} bytes from HID device {self.pretty_addr}")
+			raise HIDError(
+				f"Timeout while attempting to read {length} bytes from HID device {self.pretty_addr}"
+			)
 		# Add one byte for the report id prepended by hidraw
 		return self.hidraw.read(length + 1)[1:]
 
@@ -204,4 +238,3 @@ class HIDDevice():
 
 	def hidraw_write(self, data: bytes):
 		return self.hidraw.write(data)
-

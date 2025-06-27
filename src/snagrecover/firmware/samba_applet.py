@@ -43,38 +43,40 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import memory_ops
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
 
-class Applet():
+
+class Applet:
 	# constants defined in atmel-software-package/samba_applets
 	APPLET_CMD_INITIALIZE = 0
 	COMM_TYPE_USB = 0
 
 	trace_levels = {
-		"TRACE_LEVEL_DEBUG"	  :	  5,
-		"TRACE_LEVEL_INFO"	  :	  4,
-		"TRACE_LEVEL_WARNING" :	  3,
-		"TRACE_LEVEL_ERROR"	  :	  2,
-		"TRACE_LEVEL_FATAL"	  :	  1,
-		"TRACE_LEVEL_SILENT"  :	  0
+		"TRACE_LEVEL_DEBUG": 5,
+		"TRACE_LEVEL_INFO": 4,
+		"TRACE_LEVEL_WARNING": 3,
+		"TRACE_LEVEL_ERROR": 2,
+		"TRACE_LEVEL_FATAL": 1,
+		"TRACE_LEVEL_SILENT": 0,
 	}
 
 	status_codes = {
-			0x00: "APPLET_SUCCESS",
-			0x01: "APPLET_DEV_UNKNOWN",
-			0x02: "APPLET_WRITE_FAIL",
-			0x03: "APPLET_READ_FAIL",
-			0x04: "APPLET_PROTECT_FAIL",
-			0x05: "APPLET_UNPROTECT_FAIL",
-			0x06: "APPLET_ERASE_FAIL",
-			0x07: "APPLET_NO_DEV",
-			0x08: "APPLET_ALIGN_ERROR",
-			0x09: "APPLET_BAD_BLOCK",
-			0x0a: "APPLET_PMECC_CONFIG",
-			0x0f: "APPLET_FAIL"
+		0x00: "APPLET_SUCCESS",
+		0x01: "APPLET_DEV_UNKNOWN",
+		0x02: "APPLET_WRITE_FAIL",
+		0x03: "APPLET_READ_FAIL",
+		0x04: "APPLET_PROTECT_FAIL",
+		0x05: "APPLET_UNPROTECT_FAIL",
+		0x06: "APPLET_ERASE_FAIL",
+		0x07: "APPLET_NO_DEV",
+		0x08: "APPLET_ALIGN_ERROR",
+		0x09: "APPLET_BAD_BLOCK",
+		0x0A: "APPLET_PMECC_CONFIG",
+		0x0F: "APPLET_FAIL",
 	}
 
 	def __init__(self, memops: memory_ops.MemoryOps, fw_blob: bytes):
@@ -86,7 +88,7 @@ class Applet():
 			"cmd": Applet.APPLET_CMD_INITIALIZE,
 			# not a valid status code, probably used to check if
 			# applet really wrote a return status
-			"status": 0xffffffff,
+			"status": 0xFFFFFFFF,
 			"com_type": Applet.COMM_TYPE_USB,
 			"trace_lvl": Applet.trace_levels["TRACE_LEVEL_DEBUG"],
 			"console_instance": None,
@@ -109,14 +111,21 @@ class Applet():
 		# send command and parameters to applet before running it
 		logger.info("Starting configuring applet")
 		offset = 0
-		for param in ["cmd", "status", "com_type", "trace_lvl",\
-			"console_instance", "console_ioset"]:
+		for param in [
+			"cmd",
+			"status",
+			"com_type",
+			"trace_lvl",
+			"console_instance",
+			"console_ioset",
+		]:
 			self.memops.write32(self.address + 4 + offset, self.mailbox[param])
 			offset += 4
 
 		for applet_param in self.mailbox["applet_params"].keys():
-			self.memops.write32(self.address + 4 + offset,\
-				self.mailbox["applet_params"][applet_param])
+			self.memops.write32(
+				self.address + 4 + offset, self.mailbox["applet_params"][applet_param]
+			)
 			offset += 4
 
 	def run(self) -> str:
@@ -127,18 +136,21 @@ class Applet():
 
 
 class LowlevelApplet(Applet):
-
-	def __init__(self, memops:memory_ops.MemoryOps, fw_blob: bytes):
+	def __init__(self, memops: memory_ops.MemoryOps, fw_blob: bytes):
 		Applet.__init__(self, memops, fw_blob)
 
-		self.mailbox["console_instance"] = recovery_config["firmware"]["lowlevel"]["console_instance"]
-		self.mailbox["console_ioset"] = recovery_config["firmware"]["lowlevel"]["console_ioset"]
+		self.mailbox["console_instance"] = recovery_config["firmware"]["lowlevel"][
+			"console_instance"
+		]
+		self.mailbox["console_ioset"] = recovery_config["firmware"]["lowlevel"][
+			"console_ioset"
+		]
 		self.mailbox["applet_params"] = {
-				"preset": 0,# this parameter seems to be irrelevant for sama5d
+			"preset": 0,  # this parameter seems to be irrelevant for sama5d
 		}
 
-class ExtramApplet(Applet):
 
+class ExtramApplet(Applet):
 	ram_presets = {
 		"DDR2_MT47H128M8:Preset 0 (4 x MT47H128M8)": 0,
 		"DDR2_MT47H64M16:Preset 1 (1 x MT47H64M16)": 1,
@@ -158,20 +170,25 @@ class ExtramApplet(Applet):
 		"LPDDR2_AD220032D:Preset 13 (AD220032D)": 13,
 		"LPDDR2_AD210032D:Preset 14 (AD210032D)": 14,
 		"DDR2_W9712G6KB:Preset 15 (W9712G6KB)": 15,
-		"DDR2_W9751G6KB:Preset 16 (W9751G6KB)": 16
+		"DDR2_W9751G6KB:Preset 16 (W9751G6KB)": 16,
 	}
 
 	def __init__(self, memops: memory_ops.MemoryOps, fw_blob: bytes):
 		Applet.__init__(self, memops, fw_blob)
 
 		self.mailbox["applet_params"] = {
-				"mode": 0,# extram only has one mode
-				"preset": None,
+			"mode": 0,  # extram only has one mode
+			"preset": None,
 		}
 
-		self.mailbox["console_instance"] = recovery_config["firmware"]["extram"]["console_instance"]
-		self.mailbox["console_ioset"] = recovery_config["firmware"]["extram"]["console_ioset"]
-		self.mailbox["applet_params"]["preset"] = ExtramApplet.ram_presets.get(recovery_config["firmware"]["extram"]["preset"], None)
+		self.mailbox["console_instance"] = recovery_config["firmware"]["extram"][
+			"console_instance"
+		]
+		self.mailbox["console_ioset"] = recovery_config["firmware"]["extram"][
+			"console_ioset"
+		]
+		self.mailbox["applet_params"]["preset"] = ExtramApplet.ram_presets.get(
+			recovery_config["firmware"]["extram"]["preset"], None
+		)
 		if self.mailbox["applet_params"]["preset"] is None:
 			cli_error("Unsupported preset for extram applet")
-

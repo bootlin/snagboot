@@ -5,7 +5,8 @@ import gc
 import importlib
 import sys
 
-class SnagbootUSBContext():
+
+class SnagbootUSBContext:
 	"""
 	This class manages USB device objects instanciated by calling
 	usb.core.find(). It makes sure that all previous USB devices are
@@ -57,14 +58,18 @@ class SnagbootUSBContext():
 		bus_numbers = set([dev.bus for dev in root_hubs])
 		if len(root_hubs) > len(bus_numbers):
 			if retry == 0:
-				raise ValueError("libusb bug detected! Two root hubs were assigned the same bus number! Please update libusb to a newer version and replace the dll provided by the 'libusb' Python package!")
+				raise ValueError(
+					"libusb bug detected! Two root hubs were assigned the same bus number! Please update libusb to a newer version and replace the dll provided by the 'libusb' Python package!"
+				)
 
 			__class__.hard_rescan()
 			__class__.check_for_libusb_bug(retry=0)
 
 	def find(**args):
 		for dev in __class__.devices:
-			tests = (hasattr(dev, key) and val == getattr(dev, key) for key, val in args.items())
+			tests = (
+				hasattr(dev, key) and val == getattr(dev, key)
+				for key, val in args.items()
+			)
 			if all(tests):
 				yield weakref.proxy(dev)
-

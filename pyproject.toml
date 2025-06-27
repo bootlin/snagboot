@@ -101,3 +101,7 @@ mccabe.max-complexity = 10
 flake8-quotes.docstring-quotes = "double"
 per-file-ignores = {}
 
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+skip-magic-trailing-comma = false

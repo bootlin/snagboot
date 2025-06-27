@@ -18,19 +18,26 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import yaml
-from snagrecover.utils import cli_error, usb_addr_to_path, get_family, access_error, get_supported_socs
+from snagrecover.utils import (
+	cli_error,
+	usb_addr_to_path,
+	get_family,
+	access_error,
+	get_supported_socs,
+)
 import logging
+
 logger = logging.getLogger("snagrecover")
 
-default_usb_ids =  {
+default_usb_ids = {
 	# default ROM code USB IDs
 	"stm32mp": "0483:df11",
-	"sama5":    "03eb:6124",
-	"sunxi":    "1f3a:efe8",
-	"am6x":     "0451:6165",
-	"am62lx":   "0451:6165",
-	"zynqmp":   "03fd:0050",
-	"keembay":  "8087:0b39",
+	"sama5": "03eb:6124",
+	"sunxi": "1f3a:efe8",
+	"am6x": "0451:6165",
+	"am62lx": "0451:6165",
+	"zynqmp": "03fd:0050",
+	"keembay": "8087:0b39",
 	"imx": {
 		"imx8qxp": "1fc9:012f",
 		"imx8qm": "1fc9:0129",
@@ -52,18 +59,22 @@ default_usb_ids =  {
 		"imxrt106x": "1fc9:0135",
 		"imx8mm": "1fc9:0134",
 		"imx8mq": "1fc9:012b",
-		"imx53" : "15a2:004e",
-	}
+		"imx53": "15a2:004e",
+	},
 }
 
-recovery_config = {} # Global immutable config to be initialized with CLI args
+recovery_config = {}  # Global immutable config to be initialized with CLI args
+
 
 def check_soc_model(soc_model: str):
 	socs = get_supported_socs()
 
 	if soc_model not in {**socs["tested"], **socs["untested"]}:
-		cli_error(f"unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs))
+		cli_error(
+			f"unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs)
+		)
 	return None
+
 
 def init_config(args: list):
 	# this is the only time that config.recovery_config should be modified!
@@ -98,21 +109,26 @@ def init_config(args: list):
 	if args.firmware:
 		for fw in args.firmware:
 			if not isinstance(fw, dict):
-				cli_error("firmware config to CLI did not evaluate to Python3 dict: {fw}")
+				cli_error(
+					"firmware config to CLI did not evaluate to Python3 dict: {fw}"
+				)
 			fw_configs = {**fw_configs, **fw}
 		recovery_config["firmware"] = fw_configs
 		if args.firmware_file:
-			logger.warning("You passed firmware configuration via files AND direct CLI arguments!")
+			logger.warning(
+				"You passed firmware configuration via files AND direct CLI arguments!"
+			)
 	if args.firmware_file:
 		# get firmware configs
 		for path in args.firmware_file:
 			with open(path, "r") as file:
 				fw_configs = {**fw_configs, **yaml.safe_load(file)}
 		if not isinstance(fw_configs, dict):
-			cli_error(f"firmware config passed to CLI did not evaluate to dict: {fw_configs}")
+			cli_error(
+				f"firmware config passed to CLI did not evaluate to dict: {fw_configs}"
+			)
 		recovery_config["firmware"] = fw_configs
 
 	# store input arguments in config
 	recovery_config["args"] = vars(args)
 	logger.debug(f"recovery_config:{str(recovery_config)}")
-

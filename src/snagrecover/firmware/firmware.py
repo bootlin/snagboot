@@ -18,11 +18,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
 from snagrecover.protocols.fastboot import Fastboot
 from snagrecover.config import recovery_config
 from snagrecover.utils import cli_error
+
 
 def stm32mp_run(port, fw_name: str, fw_blob: bytes):
 	"""
@@ -60,6 +62,7 @@ def stm32mp_run(port, fw_name: str, fw_blob: bytes):
 	logger.info("Done")
 	return None
 
+
 def am6x_run(dev, fw_name: str, fw_blob: bytes):
 	"""
 	There isn't a lot of complicated logic to handle am6x firmware
@@ -86,6 +89,7 @@ def am6x_run(dev, fw_name: str, fw_blob: bytes):
 		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 
+
 def am62lx_run(dev, fw_name: str, fw_blob: bytes):
 	# find firmware altsetting (i.e. partition id)
 	if fw_name == "tiboot3":
@@ -108,6 +112,7 @@ def am62lx_run(dev, fw_name: str, fw_blob: bytes):
 		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 
+
 def keembay_run(port, fw_name: str, fw_blob: bytes):
 	if fw_name == "fip":
 		pass
@@ -122,6 +127,7 @@ def keembay_run(port, fw_name: str, fw_blob: bytes):
 	logger.info("Done")
 
 	return None
+
 
 def check_fw_blob(fw_blob: bytes):
 	"""
@@ -141,11 +147,14 @@ def check_fw_blob(fw_blob: bytes):
 
 	return False
 
+
 def load_fw(fw_name: str):
 	try:
 		fw_path = recovery_config["firmware"][fw_name]["path"]
 	except KeyError:
-		cli_error(f"Could not find firmware {fw_name}, please check your recovery config")
+		cli_error(
+			f"Could not find firmware {fw_name}, please check your recovery config"
+		)
 
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
@@ -154,6 +163,7 @@ def load_fw(fw_name: str):
 		logger.warning(f"File {fw_path} looks like a text file!")
 
 	return fw_blob
+
 
 def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	"""
@@ -172,6 +182,7 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 	soc_family = recovery_config["soc_family"]
 	if soc_family == "sama5":
 		from snagrecover.firmware.sama5_fw import sama5_run
+
 		sama5_run(port, fw_name, fw_blob)
 	elif soc_family == "stm32mp":
 		stm32mp_run(port, fw_name, fw_blob)
@@ -179,12 +190,15 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		keembay_run(port, fw_name, fw_blob)
 	elif soc_family == "imx":
 		from snagrecover.firmware.imx_fw import imx_run
+
 		imx_run(port, fw_name, fw_blob, subfw_name)
 	elif soc_family == "am335x":
 		from snagrecover.firmware.am335x_fw import am335x_run
+
 		am335x_run(port, fw_name)
 	elif soc_family == "sunxi":
 		from snagrecover.firmware.sunxi_fw.sunxi_fw import sunxi_run
+
 		sunxi_run(port, fw_name, fw_blob)
 	elif soc_family == "am6x":
 		am6x_run(port, fw_name, fw_blob)
@@ -192,8 +206,8 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		am62lx_run(port, fw_name, fw_blob)
 	elif soc_family == "zynqmp":
 		from snagrecover.firmware.zynqmp_fw import zynqmp_run
+
 		zynqmp_run(port, fw_name, fw_blob, subfw_name)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")
-

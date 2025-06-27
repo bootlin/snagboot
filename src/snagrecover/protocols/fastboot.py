@@ -25,6 +25,7 @@ from snagrecover import utils
 from snagflash.android_sparse_file.utils import split
 
 import logging
+
 logger = logging.getLogger("snagrecover")
 
 MAX_LIBUSB_TRANSFER_SIZE = 0x40000
@@ -34,6 +35,7 @@ See doc/android/fastboot-protocol.rst in the U-Boot sources
 for more information on fastboot support in U-Boot.
 """
 
+
 class FastbootError(Exception):
 	def __init__(self, message):
 		self.message = message
@@ -42,27 +44,32 @@ class FastbootError(Exception):
 	def __str__(self):
 		return f"Fastboot error: {self.message}"
 
-class Fastboot():
+
+class Fastboot:
 	def __init__(self, dev: usb.core.Device, timeout: int = 10000):
 		self.dev = dev
 		cfg = dev.get_active_configuration()
 		# select the first interface we find with a bulk in ep and a bulk out ep
 		eps_found = False
 		for intf in cfg.interfaces():
-				ep_in, ep_out = None, None
-				for ep in intf.endpoints():
-						is_bulk = (ep.bmAttributes & usb.ENDPOINT_TYPE_MASK) == usb.ENDPOINT_TYPE_BULK
-						is_in = (ep.bmAttributes & usb.ENDPOINT_TYPE_MASK) == usb.ENDPOINT_TYPE_BULK
-						if not is_bulk:
-								continue
-						is_in = (ep.bEndpointAddress & usb.ENDPOINT_DIR_MASK) == usb.ENDPOINT_IN
-						if is_in:
-								ep_in = ep.bEndpointAddress
-						else:
-								ep_out = ep.bEndpointAddress
-				if not ((ep_in is None) or (ep_out is None)):
-					eps_found = True
-					break
+			ep_in, ep_out = None, None
+			for ep in intf.endpoints():
+				is_bulk = (
+					ep.bmAttributes & usb.ENDPOINT_TYPE_MASK
+				) == usb.ENDPOINT_TYPE_BULK
+				is_in = (
+					ep.bmAttributes & usb.ENDPOINT_TYPE_MASK
+				) == usb.ENDPOINT_TYPE_BULK
+				if not is_bulk:
+					continue
+				is_in = (ep.bEndpointAddress & usb.ENDPOINT_DIR_MASK) == usb.ENDPOINT_IN
+				if is_in:
+					ep_in = ep.bEndpointAddress
+				else:
+					ep_out = ep.bEndpointAddress
+			if not ((ep_in is None) or (ep_out is None)):
+				eps_found = True
+				break
 
 		if not eps_found:
 			raise FastbootError("No BULK IN/OUT endpoint pair found in device")
@@ -104,7 +111,7 @@ class Fastboot():
 	def response(self):
 		t0 = time.time()
 		while time.time() - t0 < 10 * self.timeout:
-			ret = self.dev.read(self.ep_in, 256, timeout = self.timeout)
+			ret = self.dev.read(self.ep_in, 256, timeout=self.timeout)
 			status = bytes(ret[:4])
 			if status in [b"INFO", b"TEXT"]:
 				logger.info(f"(bootloader) {bytes(ret[4:256])}", end="")
@@ -229,7 +236,6 @@ class Fastboot():
 
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
 
-
 	def flash_sparse(self, args: str):
 		"""
 		Download and flash an android sparse file.
@@ -239,19 +245,23 @@ class Fastboot():
 		try:
 			maxsize = int(self.getvar("max-download-size"), 0)
 		except Exception as e:
-			raise FastbootError("Failed to get fastboot max-download-size variable") from e
+			raise FastbootError(
+				"Failed to get fastboot max-download-size variable"
+			) from e
 		if maxsize == 0:
 			raise FastbootError("Fastboot variable max-download-size is 0")
-		arg_list = args.split(':')
+		arg_list = args.split(":")
 		cnt = len(arg_list)
 		if cnt != 2:
-			raise FastbootError(f"Wrong arguments count {cnt}, expected 2. Given {args}")
+			raise FastbootError(
+				f"Wrong arguments count {cnt}, expected 2. Given {args}"
+			)
 		fname = arg_list[0]
 		if not os.path.exists(fname):
 			raise FastbootError(f"File {fname} does not exist")
 		part = arg_list[1]
 		with tempfile.TemporaryDirectory() as tmp:
-			temppath = os.path.join(tmp, 'sparse.img')
+			temppath = os.path.join(tmp, "sparse.img")
 			try:
 				splitfiles = split(fname, temppath, maxsize)
 				logger.info(f"Split fastboot file into {len(splitfiles)} file(s)")

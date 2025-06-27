@@ -28,12 +28,14 @@ import sys
 
 if platform.system() == "Linux":
 	from snagflash.ums import ums
+
 	protocols = ["dfu", "ums", "fastboot", "fastboot-uboot"]
 else:
 	protocols = ["dfu", "fastboot", "fastboot-uboot"]
 
+
 def cli():
-	example = '''Examples:
+	example = """Examples:
 	# U-Boot: fastboot usb 0
 	snagflash -P fastboot-uboot -p 0483:0afb -I flash.cmd
 	# U-Boot: fastboot usb 0
@@ -44,30 +46,83 @@ def cli():
 	# U-Boot: setenv dfu_alt_info "mmc=uboot part 0 1"
 	# U-Boot: dfu 0 mmc 0
 	snagflash -P dfu -p 0483:df11 -D 0:binaries/u-boot.stm32
-	'''
-	parser = argparse.ArgumentParser(epilog=example, formatter_class=argparse.RawDescriptionHelpFormatter)
+	"""
+	parser = argparse.ArgumentParser(
+		epilog=example, formatter_class=argparse.RawDescriptionHelpFormatter
+	)
 	common = parser.add_argument_group("Common")
-	common.add_argument("--loglevel", help="set loglevel", choices=["silent","info","debug"], default="silent")
+	common.add_argument(
+		"--loglevel",
+		help="set loglevel",
+		choices=["silent", "info", "debug"],
+		default="silent",
+	)
 	common.add_argument("--logfile", help="set logfile", default="board_flashing.log")
 	common.add_argument("--version", help="show version", action="store_true")
-	common.add_argument("-P", "--protocol", help="Protocol to use for flashing", choices=protocols)
-	common.add_argument("-p", "--port", help="USB device address for DFU and Fastboot commands", metavar="vid:pid|bus-port1.port2.[...]")
-	common.add_argument("--timeout", help="USB timeout, sometimes increasing this is necessary when downloading large files", default=60000)
+	common.add_argument(
+		"-P", "--protocol", help="Protocol to use for flashing", choices=protocols
+	)
+	common.add_argument(
+		"-p",
+		"--port",
+		help="USB device address for DFU and Fastboot commands",
+		metavar="vid:pid|bus-port1.port2.[...]",
+	)
+	common.add_argument(
+		"--timeout",
+		help="USB timeout, sometimes increasing this is necessary when downloading large files",
+		default=60000,
+	)
 	dfuargs = parser.add_argument_group("DFU")
-	dfuargs.add_argument("-D", "--dfu-config", help="The altsetting and path of a file to download to the board. in DFU mode", action="append", metavar="altsetting:path")
-	dfuargs.add_argument("--dfu-keep", help="Avoid detaching DFU mode after download and keep the mode active", action="store_true")
-	dfuargs.add_argument("--dfu-detach", help="Only request detaching DFU mode", action="store_true")
-	dfuargs.add_argument("--dfu-reset", help="Reset USB device after download and reboot the board", action="store_true")
+	dfuargs.add_argument(
+		"-D",
+		"--dfu-config",
+		help="The altsetting and path of a file to download to the board. in DFU mode",
+		action="append",
+		metavar="altsetting:path",
+	)
+	dfuargs.add_argument(
+		"--dfu-keep",
+		help="Avoid detaching DFU mode after download and keep the mode active",
+		action="store_true",
+	)
+	dfuargs.add_argument(
+		"--dfu-detach", help="Only request detaching DFU mode", action="store_true"
+	)
+	dfuargs.add_argument(
+		"--dfu-reset",
+		help="Reset USB device after download and reboot the board",
+		action="store_true",
+	)
 	fbubargs = parser.add_argument_group("Extended Fastboot for U-Boot")
-	fbubargs.add_argument("-i", "--interactive", help="Start interactive mode", action="store_true")
-	fbubargs.add_argument("-I", "--interactive-cmdfile", help="Read extended fastboot mode commands from a file")
+	fbubargs.add_argument(
+		"-i", "--interactive", help="Start interactive mode", action="store_true"
+	)
+	fbubargs.add_argument(
+		"-I",
+		"--interactive-cmdfile",
+		help="Read extended fastboot mode commands from a file",
+	)
 	fbargs = parser.add_argument_group("Fastboot")
-	fbargs.add_argument("-f", "--fastboot-cmd", help="A fastboot command.", action="append", metavar="cmd:args")
+	fbargs.add_argument(
+		"-f",
+		"--fastboot-cmd",
+		help="A fastboot command.",
+		action="append",
+		metavar="cmd:args",
+	)
 	if platform.system() == "Linux":
 		umsargs = parser.add_argument_group("UMS")
 		umsargs.add_argument("-s", "--src", help="source file for UMS transfer")
-		umsargs.add_argument("-d", "--dest", help="mounted transfer: set destination file name")
-		umsargs.add_argument("-b", "--blockdev", help="raw transfer: set destination block device", metavar="device")
+		umsargs.add_argument(
+			"-d", "--dest", help="mounted transfer: set destination file name"
+		)
+		umsargs.add_argument(
+			"-b",
+			"--blockdev",
+			help="raw transfer: set destination block device",
+			metavar="device",
+		)
 
 	args = parser.parse_args()
 
@@ -77,7 +132,7 @@ def cli():
 		sys.exit(0)
 
 	# setup logging
-	logger = logging.getLogger('snagflash')
+	logger = logging.getLogger("snagflash")
 	logger.setLevel(logging.DEBUG)
 	log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 
@@ -96,7 +151,7 @@ def cli():
 		logger.addHandler(log_handler)
 
 	# make sure we don't log into the recovery log when importing its modules
-	recovery_logger = logging.getLogger('snagrecover')
+	recovery_logger = logging.getLogger("snagrecover")
 	recovery_logger.parent = logger
 
 	logger.info(f"Running snagflash using protocol {args.protocol}")
@@ -113,6 +168,6 @@ def cli():
 	else:
 		cli_error(f"unrecognized protocol {args.protocol}")
 
+
 if __name__ == "__main__":
 	cli()
-
