@@ -157,6 +157,9 @@ def get_usb(
 	SnagbootUSBContext.rescan()
 
 	for i in range(retries + 1):
+		if i > 0:
+			logger.info(f"USB retry {i}/{retries}")
+
 		SnagbootUSBContext.rescan()
 		dev_list = list(
 			SnagbootUSBContext.find(bus=usb_path[0], port_numbers=usb_path[1])
@@ -178,7 +181,6 @@ def get_usb(
 				f"Too many results for address {pretty_addr}!\{str(dev_list)}"
 			)
 
-		logger.info(f"USB retry {i + 1}/{retries + 1}")
 		time.sleep(USB_INTERVAL)
 
 	if error_on_fail:
