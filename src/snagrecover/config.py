@@ -138,11 +138,12 @@ def init_config(args: list):
 		# get firmware configs
 		for path in args.firmware_file:
 			with open(path, "r") as file:
-				fw_configs = {**fw_configs, **yaml.safe_load(file)}
-		if not isinstance(fw_configs, dict):
-			cli_error(
-				f"firmware config passed to CLI did not evaluate to dict: {fw_configs}"
-			)
+				fw_config_file = yaml.safe_load(file)
+			if not isinstance(fw_config_file, dict):
+				cli_error(
+					f"firmware config passed to CLI did not evaluate to dict: {fw_config_file}"
+				)
+			fw_configs = {**fw_configs, **fw_config_file}
 		recovery_config["firmware"] = fw_configs
 
 	# store input arguments in config
