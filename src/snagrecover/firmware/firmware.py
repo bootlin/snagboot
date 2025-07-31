@@ -148,7 +148,7 @@ def check_fw_blob(fw_blob: bytes):
 	return False
 
 
-def load_fw(fw_name: str):
+def load_fw(fw_name: str, check_fw=True) -> bytes:
 	try:
 		fw_path = recovery_config["firmware"][fw_name]["path"]
 	except KeyError:
@@ -159,7 +159,7 @@ def load_fw(fw_name: str):
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
 
-	if not check_fw_blob(fw_blob):
+	if check_fw and not check_fw_blob(fw_blob):
 		logger.warning(f"File {fw_path} looks like a text file!")
 
 	return fw_blob
