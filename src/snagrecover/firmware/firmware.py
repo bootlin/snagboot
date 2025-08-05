@@ -148,13 +148,24 @@ def check_fw_blob(fw_blob: bytes):
 	return False
 
 
-def load_fw(fw_name: str, check_fw=True) -> bytes:
+def get_fw_path(fw_name: str) -> str:
 	try:
-		fw_path = recovery_config["firmware"][fw_name]["path"]
+		fw = recovery_config["firmware"][fw_name]
 	except KeyError:
 		cli_error(
-			f"Could not find firmware {fw_name}, please check your recovery config"
+			f"Could not find firmware {fw_name} in recovery_config, please check your recovery config"
 		)
+	try:
+		fw_path = fw["path"]
+	except KeyError:
+		cli_error(
+			f"Could not find firmware {fw_name} path's in recovery config, please check your recovery config"
+		)
+	return fw_path
+
+
+def load_fw(fw_name: str, check_fw: bool =True) -> bytes:
+	fw_path = get_fw_path(fw_name)
 
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
