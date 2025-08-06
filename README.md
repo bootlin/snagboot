@@ -15,7 +15,7 @@ ISP, UUU, and sunxi-fel. Snagboot is made of two separate parts:
   <img src="docs/tutorial_snagrecover.gif" alt="animated" />
 </p>
 
-Snagbot currently supports the following families of System-On-Chips (SoCs):
+Snagboot currently supports the following families of System-On-Chips (SoCs):
 
  * [Allwinner sunxi](https://linux-sunxi.org/) A10, A10S, A13, A20, A23, A31, A33, A63, A64, A80, A83T, AF1C100S, H2+, R8, R16, R40, R329, R528, T113-S3, V3S, V5S, V536, V831, V853
  * [STMicroelectronics](http://st.com/) [STM32MP1](https://www.st.com/en/microcontrollers-microprocessors/stm32mp1-series.html) and [STM32MP2](https://www.st.com/en/microcontrollers-microprocessors/stm32mp2-series.html)
@@ -24,10 +24,11 @@ Snagbot currently supports the following families of System-On-Chips (SoCs):
  * [Texas Instruments](https://www.ti.com) [AM335x](https://www.ti.com/product/AM3358), [AM62x](https://www.ti.com/product/AM625), [AM62Lx](https://www.ti.com/product/AM62L), [AM64x](https://www.ti.com/product/AM6442)
  * [Xilinx/AMD](https://www.amd.com/) [Zynq UltraScale+ MPSoC](https://www.amd.com/en/products/adaptive-socs-and-fpgas/soc/zynq-ultrascale-plus-mpsoc.html)
  * [Intel](https://www.intel.com/) Keembay
+ * [Broadcom](https://www.broadcom.com/) BCM2711 and BCM2712, used in [Raspberry Pi 4 & 5](https://www.raspberrypi.com/documentation/computers/processors.html)
 
-Please check
-[supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml) or run `snagrecover
---list-socs` for a more precise list of supported SoCs.
+
+Please check [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml)
+or run `snagrecover --list-socs` for a more precise list of supported SoCs.
 
 ## Installation on Linux
 

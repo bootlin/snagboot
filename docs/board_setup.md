@@ -151,3 +151,7 @@ sudo am335x_usb_setup.sh -c
 **Note:** If for some reason, the am335x_usb_setup.sh script exits without
 cleaning up the network namespace and polling subprocess, you can run the above
 command to remove them.
+
+## Broadcom BCM
+
+Set up your board in "USB device boot mode", connect the board to the USB device port, power the board if necessary. A new USB device should appear on your host system.
