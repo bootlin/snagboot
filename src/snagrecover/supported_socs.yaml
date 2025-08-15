@@ -63,6 +63,8 @@ tested:
         family: stm32mp
   zynqmp:
         family: zynqmp
+  cv22:
+        family: ambarella
 untested:
   a10:
         family: sunxi
@@ -150,3 +152,11 @@ untested:
         family: sunxi
   v853:
         family: sunxi
+  cv22:
+        family: ambarella
+  cv25:
+        family: ambarella
+  cv28:
+        family: ambarella
+  cv35:
+        family: ambarella
