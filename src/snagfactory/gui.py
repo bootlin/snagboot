@@ -84,20 +84,28 @@ class SnagFactorySoCFamily(TabbedPanel):
 	name = StringProperty("")
 
 	def set_config(self, fw_config: dict, tasks_config: dict):
-		tabs = {}
+		tabs = []
 
 		for key, value in fw_config.items():
-			tabs[key] = yaml.dump(value)
+			tabs.append((key, yaml.dump(value)))
 
-		for key, value in tasks_config[0].items():
-			tabs[key] = hex(value) if isinstance(value, int) else str(value)
+		globals = {"global variables": tasks_config[0] }
 
+		i = 0
 		for config in tasks_config[1:]:
-			tabs["task: " + config["task"]] = yaml.dump(config.get("args", ""))
+			if "task" in config:
+				for key, value in globals["global variables"].items():
+					globals["global variables"][key] = hex(value) if isinstance(value, int) else value
+
+				tabs.append((f"task #{i}", "task: " + config["task"] + "\n\n" + yaml.dump(config.get("args", "")) + yaml.dump(globals)))
+
+				i += 1
+			else:
+				globals["global variables"].update(config)
 
 		panel_items = [
 			SnagFactoryPanelItem(text=key, content_text=value)
-			for key, value in tabs.items()
+			for key, value in tabs
 		]
 
 		for panel_item in panel_items:

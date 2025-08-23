@@ -261,9 +261,9 @@ def read_config(path, check_paths=True):
 		i = 0
 		for entry in soc_config[1:]:
 			if "task" not in entry:
-				raise SnagFactoryConfigError(
-					f"Invalid entry {entry}: missing task name"
-				)
+				# Treat all non-task entries as global variable updates
+				globals.update(entry)
+				continue
 			elif (task_object := task_table.get(entry["task"], None)) is None:
 				raise SnagFactoryConfigError(
 					f"Invalid entry {entry}: unknown task {entry['task']}"

@@ -53,6 +53,22 @@ eraseblk-size: The size in bytes of an erase block for MTD targets
 fb-buffer-size: (optional) The size in bytes of the Fastboot buffer. This can only be used to reduce the default U-Boot buffer size.
 ```
 
+These variables may be updated during the factory flashing process, e.g.:
+
+```yaml
+- target-device: mmc0
+  fb-buffer-addr: 0xd0000000
+
+- task: flash
+  args: ...
+
+# change target device to NOR flash
+- target-device: nor0
+
+- task: flash
+  args: ...
+```
+
 The following elements are standard Factory flashing tasks. They all have the
 following format:
 
