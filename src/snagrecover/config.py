@@ -61,6 +61,7 @@ default_usb_ids = {
 		"imx8mq": "1fc9:012b",
 		"imx53": "15a2:004e",
 	},
+	"bcm": {"bcm2711": "0a5c:2711", "bcm2712": "0a5c:2712"},
 }
 
 recovery_config = {}  # Global immutable config to be initialized with CLI args
@@ -90,10 +91,9 @@ def init_config(args: list):
 
 	if soc_family != "am335x":
 		if args.usb_path is None:
-			if soc_family == "imx":
-				usb_ids = default_usb_ids["imx"][soc_model]
-			else:
-				usb_ids = default_usb_ids[soc_family]
+			usb_ids = default_usb_ids[soc_family]
+			if isinstance(usb_ids, dict):
+				usb_ids = usb_ids[soc_model]
 
 			recovery_config["usb_path"] = usb_addr_to_path(usb_ids)
 

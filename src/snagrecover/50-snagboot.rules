@@ -81,3 +81,7 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="03fd", ATTRS{idProduct}=="0050", MODE="0660"
 
 #Intel Keembay rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="8087", ATTRS{idProduct}=="0b39", MODE="0660", TAG+="uaccess"
+
+#Broadcom rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0a5c", ATTRS{idProduct}=="2711", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0a5c", ATTRS{idProduct}=="2712", MODE="0660", TAG+="uaccess"

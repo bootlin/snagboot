@@ -148,18 +148,29 @@ def check_fw_blob(fw_blob: bytes):
 	return False
 
 
-def load_fw(fw_name: str):
+def get_fw_path(fw_name: str) -> str:
 	try:
-		fw_path = recovery_config["firmware"][fw_name]["path"]
+		fw = recovery_config["firmware"][fw_name]
 	except KeyError:
 		cli_error(
-			f"Could not find firmware {fw_name}, please check your recovery config"
+			f"Could not find firmware {fw_name} in recovery_config, please check your recovery config"
 		)
+	try:
+		fw_path = fw["path"]
+	except KeyError:
+		cli_error(
+			f"Could not find firmware {fw_name} path in recovery config, please check your recovery config"
+		)
+	return fw_path
+
+
+def load_fw(fw_name: str, check_fw: bool = True) -> bytes:
+	fw_path = get_fw_path(fw_name)
 
 	with open(fw_path, "rb") as file:
 		fw_blob = file.read(-1)
 
-	if not check_fw_blob(fw_blob):
+	if check_fw and not check_fw_blob(fw_blob):
 		logger.warning(f"File {fw_path} looks like a text file!")
 
 	return fw_blob
@@ -208,6 +219,10 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		from snagrecover.firmware.zynqmp_fw import zynqmp_run
 
 		zynqmp_run(port, fw_name, fw_blob, subfw_name)
+	elif soc_family == "bcm":
+		from snagrecover.firmware.bcm import bcm_run
+
+		bcm_run(port, fw_name, fw_blob, subfw_name)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")

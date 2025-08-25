@@ -1,0 +1,8 @@
+bootfiles:
+    path: bootfiles.bin
+boot:
+    path: boot.img
+config:
+    path: config.txt
+u-boot:
+    path: u-boot.bin

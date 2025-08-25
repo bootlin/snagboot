@@ -63,6 +63,10 @@ tested:
         family: stm32mp
   zynqmp:
         family: zynqmp
+  bcm2711:
+        family: bcm
+  bcm2712:
+        family: bcm
 untested:
   a10:
         family: sunxi
