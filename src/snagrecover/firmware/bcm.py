@@ -301,7 +301,7 @@ def modify_boot_fw(boot_path: str, uboot_blob: bytes) -> None:
 			pfe.add_note(err_msg)
 			raise pfe
 
-		logger.debug(f"Updated config.txt content's : {content.replace('\n', '\\n')}")
+		logger.debug("Updated config.txt content's : " + content.replace('\n', '\\n'))
 		logger.debug(f"'boot' firmware '/' directory content: {bootimgfs.listdir('/')}")
 
 
