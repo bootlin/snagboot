@@ -85,3 +85,6 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="8087", ATTRS{idProduct}=="0b39", MODE="0660"
 #Broadcom rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0a5c", ATTRS{idProduct}=="2711", MODE="0660", TAG+="uaccess"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0a5c", ATTRS{idProduct}=="2712", MODE="0660", TAG+="uaccess"
+
+#Ambarella rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1d6b", ATTRS{idProduct}=="0104", MODE="0660", TAG+="uaccess"

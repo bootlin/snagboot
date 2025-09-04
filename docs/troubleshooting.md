@@ -47,3 +47,22 @@ ideal scenario, each board is plugged into a separate root hub port, but if an
 external hub is absolutely necessary, using one with a higher capacity or making
 sure that it is powered by an independent supply can help.
 
+## Ambarella SoC recovery issues
+
+### USB device not detected
+
+If the Ambarella SoC is not detected as a USB device, make sure:
+1. The board is properly set to USB boot mode using the appropriate jumpers or switches
+2. The USB cable is connected to the correct port (usually the OTG port)
+3. The board is powered on
+
+### DRAM initialization fails
+
+DRAM initialization can fail if the ADS script doesn't match the specific memory configuration of your board. Make sure you're using the correct ADS script for your specific board model and memory type.
+
+### Bootloader fails to enter Amboot mode
+
+If the bootloader fails to enter Amboot mode:
+1. Check that you're using the correct bootloader binary for your SoC model
+2. Ensure the board has enough power (some boards may require a powered USB hub)
+3. Try resetting the board and starting the recovery process again
