@@ -1,0 +1,36 @@
+site_name: Snagboot
+site_description: Snagboot documentation
+
+copyright: Copyright (C) 2023 Bootlin
+
+repo_url: https://github.com/bootlin/snagboot/
+edit_uri: edit/main/docs/
+
+nav:
+  - Home: index.md
+  - Installation guide:
+    - Installing Snagboot: installing.md
+  - User guide:
+    - Getting started: users.md
+    - Recovering: snagrecover.md
+    - Flashing: snagflash.md
+    - Factory flashing: snagfactory.md
+  - Developer guide:
+    - Supporting new SoCs: developers/supporting_new_socs.md
+  - About:
+    - Contributing: about/contributing.md
+    - License: about/license.md
+
+exclude_docs: |
+  *.py
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - attr_list
+  - def_list
+  - tables
+
+theme:
+  name: readthedocs
+
