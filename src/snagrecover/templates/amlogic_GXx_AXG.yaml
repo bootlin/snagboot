@@ -1,0 +1,6 @@
+bl2:
+  path: u-boot.bin.usb.bl2
+
+u-boot:
+  path: u-boot.bin.usb.tpl
+  load-addr: 0x200_C000

@@ -249,6 +249,10 @@ def get_recovery(soc_family: str):
 		from snagrecover.recoveries.bcm import main as bcm_recovery
 
 		return bcm_recovery
+	elif soc_family == "amlogic":
+		from snagrecover.recoveries.amlogic import main as amlogic_recovery
+
+		return amlogic_recovery
 	else:
 		cli_error(f"unsupported board family {soc_family}")
 

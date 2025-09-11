@@ -1,0 +1,3 @@
+u-boot-fip:
+  path: u-boot.bin
+  bl2-load-addr: 0xFFFA_0000
