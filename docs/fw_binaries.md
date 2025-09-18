@@ -352,3 +352,38 @@ configuration:
 
 configuration:
   * path
+
+
+## For AMLogic devices
+
+There are two protocols of USB recovery for AMLogic SoCs :
+1. Series: G12A (eg S905D2), G12B (eg A311D), SM1 (eg S905D3)
+2. Series: GXL (eg S905D), GXM (eg S912), GXBB (eg S905), AXG (eg A113D)
+
+These two recoveries uses different firmwares.
+
+### 1. G12x and SM1 series
+
+[example](../src/snagrecover/templates/amlogic_G12x_SM1.yaml)
+
+**u-boot-fip:** Firmware Image Package (FIP) containing both the BL2 bootloader and U-Boot proper. For some boards you can use the tool [amlogic-boot-fip](https://github.com/LibreELEC/amlogic-boot-fip) to generate it, otherwise, refer to your board vendor..
+
+configuration:
+  * path
+  * bl2-load-addr (optional): load address for `BL2`, if not provided a default value is used.
+
+
+### 2. GXx and AXG series
+
+[example](../src/snagrecover/templates/amlogic_GXx_AXG.yaml)
+
+**bl2:** BL2 bootloader from AMLogic, seems to be based on TFA (no source available). For some boards you can use the tool [amlogic-boot-fip](https://github.com/LibreELEC/amlogic-boot-fip) to generate it, otherwise, refer to your board vendor.
+
+configuration:
+  * path
+
+**u-boot:** signed U-Boot proper. For some boards you can use the tool [amlogic-boot-fip](https://github.com/LibreELEC/amlogic-boot-fip) to generate it, otherwise, refer to your board vendor.
+
+configuration:
+  * path
+  * load-addr (optional): load address of U-Boot, if not provided a default value is used.
