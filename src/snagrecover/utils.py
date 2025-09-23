@@ -178,7 +178,7 @@ def get_usb(
 				f"Found too many ({nb_devs}) possible results matching {pretty_addr}!"
 			)
 			logger.warning(
-				f"Too many results for address {pretty_addr}!\{str(dev_list)}"
+				f"Too many results for address {pretty_addr}! {str(dev_list)}"
 			)
 
 		time.sleep(USB_INTERVAL)
