@@ -187,7 +187,6 @@ Templates:
 	logger.info(f"Done recovering {soc_model} board")
 	if args.loglevel != "silent":
 		logger.info(f"Logs were appended to {args.logfile}")
-	logger.info(f"Done recovering {soc_model} board")
 
 
 if __name__ == "__main__":

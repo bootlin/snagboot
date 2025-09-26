@@ -155,3 +155,13 @@ command to remove them.
 ## Broadcom BCM
 
 Set up your board in "USB device boot mode", connect the board to the USB device port, power the board if necessary. A new USB device should appear on your host system.
+
+## AMLogic
+
+Set up your board in "USB device boot mode", connect the board to the USB device port, power the board if necessary. A new USB device should appear on your host system.
+See U-Boot AMLogic boards [documentation](https://docs.u-boot.org/en/latest/board/amlogic/boot-flow.html) for more information.
+
+**Note:** Some boards (eg LibreComputer AML-S905X-CC "Le Potato") requires you to use a, non standard, USB A to A (male to male) cable to enable the USB recovery.
+This USB cable needs to power up the board, ie it needs to have its internal VBUS cable connected, which is not always the case if you made it yourself. After connecting the USB A to A cable and properly setting up boot switches and/or buttons, a new AMLogic USB device should be enumerated. After that, you might need to provide additional power by connecting another MicroUSB cable to the board.
+
+**DISCLAMER: USB A to A type of cable can seriously harm your hardware, use it at your own risk.**

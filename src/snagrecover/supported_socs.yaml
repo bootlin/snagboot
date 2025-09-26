@@ -67,6 +67,12 @@ tested:
         family: bcm
   bcm2712:
         family: bcm
+  a311d:
+        family: amlogic
+  s905d3:
+        family: amlogic
+  s905x:
+        family: amlogic
 untested:
   a10:
         family: sunxi
@@ -154,3 +160,37 @@ untested:
         family: sunxi
   v853:
         family: sunxi
+  a113d:
+        family: amlogic
+  a113x:
+        family: amlogic
+  s805x:
+        family: amlogic
+  s805y:
+        family: amlogic
+  s905:
+        family: amlogic
+  s905d:
+        family: amlogic
+  s905d2:
+        family: amlogic
+  s905h:
+        family: amlogic
+  s905l:
+        family: amlogic
+  s905m:
+        family: amlogic
+  s905m2:
+        family: amlogic
+  s905w:
+        family: amlogic
+  s905x2:
+        family: amlogic
+  s905x3:
+        family: amlogic
+  s905y2:
+        family: amlogic
+  s912:
+        family: amlogic
+  s922x:
+        family: amlogic
