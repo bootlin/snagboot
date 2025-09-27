@@ -2,4 +2,4 @@
 
 - [Installation](installing.md)
 - [User guide](users.md)
-- [Developer guide](developers/docs.md)
+- [Developer guide](developers/supporting_new_socs.md)

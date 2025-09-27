@@ -30,14 +30,14 @@
   memory_ops interface when possible
 - snagrecover should not modify non-volatile memories
 
-For a more in-depth guide on adding new SoC families to snagrecover, please
-consult the [developers](docs/developers/supporting_new_socs.md) doc.
+For a more in-depth guide on supporting new SoC families, please
+consult the [developers guide](../developers/supporting_new_socs.md) doc.
 
 ## Wishlist
 
 Here are a few things which would be nice to add to the recovery tool:
 - testing snagrecover on supported but untested SoCs (see
-  [supported_socs.yaml](src/snagrecover/supported_socs.yaml))
+  [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml))
 - snagrecover support for RaspberryPi platforms (Broadcom BCM283x and
   BCM271x SoCs)
 - snagrecover support for Rockchip SOCs. Some initial investigation

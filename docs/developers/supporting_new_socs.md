@@ -306,7 +306,7 @@ steps, since all of the necessary building blocks are now available.
 Each SoC family has an associated recovery module at recoveries/<soc_family>.py.
 This module contains a main() function which is called by the Snagrecover CLI.
 Create a similar module for you SoC family and add a main function to it.  In
-the [utils](../../src/snagrecover/utils.py) module, there is a function called
+the [utils](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/utils.py) module, there is a function called
 get_recovery(). Modify this function to add your SoC family.
 
 Your main recovery function will be called without any parameters. All the

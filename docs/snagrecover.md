@@ -240,7 +240,7 @@ when configuring U-Boot.
 
 ### For ST STM32MP1/2 devices
 
-[example](../src/snagrecover/templates/stm32mp1-stm32mp157f-dk2.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/stm32mp1-stm32mp157f-dk2.yaml)
 
 TF-A is used as the first stage and U-Boot as the second stage.
 
@@ -287,7 +287,7 @@ pass to snagrecover.
 
 ### For Microchip SAMA5 devices
 
-[example](../src/snagrecover/templates/sama5-sama5d2xplained.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/sama5-sama5d2xplained.yaml)
 
 **lowlevel:** SAM-BA applet used to initialize the clock tree. You can
 obtain SAM-BA applets by downloading the source code for SAM-BA ISP from
@@ -323,7 +323,7 @@ configuration:
 
 #### Option1: Use dcd to initialize the external RAM
 
-[example](../src/snagrecover/templates/imx7-colibri-imx7d.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/imx7-colibri-imx7d.yaml)
 
 **u-boot-with-dcd:** For some boards, you can build the `u-boot.imx` target in
 U-Boot which contains an IVT header + a DCD + U-Boot proper. The DCD will be
@@ -335,7 +335,7 @@ configuration:
 
 #### Option 2: Use SPL to initialize the external RAM
 
-[example](../src/snagrecover/templates/var-som-mx6.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/var-som-mx6.yaml)
 
 **SPL:** IVT header + U-BOOT SPL to be loaded in OCRAM. You can generate this
 by compiling the SPL target in U-Boot. SPL should support SDP. You should not
@@ -353,7 +353,7 @@ configuration:
 
 ### For NXP i.MX8, i.MX28 , i.MX91 and i.MX93 devices
 
-[example](../src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
 
 The process for generating the bootloader firmware for i.MX8 SoCs is highly
 vendor and board specific. We recommend that you follow your board vendor’s
@@ -370,7 +370,7 @@ configuration:
 
 ### For TI AM335x devices
 
-[example](../src/snagrecover/templates/am335x-beaglebone-black.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/am335x-beaglebone-black.yaml)
 
 **spl:** First stage bootloader. Build the spl/u-boot-spl.bin target for your
 board in U-Boot mainline. If recovering via UART, SPL should be built with
@@ -401,7 +401,7 @@ binary file.
 
 #### Option 1: Single SPL+U-Boot binary
 
-[example](../src/snagrecover/templates/sunxi-orangepi-pc.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/sunxi-orangepi-pc.yaml)
 
 **u-boot-with-spl:** Described in sunxi-u-boot.dtsi. For arm64 SOCs, this
 contains: sunxi-spl.bin + nonfit or FIT container with u-boot-nodtb,bl31,
@@ -424,7 +424,7 @@ configuration:
 
 ### For TI AM62x/AM62Ax/AM62Px/AM64x/AM62Lx/AM62Dx devices
 
-[example](../src/snagrecover/templates/am625-beagle-play.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/am625-beagle-play.yaml)
 
 Instructions for building the required images can be found in various locations
 depending on your SoC and board model. In general, your board vendor's
@@ -458,7 +458,7 @@ configuration:
 
 ### For Xilinx ZynqMP devices
 
-[example](../src/snagrecover/templates/zynqmp-generic.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/zynqmp-generic.yaml)
 
 Detailed instructions for building the required boot images can be found in the
 [Xilinx documentation](https://xilinx.github.io/Embedded-Design-Tutorials), in
@@ -485,7 +485,7 @@ configuration:
 
 ### For Intel Keembay devices
 
-[example](../src/snagrecover/templates/keembay-generic.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/keembay-generic.yaml)
 
 Intel Keembay boards use a Firmware Image Package (FIP) to boot the board
 in recovery mode.
@@ -501,7 +501,7 @@ configuration:
 
 ### For Broadcom BCM devices
 
-[example](../src/snagrecover/templates/bcm2711.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/bcm2711.yaml)
 
 In the case of Raspberry Pi, most firmwares can be found in their GitHub repositories [github.com/raspberrypi](https://github.com/raspberrypi/)
 along with a [genimage.cfg](https://github.com/raspberrypi/buildroot/blob/mass-storage-gadget64/board/raspberrypi64-mass-storage-gadget/genimage.cfg) file wich can be taken as a reference for building the DOS partition image using the [genimage](https://github.com/pengutronix/genimage) tool.
@@ -553,7 +553,7 @@ These two recoveries uses different firmwares.
 
 #### 1. G12x and SM1 series
 
-[example](../src/snagrecover/templates/amlogic_G12x_SM1.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/amlogic_G12x_SM1.yaml)
 
 **u-boot-fip:** Firmware Image Package (FIP) containing both the BL2 bootloader and U-Boot proper. For some boards you can use the tool [amlogic-boot-fip](https://github.com/LibreELEC/amlogic-boot-fip) to generate it, otherwise, refer to your board vendor..
 
@@ -564,7 +564,7 @@ configuration:
 
 #### 2. GXx and AXG series
 
-[example](../src/snagrecover/templates/amlogic_GXx_AXG.yaml)
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/amlogic_GXx_AXG.yaml)
 
 **bl2:** BL2 bootloader from AMLogic, seems to be based on TFA (no source available). For some boards you can use the tool [amlogic-boot-fip](https://github.com/LibreELEC/amlogic-boot-fip) to generate it, otherwise, refer to your board vendor.
 
