@@ -5,11 +5,13 @@ in the same way as the existing SoC supports.
 
 Update the [README](../../README.md) to mention that your SoC family is supported.
 
-Add general instructions for setting up boards for recovery in
-[board_setup.md](../board_setup.md).
+Add a section for your SoC family in:
 
-Describe the required firmware binaries and associated configuration options in
-[fw_binaries.md](../fw_binaries.md).
+[Setting up your device for recovery](../snagrecover.md/#setting-up-your-device-for-recovery).
+
+and in:
+
+[Preparing recovery firmware](../snagrecover.md/#preparing-recovery-firmware).
 
 If there are any quirks and pitfalls that users should watch out for when
 recovering your SoCs, you can mention them in
