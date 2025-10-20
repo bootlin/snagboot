@@ -71,6 +71,8 @@ def am6x_run(dev, fw_name: str, fw_blob: bytes):
 	# find firmware altsetting (i.e. partition id)
 	if fw_name == "tiboot3":
 		partname = "bootloader"
+	elif fw_name == "sysfw":
+		partname = "sysfw.itb"
 	elif fw_name == "tispl":
 		partname = "tispl.bin"
 	elif fw_name == "u-boot":
@@ -85,7 +87,7 @@ def am6x_run(dev, fw_name: str, fw_blob: bytes):
 	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	logger.info("Done")
-	if fw_name == "u-boot":
+	if fw_name in ["u-boot", "sysfw"]:
 		logger.info("Sending detach command...")
 		dfu_cmd.detach(partid)
 

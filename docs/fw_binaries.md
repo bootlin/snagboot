@@ -229,7 +229,7 @@ SPL part, you can typically use u-boot.img for this
 configuration:
  * path
 
-## For TI AM62x/AM62Ax/AM62Px/AM64x/AM62Lx/AM62Dx devices
+## For TI AM62x/AM62Ax/AM62Px/AM62Lx/AM62Dx/AM64x/AM654x devices
 
 [example](../src/snagrecover/templates/am625-beagle-play.yaml)
 
@@ -239,6 +239,10 @@ documentation should be the first place to check. For evaluation kits, you can
 either check the [U-Boot documentation](https://u-boot.readthedocs.io/en/latest/board/ti/)
 or the TI SDK documentation for your SoC. When building tiboot3, please make
 sure that your configuration supports booting from DFU.
+
+*Note for AM654x SoCs:* When building tiboot3 and tispl binaries, please check
+that the device trees for your board have USB components enabled in both SPL
+boot stages (r5 and a53).
 
 The following images are required for all AM6xx SoCs:
 
@@ -259,6 +263,17 @@ configuration:
 DM firmware, U-Boot SPL for A53 and device tree blobs. For AM62Lx, X.509 certificate
 container with ATF for A53, OPTEE, U-Boot SPL for A53, device tree blobs and
 TIFS.
+
+configuration:
+ * path
+
+AM654x SoCs require an additional "sysfw" binary:
+
+**sysfw:** FIT container with system configuration data. Usually generated as a
+tiboot3 build artifact, named "sysfw.itb".
+
+configuration:
+ * path
 
 configuration:
  * path

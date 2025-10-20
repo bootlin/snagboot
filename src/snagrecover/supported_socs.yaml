@@ -21,6 +21,8 @@ tested:
         family: sunxi
   am6442:
         family: am6x
+  am6548:
+        family: am6x
   h3:
         family: sunxi
   imx28:
@@ -113,6 +115,8 @@ untested:
   am6422:
         family: am6x
   am6441:
+        family: am6x
+  am6546:
         family: am6x
   h5:
         family: sunxi
