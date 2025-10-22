@@ -10,6 +10,7 @@ explains what firmware and configuration options are needed for each SoC family.
 A firmware configuration file for snagrecover has the following structure:
 
 ```
+paths-relative-to: THIS_FILE
 fw_1:
   path: /path/to/fw_1
   option1: value1
@@ -27,6 +28,20 @@ The firmware needed for each SoC family are listed below. Some
 type of SoC you are using, you will probably want to configure your U-Boot build
 so that it can interact with snagflash correctly after recovery (e.g. use DFU,
 UMS or fastboot).
+
+The key `paths-relative-to` is optional and indicates that paths to images are
+relative to a specific path, either:
+
+- `CWD`: the current working directory, e.g the default behaviour
+- `THIS_FILE`: the directory containing the current configuration file
+- a path to a directory.
+
+If `THIS_FILE` or a path is specified, snagrecover will effectively join this
+path and the images paths. `CWD` is actually a no-op and will keep the default
+behaviour.
+Absolute paths to images will not be modified by this option.
+
+This is useful when distributing the configuration file alongside images.
 
 ## General tips on configuring U-Boot
 
