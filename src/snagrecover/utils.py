@@ -5,6 +5,7 @@ import time
 from dataclasses import astuple
 import struct
 import logging
+import errno
 
 logger = logging.getLogger("snagrecover")
 
@@ -37,10 +38,12 @@ def is_usb_path(usb_addr) -> bool:
 	return isinstance(usb_addr, tuple) and isinstance(usb_addr[1], tuple)
 
 
-def access_error(dev_type: str, dev_addr: str):
-	logger.error(
-		f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights"
-	)
+def access_error(dev_type: str, dev_addr: str, log_err: bool = True):
+	if log_err:
+		logger.error(
+			f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights"
+		)
+
 	sys.exit(-1)
 
 
@@ -141,7 +144,10 @@ def active_cfg_check(dev: usb.core.Device):
 		dev.get_active_configuration()
 	except NotImplementedError:
 		return True
-	except usb.core.USBError:
+	except usb.core.USBError as e:
+		if e.errno == errno.EACCES:  # permission error
+			raise e
+
 		logger.warning(
 			f"Failed to get configuration descriptor for device at {prettify_usb_addr((dev.bus, dev.port_numbers))}!"
 		)
@@ -170,8 +176,35 @@ def get_usb(
 		if nb_devs == 1:
 			dev = dev_list[0]
 
-			if ready_check(dev):
-				return dev
+			try:
+				if ready_check(dev):
+					return dev
+			except usb.USBError as e:
+				if e.errno == errno.EACCES:
+					logger.error(
+						f"USB Device has been found at address {pretty_addr} but can't be accessed because of permission issue."
+					)
+					if sys.platform == "linux":
+						logger.error(
+							"Please check your udev config (refer to README.md#Installation on Linux)."
+						)
+						logger.error(
+							"The following udev rule allow access to the USB device:"
+						)
+						logger.error(
+							f'SUBSYSTEM=="usb", ATTRS{{idVendor}}=="{dev.idProduct:x}", ATTRS{{idProduct}}=="{dev.idVendor:x}", MODE="0660", TAG+="uaccess"'
+						)
+					elif sys.platform == "win32":
+						logger.error(
+							"Please check your installation (refer to README.md#Installation on Windows 10 or 11)."
+						)
+
+					if error_on_fail:
+						# Don't retry if it is a permission issue
+						access_error("USB", pretty_addr, log_err=False)
+				else:
+					# Don't silence other USBErrors
+					raise e
 
 		elif nb_devs > 1:
 			logger.info(
