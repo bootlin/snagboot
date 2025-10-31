@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import os
 import yaml
 from snagrecover.utils import (
 	cli_error,
@@ -93,6 +94,22 @@ def check_soc_model(soc_model: str):
 	return None
 
 
+def complete_fw_paths(fw_config: dict, this_file_path: str) -> None:
+	paths_relative_to_conf = fw_config.pop("paths-relative-to", "CWD")
+	if paths_relative_to_conf == "CWD":
+		return
+	elif paths_relative_to_conf == "THIS_FILE":
+		path_relative_to = os.path.dirname(this_file_path)
+	else:
+		path_relative_to = path_relative_to_conf
+
+	for binary in fw_config.keys():
+		if "path" in fw_config[binary]:
+			fw_config[binary]["path"] = os.path.join(
+				path_relative_to, fw_config[binary]["path"]
+			)
+
+
 def init_config(args: list):
 	# this is the only time that config.recovery_config should be modified!
 	# get soc model
@@ -138,11 +155,13 @@ def init_config(args: list):
 		# get firmware configs
 		for path in args.firmware_file:
 			with open(path, "r") as file:
-				fw_configs = {**fw_configs, **yaml.safe_load(file)}
-		if not isinstance(fw_configs, dict):
-			cli_error(
-				f"firmware config passed to CLI did not evaluate to dict: {fw_configs}"
-			)
+				fw_config_file = yaml.safe_load(file)
+			if not isinstance(fw_config_file, dict):
+				cli_error(
+					f"firmware config passed to CLI did not evaluate to dict: {fw_config_file}"
+				)
+			complete_fw_paths(fw_config_file, path)
+			fw_configs = {**fw_configs, **fw_config_file}
 		recovery_config["firmware"] = fw_configs
 
 	# store input arguments in config
