@@ -101,7 +101,7 @@ def complete_fw_paths(fw_config: dict, this_file_path: str) -> None:
 	elif paths_relative_to_conf == "THIS_FILE":
 		path_relative_to = os.path.dirname(this_file_path)
 	else:
-		path_relative_to = path_relative_to_conf
+		path_relative_to = paths_relative_to_conf
 
 	for binary in fw_config.keys():
 		if "path" in fw_config[binary]:
