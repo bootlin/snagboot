@@ -21,6 +21,7 @@ def send_tiboot3(dev):
 		run_firmware(dev, "sysfw")
 		time.sleep(1)
 
+
 def main():
 	usb_addr = recovery_config["usb_path"]
 	dev = get_usb(usb_addr)
