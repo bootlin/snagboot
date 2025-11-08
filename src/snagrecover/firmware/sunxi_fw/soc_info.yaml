@@ -203,6 +203,18 @@ a83t:
       size: 0x2400
   tt_addr: 0x44000
   safe_addr: 0x1000
+a133:
+  sram_size: 0x25000
+  spl_start: 0x20000
+  thunk:
+    start: 0x40400
+    size: 0x200
+  rom:
+    - start: 0x21000
+      backup: 0x40000
+      size: 0x0400
+  safe_addr: 0x21000
+  rvbar_addr: 0x8100040
 f1c100s:
   sram_size: 0x8000
   spl_start: 0x0
