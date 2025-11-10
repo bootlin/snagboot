@@ -5,6 +5,8 @@ tested:
         family: sunxi
   a64:
         family: sunxi
+  a133:
+        family: sunxi
   am3358:
         family: am335x
   am625:
