@@ -32,20 +32,5 @@ Snagboot currently supports the following families of System-On-Chips (SoCs):
 Please check [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml)
 or run `snagrecover --list-socs` for a more precise list of supported SoCs.
 
-## Installing Snagboot
+Documentation: https://snagboot.readthedocs.io
 
-Please read the [installation guide](FIXME)
-
-## Using Snagboot
-
-Please read the [user guide](FIXME)
-
-## Contributing
-
-Contributions are welcome! Since Snagboot includes many different recovery
-techniques and protocols, we try to keep the code base as structured as
-possible. Please consult the [contribution guidelines](https://github.com/bootlin/snagboot/blob/main/CONTRIBUTING.md).
-
-## License
-
-Snagboot is released under the [GNU General Public License version 2](https://github.com/bootlin/snagboot/blob/main/LICENSE)
