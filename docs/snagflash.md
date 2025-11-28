@@ -126,7 +126,7 @@ snagflash -P fastboot -p 0483:0afb -f download:boot.img -f flash:0:1 -f boot
 
 The ``flash_sparse`` command will download and flash a android sparse file with
 fastboot protocol. For details about the file format, see the [sparse file format
-partial documentation](docs/developers/android-sparse-file.md).
+partial documentation](developers/android-sparse-file.md).
 
 For more information on Fastboot commands, see the [fastboot
 specification](https://android.googlesource.com/platform/system/core/+/refs/heads/master/fastboot/README.md)

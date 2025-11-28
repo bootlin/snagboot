@@ -84,7 +84,7 @@ The following sections describe all tasks supported by Snagfactory.
 Action:
 
 Runs a list of Fastboot commands, in snagflash format. Please refer to
-[the snagflash docs](docs/snagflash.md) for more information.
+[the snagflash docs](snagflash.md) for more information.
 
 Example:
 
