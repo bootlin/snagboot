@@ -10,7 +10,8 @@ ISP, UUU, and sunxi-fel. Snagboot is made of three separate parts:
   memories.
 - **snagflash** communicates with U-Boot to flash system images to non-volatile
   memories, using either DFU, UMS or Fastboot.
-- **snagfactory** FIXME
+- **snagfactory** orchestrates and parallelizes factory flashing tasks
+  efficiently on groups of devices.
 
 <p align="center">
   <img src="docs/tutorial_snagrecover.gif" alt="animated" />
