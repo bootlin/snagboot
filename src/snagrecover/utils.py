@@ -5,6 +5,7 @@ import time
 from dataclasses import astuple
 import struct
 import logging
+import errno
 
 logger = logging.getLogger("snagrecover")
 
@@ -37,10 +38,12 @@ def is_usb_path(usb_addr) -> bool:
 	return isinstance(usb_addr, tuple) and isinstance(usb_addr[1], tuple)
 
 
-def access_error(dev_type: str, dev_addr: str):
-	logger.error(
-		f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights"
-	)
+def access_error(dev_type: str, dev_addr: str, log_err: bool = True):
+	if log_err:
+		logger.error(
+			f"Device access error: failed to access {dev_type} device {dev_addr}, please check its presence and access rights"
+		)
+
 	sys.exit(-1)
 
 
@@ -150,12 +153,25 @@ def active_cfg_check(dev: usb.core.Device):
 	return True
 
 
+def permissions_check(dev: usb.core.Device) -> bool:
+	"""
+	Checks if a device has the device file access rights to be accessed.
+	"""
+	try:
+		dev.get_active_configuration()
+	except usb.core.USBError as e:
+		if e.errno == errno.EACCES:  # device access error
+			return False
+	return True
+
+
 def get_usb(
 	usb_path, error_on_fail=True, retries=USB_RETRIES, ready_check=active_cfg_check
 ) -> usb.core.Device:
 	pretty_addr = prettify_usb_addr(usb_path)
 	SnagbootUSBContext.rescan()
 
+	log_access_error = True
 	for i in range(retries + 1):
 		if i > 0:
 			logger.info(f"USB retry {i}/{retries}")
@@ -183,8 +199,30 @@ def get_usb(
 
 		time.sleep(USB_INTERVAL)
 
+	if permissions_check(dev):
+		logger.error(
+			f"USB Device was found at address {pretty_addr} but can't be accessed because of a device file access rights issue."
+		)
+		if sys.platform == "linux":
+			logger.error(
+				"Please check your udev config (refer to README.md#Installation on Linux)."
+			)
+			logger.error("The following udev rule grants access to the USB device:")
+			logger.error(
+				f'SUBSYSTEM=="usb", ATTRS{{idVendor}}=="{dev.idVendor:04x}", ATTRS{{idProduct}}=="{dev.idProduct:04x}", MODE="0660", TAG+="uaccess"'
+			)
+		elif sys.platform == "win32":
+			logger.error(
+				f"Please check that the 'libusb-win32' driver is bound to this USB device ID: {dev.idVendor:04x}:{dev.idProduct:04x}"
+			)
+			logger.error(
+				"This is usually done with the Zadig tool, please check the Snagboot installation guide for more information."
+			)
+		# Don't log 'access_error' generic error message's
+		log_access_error = False
+
 	if error_on_fail:
-		access_error("USB", pretty_addr)
+		access_error("USB", pretty_addr, log_access_error)
 
 	return None
 
