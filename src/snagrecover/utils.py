@@ -1,4 +1,5 @@
 import sys
+import platform
 import re
 import usb
 import time
@@ -203,7 +204,7 @@ def get_usb(
 		logger.error(
 			f"USB Device was found at address {pretty_addr} but can't be accessed because of a device file access rights issue."
 		)
-		if sys.platform == "linux":
+		if platform.system() == "Linux":
 			logger.error(
 				"Please check your udev config (refer to README.md#Installation on Linux)."
 			)
@@ -211,7 +212,7 @@ def get_usb(
 			logger.error(
 				f'SUBSYSTEM=="usb", ATTRS{{idVendor}}=="{dev.idVendor:04x}", ATTRS{{idProduct}}=="{dev.idProduct:04x}", MODE="0660", TAG+="uaccess"'
 			)
-		elif sys.platform == "win32":
+		elif platform.system() == "Windows":
 			logger.error(
 				f"Please check that the 'libusb-win32' driver is bound to this USB device ID: {dev.idVendor:04x}:{dev.idProduct:04x}"
 			)
