@@ -206,7 +206,7 @@ def get_usb(
 		)
 		if platform.system() == "Linux":
 			logger.error(
-				"Please check your udev config (refer to README.md#Installation on Linux)."
+				"Please check your udev config (refer to https://snagboot.readthedocs.io/en/latest/installing/#installation-on-linux)."
 			)
 			logger.error("The following udev rule grants access to the USB device:")
 			logger.error(
@@ -217,7 +217,7 @@ def get_usb(
 				f"Please check that the 'libusb-win32' driver is bound to this USB device ID: {dev.idVendor:04x}:{dev.idProduct:04x}"
 			)
 			logger.error(
-				"This is usually done with the Zadig tool, please check the Snagboot installation guide for more information."
+				"This is usually done with the Zadig tool, please check the Snagboot installation guide (https://snagboot.readthedocs.io/en/latest/installing/#installation-on-windows-10-or-11) for more information."
 			)
 		# Don't log 'access_error' generic error message's
 		log_access_error = False
