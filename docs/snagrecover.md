@@ -148,29 +148,6 @@ network namespace and udev rules. You can also run:
 
 ```bash
 sudo am335x_usb_setup.sh -c
-$ chmod a+x am335x_usb_setup.sh
-$ sudo ./am335x_usb_setup.sh
-```
-
-**Note:** If you have changed the ROM code's or SPL's USB VID/PID, you have to
-pass the new values to the script using the -s and -r args.
-
-At this point, we recommend that you change your shell prompt, so you do not
-forget to log out of the special shell after recovery.
-
-Reset the board and run ip addr. Check that the board interface appears using
-`ip link`. Then, run the recovery tool as you would normally (see [running
-snagrecover](snagrecover.md)), eg for the Beagle Bone Black:
-
-```bash
-snagrecover -s am3358 -f src/snagrecover/templates/am335x-beaglebone-black.yaml
-```
-
-Once the recovery is done, exit the recovery shell. This will clean up the
-network namespace and udev rules. You can also run:
-
-```bash
-sudo am335x_usb_setup.sh -c
 ```
 
 **Note:** If for some reason, the am335x_usb_setup.sh script exits without
