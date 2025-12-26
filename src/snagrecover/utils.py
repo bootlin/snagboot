@@ -172,6 +172,8 @@ def get_usb(
 	pretty_addr = prettify_usb_addr(usb_path)
 	SnagbootUSBContext.rescan()
 
+	dev = None
+
 	log_access_error = True
 	for i in range(retries + 1):
 		if i > 0:
