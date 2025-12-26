@@ -200,7 +200,7 @@ def get_usb(
 
 		time.sleep(USB_INTERVAL)
 
-	if permissions_check(dev):
+	if dev is not None and permissions_check(dev):
 		logger.error(
 			f"USB Device was found at address {pretty_addr} but can't be accessed because of a device file access rights issue."
 		)
