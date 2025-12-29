@@ -7,8 +7,6 @@ import os
 
 logger = logging.getLogger("snagflash")
 
-from math import ceil
-
 from snagflash.bmaptools.BmapCopy import Bmap
 
 MMC_LBA_SIZE = 512
@@ -274,9 +272,9 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		padding: int,
 		part: str,
 		dest_offset: int,
-		dest_size: int,
 	):
 		fast = self.fast
+		dest_size = file_size + padding
 
 		logger.debug(
 			f"erasing flash area part {part} offset 0x{dest_offset:x} size 0x{dest_size:x}..."
@@ -314,7 +312,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		flash_size = file_size + padding
 		if flash_size <= fb_size:
 			self.flash_mtd_section(
-				fb_addr, path, file_offset, file_size, padding, part, offset, flash_size
+				fb_addr, path, file_offset, file_size, padding, part, offset
 			)
 			return
 
@@ -337,7 +335,6 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				0,
 				part,
 				offset * i * fb_size,
-				fb_size,
 			)
 
 		if remainder > 0:
@@ -350,7 +347,6 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				0,
 				part,
 				offset + nchunks * fb_size,
-				remainder,
 			)
 
 	def flash_mmc_section(
@@ -360,13 +356,22 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		file_offset: int,
 		file_size: int,
 		dest_offset: int,
-		dest_size: int,
 	):
 		fast = self.fast
 
+		if dest_offset % MMC_LBA_SIZE != 0:
+			raise ValueError(
+				f"Given offset {dest_offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
+			)
+
+		if file_size % MMC_LBA_SIZE != 0:
+			raise ValueError(
+				f"Given size {dest_size} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
+			)
+
 		fast.download_section(path, file_offset, file_size)
 
-		fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{dest_offset:x} 0x{dest_size:x}")
+		fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{dest_offset // MMC_LBA_SIZE:x} 0x{file_size // MMC_LBA_SIZE:x}")
 
 	def flash_mmc(
 		self,
@@ -389,11 +394,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				f"Given offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
 			)
 
-		fb_size_lba = fb_size // MMC_LBA_SIZE
-		file_size_lba = ceil(file_size / MMC_LBA_SIZE)
-		offset_lba = offset // MMC_LBA_SIZE
-
-		fb_size_aligned = fb_size_lba * MMC_LBA_SIZE
+		fb_size_aligned = (fb_size // MMC_LBA_SIZE) * MMC_LBA_SIZE
 
 		if part is None:
 			logger.debug(f"setting MMC device to {device_num}")
@@ -413,7 +414,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				f"gpt setenv mmc {device_num} {part};setenv fastboot.part_start $"
 				+ "{gpt_partition_addr}"
 			)
-			part_start = int(fast.getvar("part_start"), 16)
+			part_start = int(fast.getvar("part_start"), 16) * MMC_LBA_SIZE
 
 		if file_size <= fb_size:
 			logger.info(
@@ -424,38 +425,34 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				path,
 				file_offset,
 				file_size,
-				part_start + offset_lba,
-				file_size_lba,
+				part_start + offset,
 			)
 			return
 
 		logger.info("huge file detected, flashing in sections")
 		nchunks = file_size // fb_size_aligned
 		remainder = file_size % fb_size_aligned
-		remainder_lba = ceil(remainder / MMC_LBA_SIZE)
 
 		for i in range(nchunks):
 			logger.info(f"flashing section {i + 1}/{nchunks}")
-			target_offset = part_start + offset_lba + i * fb_size_lba
+			target_offset = part_start + offset + i * fb_size
 			self.flash_mmc_section(
 				fb_addr,
 				path,
 				file_offset + i * fb_size_aligned,
 				fb_size_aligned,
 				target_offset,
-				fb_size_lba,
 			)
 
 		if remainder > 0:
 			logger.info("flashing remainder")
-			target_offset = part_start + offset_lba + nchunks * fb_size_lba
+			target_offset = part_start + offset + nchunks * fb_size
 			self.flash_mmc_section(
 				fb_addr,
 				path,
 				file_offset + nchunks * fb_size_aligned,
 				remainder,
 				target_offset,
-				remainder_lba,
 			)
 
 	def run(self, cmds: list):
