@@ -128,24 +128,21 @@ class Fastboot:
 		logger.info(f"(bootloader) {var} value {ret}")
 		return ret
 
-	def send(self, blob: bytes, padding: int = None):
-		if padding is None:
-			padding = 0
-
+	def send(self, blob: bytes, padding: int = 0):
 		packet = f"download:{len(blob) + padding:08x}".encode()
 		self.cmd(packet)
 		for chunk in utils.dnload_iter(blob + b"\x00" * padding, self.max_size):
 			self.dev.write(self.ep_out, chunk, timeout=self.timeout)
 		self.response()
 
-	def download_section(self, path: str, offset: int, size: int, padding: int = None):
+	def download_section(self, path: str, offset: int, size: int, padding: int = 0):
 		with open(path, "rb") as file:
 			file.seek(offset)
 			blob = file.read(size)
 
 		self.send(blob, padding)
 
-	def download(self, path: str, padding: int = None):
+	def download(self, path: str, padding: int = 0):
 		self.download_section(path, 0, -1, padding)
 
 	def erase(self, part: str):

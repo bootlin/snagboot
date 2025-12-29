@@ -308,11 +308,10 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		if file_size % eraseblk_size != 0:
 			logger.info("padding file size to align it with an eraseblock...")
 			padding = eraseblk_size - (file_size % eraseblk_size)
-			flash_size = file_size + padding
 		else:
-			padding = None
-			flash_size = file_size
+			padding = 0
 
+		flash_size = file_size + padding
 		if flash_size <= fb_size:
 			self.flash_mtd_section(
 				fb_addr, path, file_offset, file_size, padding, part, offset, flash_size
