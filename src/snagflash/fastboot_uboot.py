@@ -265,12 +265,36 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			logger.info("No bmap file found, flashing in non-sparse mode")
 			flash_func(file_size=file_size, file_offset=0, offset=offset)
 
+	def flash_mtd_section(
+		self,
+		fb_addr: int,
+		path: str,
+		file_offset: int,
+		file_size: int,
+		padding: int,
+		part: str,
+		dest_offset: int,
+		dest_size: int,
+	):
+		fast = self.fast
+
+		logger.debug(
+			f"erasing flash area part {part} offset 0x{dest_offset:x} size 0x{dest_size:x}..."
+		)
+		fast.oem_run(f"mtd erase {part} 0x{dest_offset:x} 0x{dest_size:x}")
+
+		logger.info(
+			f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size}"
+		)
+		fast.download_section(path, file_offset, file_size, padding=padding)
+		fast.oem_run(
+			f"mtd write {part} 0x{fb_addr:x} 0x{dest_offset:x} 0x{dest_size:x}"
+		)
+
 	def flash_mtd(
 		self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0
 	):
 		logger.info("Flashing to MTD device...")
-
-		fast = self.fast
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
 		fb_size = self.fb_size
@@ -290,17 +314,8 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			flash_size = file_size
 
 		if flash_size <= fb_size:
-			logger.debug(
-				f"erasing flash area part {part} offset 0x{offset:x} size 0x{flash_size:x}..."
-			)
-			fast.oem_run(f"mtd erase {part} 0x{offset:x} 0x{flash_size:x}")
-
-			logger.info(
-				f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size}"
-			)
-			fast.download_section(path, file_offset, file_size, padding=padding)
-			fast.oem_run(
-				f"mtd write {part} 0x{fb_addr:x} 0x{offset:x} 0x{flash_size:x}"
+			self.flash_mtd_section(
+				fb_addr, path, file_offset, file_size, padding, part, offset, flash_size
 			)
 			return
 
@@ -314,33 +329,45 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		remainder = flash_size % fb_size
 
 		for i in range(nchunks):
-			logger.info(f"downloading section {i + 1}/{nchunks}")
-			fast.download_section(path, file_offset + i * fb_size, fb_size)
-
-			target_offset = offset + i * fb_size
-			logger.info(
-				f"erasing flash area offset 0x{target_offset:x} size 0x{fb_size:x}..."
-			)
-			fast.oem_run(f"mtd erase {part} {target_offset:x} {fb_size:x}")
-
-			logger.info(f"writing section {i + 1}/{nchunks}")
-			fast.oem_run(
-				f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size:x}"
+			logger.info(f"flashing section {i + 1}/{nchunks}")
+			self.flash_mtd_section(
+				fb_addr,
+				path,
+				file_offset + i * fb_size,
+				fb_size,
+				0,
+				part,
+				offset * i * fb_size,
+				fb_size,
 			)
 
 		if remainder > 0:
-			logger.info("downloading remainder")
-			fast.download_section(path, file_offset + nchunks * fb_size, remainder)
-
-			target_offset = offset + nchunks * fb_size
-			logger.info(
-				f"erasing flash area offset 0x{target_offset} size 0x{remainder:x}..."
+			logger.info("flashing remainder")
+			self.flash_mtd_section(
+				fb_addr,
+				path,
+				file_offset + nchunks * fb_size,
+				remainder,
+				0,
+				part,
+				offset + nchunks * fb_size,
+				remainder,
 			)
-			fast.oem_run(f"mtd erase {part} {target_offset:x} {remainder:x}")
 
-			fast.oem_run(
-				f"mtd write {part} 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder:x}"
-			)
+	def flash_mmc_section(
+		self,
+		fb_addr: int,
+		path: str,
+		file_offset: int,
+		file_size: int,
+		dest_offset: int,
+		dest_size: int,
+	):
+		fast = self.fast
+
+		fast.download_section(path, file_offset, file_size)
+
+		fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{dest_offset:x} 0x{dest_size:x}")
 
 	def flash_mmc(
 		self,
@@ -393,10 +420,13 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			logger.info(
 				f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size:x}"
 			)
-			fast.download_section(path, file_offset, file_size)
-
-			fast.oem_run(
-				f"mmc write 0x{fb_addr:x} 0x{part_start + offset_lba:x} 0x{file_size_lba:x}"
+			self.flash_mmc_section(
+				fb_addr,
+				path,
+				file_offset,
+				file_size,
+				part_start + offset_lba,
+				file_size_lba,
 			)
 			return
 
@@ -408,23 +438,25 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		for i in range(nchunks):
 			logger.info(f"flashing section {i + 1}/{nchunks}")
 			target_offset = part_start + offset_lba + i * fb_size_lba
-			fast.download_section(
-				path, file_offset + i * fb_size_aligned, fb_size_aligned
-			)
-
-			fast.oem_run(
-				f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{fb_size_lba:x}"
+			self.flash_mmc_section(
+				fb_addr,
+				path,
+				file_offset + i * fb_size_aligned,
+				fb_size_aligned,
+				target_offset,
+				fb_size_lba,
 			)
 
 		if remainder > 0:
 			logger.info("flashing remainder")
 			target_offset = part_start + offset_lba + nchunks * fb_size_lba
-			fast.download_section(
-				path, file_offset + nchunks * fb_size_aligned, remainder
-			)
-
-			fast.oem_run(
-				f"mmc write 0x{fb_addr:x} 0x{target_offset:x} 0x{remainder_lba:x}"
+			self.flash_mmc_section(
+				fb_addr,
+				path,
+				file_offset + nchunks * fb_size_aligned,
+				remainder,
+				target_offset,
+				remainder_lba,
 			)
 
 	def run(self, cmds: list):
