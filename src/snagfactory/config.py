@@ -2,7 +2,7 @@ import yaml
 import os
 import re
 
-from snagrecover.utils import get_supported_socs
+from snagrecover.utils import get_supported_socs, get_soc_aliases
 
 from snagfactory.fastboot import task_table
 from snagfactory.utils import SnagFactoryConfigError
@@ -14,8 +14,9 @@ any_rule = {
 
 def list_soc_models():
 	socs = get_supported_socs()
+	aliases = get_soc_aliases(socs)
 
-	return list(socs["tested"].keys()) + list(socs["untested"].keys())
+	return list(socs["tested"].keys()) + list(socs["untested"].keys()) + list(aliases.keys())
 
 
 soc_model_pattern = "(" + "|".join(list_soc_models()) + ")"

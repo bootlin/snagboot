@@ -1,4 +1,4 @@
-from snagrecover.utils import get_family
+from snagrecover.utils import get_family, resolve_soc_model
 from multiprocessing import Process, Queue
 import uuid
 from snagrecover.utils import prettify_usb_addr, parse_usb_path
@@ -36,8 +36,8 @@ class Board:
 		pipeline: list,
 	):
 		self.path = usb_path
-		self.soc_model = soc_model
-		self.soc_family = get_family(soc_model)
+		self.soc_model = resolve_soc_model(soc_model)
+		self.soc_family = get_family(self.soc_model)
 		self.process = None
 		self.phase = BoardPhase.ROM
 

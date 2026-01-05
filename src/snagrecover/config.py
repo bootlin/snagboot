@@ -24,7 +24,7 @@ from snagrecover.utils import (
 	usb_addr_to_path,
 	get_family,
 	access_error,
-	get_supported_socs,
+	resolve_soc_model,
 )
 import logging
 
@@ -83,17 +83,6 @@ default_usb_ids = {
 
 recovery_config = {}  # Global immutable config to be initialized with CLI args
 
-
-def check_soc_model(soc_model: str):
-	socs = get_supported_socs()
-
-	if soc_model not in {**socs["tested"], **socs["untested"]}:
-		cli_error(
-			f"unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs)
-		)
-	return None
-
-
 def complete_fw_paths(fw_config: dict, this_file_path: str) -> None:
 	paths_relative_to_conf = fw_config.pop("paths-relative-to", "CWD")
 	if paths_relative_to_conf == "CWD":
@@ -113,8 +102,7 @@ def complete_fw_paths(fw_config: dict, this_file_path: str) -> None:
 def init_config(args: list):
 	# this is the only time that config.recovery_config should be modified!
 	# get soc model
-	soc_model = args.soc
-	check_soc_model(soc_model)
+	soc_model = resolve_soc_model(args.soc)
 	recovery_config.update({"soc_model": soc_model})
 	soc_family = get_family(soc_model)
 	recovery_config.update({"soc_family": soc_family})

@@ -28,6 +28,40 @@ def get_supported_socs():
 
 	return yaml.safe_load(yaml_text)
 
+def get_soc_aliases(socs: dict):
+	all_socs = {**socs["tested"], **socs["untested"]}
+	aliases = {}
+
+	for model in all_socs:
+		for alias in all_socs[model].get("aliases", []):
+			if alias in aliases:
+				logger.warning(
+					f"SoC alias {alias} appears more than once in the list of supported SoCs!"
+				)
+
+			aliases[alias] = model
+
+	return aliases
+
+def resolve_soc_model(soc_model: str):
+	"""
+	Checks if an SoC model is supported by snagrecover. If a matching alias
+	is found, resolves it.
+	"""
+	socs = get_supported_socs()
+
+	if soc_model not in {**socs["tested"], **socs["untested"]}:
+		# Look for an matching alias
+		aliases = get_soc_aliases(socs)
+		if soc_model in aliases:
+			logger.info(f"SoC model {soc_model} is an alias for {aliases[soc_model]}")
+			return aliases[soc_model]
+
+		cli_error(
+			f"unsupported soc model {soc_model}, supported socs: \n" + yaml.dump(socs)
+		)
+
+	return soc_model
 
 def get_family(soc_model: str) -> str:
 	socs = get_supported_socs()
