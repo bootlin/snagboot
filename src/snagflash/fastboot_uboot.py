@@ -366,7 +366,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		if file_size % MMC_LBA_SIZE != 0:
 			raise ValueError(
-				f"Given size {dest_size} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
+				f"Given size {file_size} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
 			)
 
 		fast.download_section(path, file_offset, file_size)
