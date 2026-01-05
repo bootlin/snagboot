@@ -39,6 +39,8 @@ tested:
         family: imx
   imx865:
         family: imx
+        aliases:
+          - imx8mp
   imx8mm:
         family: imx
   imx8qm:
