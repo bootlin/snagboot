@@ -215,6 +215,8 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		offset = int(offset, 0)
 
+		logger.info(f"Flashing file {path}")
+
 		file_size = os.path.getsize(path)
 
 		target = self.request_env("target")
@@ -223,7 +225,6 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			device_num = int(target[-1])
 			flash_func = functools.partial(
 				self.flash_mmc,
-				path=path,
 				offset=offset,
 				device_num=device_num,
 				part=part,
@@ -232,14 +233,15 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			if part is None:
 				part = target
 
-			flash_func = functools.partial(self.flash_mtd, path=path, part=part)
+			flash_func = functools.partial(self.flash_mtd, part=part)
 
 		bmap_path = path + ".bmap"
-		if os.path.exists(bmap_path):
-			logger.info("Found a bmap file, flashing in sparse mode")
 
-			# Verify bmap checksums and get list of ranges
-			with open(path, "rb") as image_file:
+		with open(path, "rb") as image_file:
+			if os.path.exists(bmap_path):
+				logger.info("Found a bmap file, flashing in sparse mode")
+
+				# Verify bmap checksums and get list of ranges
 				with open(bmap_path, "r") as bmap_file:
 					bmap = Bmap(image_file, bmap_file)
 					list(bmap._get_data(verify=True))
@@ -250,24 +252,24 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 						size = (end - start + 1) * bmap.block_size
 						ranges.append((size, range_offset))
 
-			i = 0
-			for size, range_offset in ranges:
-				logger.info(f"Flashing sparse range {i}/{len(ranges)}")
-				flash_func(
-					file_size=size,
-					file_offset=range_offset,
-					offset=offset + range_offset,
-				)
-				i += 1
-		else:
-			logger.info("No bmap file found, flashing in non-sparse mode")
-			flash_func(file_size=file_size, file_offset=0, offset=offset)
+				i = 0
+				for size, range_offset in ranges:
+					logger.info(f"Flashing sparse range {i}/{len(ranges)}")
+					image_file.seek(range_offset)
+					flash_func(
+						file=image_file,
+						file_size=size,
+						offset=offset + range_offset,
+					)
+					i += 1
+			else:
+				logger.info("No bmap file found, flashing in non-sparse mode")
+				flash_func(file=image_file, file_size=file_size, offset=offset)
 
 	def flash_mtd_section(
 		self,
 		fb_addr: int,
-		path: str,
-		file_offset: int,
+		file,
 		file_size: int,
 		padding: int,
 		part: str,
@@ -281,17 +283,13 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		)
 		fast.oem_run(f"mtd erase {part} 0x{dest_offset:x} 0x{dest_size:x}")
 
-		logger.info(
-			f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size}"
-		)
-		fast.download_section(path, file_offset, file_size, padding=padding)
+		logger.info(f"flashing file range start 0x{file.tell():x} size 0x{file_size:x}")
+		fast.download_section(file, file_size, padding=padding)
 		fast.oem_run(
 			f"mtd write {part} 0x{fb_addr:x} 0x{dest_offset:x} 0x{dest_size:x}"
 		)
 
-	def flash_mtd(
-		self, path: str, offset: int, part: str, file_size: int, file_offset: int = 0
-	):
+	def flash_mtd(self, file, offset: int, part: str, file_size: int):
 		logger.info("Flashing to MTD device...")
 
 		fb_addr = int(self.request_env("fb-addr"), 0)
@@ -311,9 +309,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		flash_size = file_size + padding
 		if flash_size <= fb_size:
-			self.flash_mtd_section(
-				fb_addr, path, file_offset, file_size, padding, part, offset
-			)
+			self.flash_mtd_section(fb_addr, file, file_size, padding, part, offset)
 			return
 
 		if fb_size % eraseblk_size != 0:
@@ -329,20 +325,19 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			logger.info(f"flashing section {i + 1}/{nchunks}")
 			self.flash_mtd_section(
 				fb_addr,
-				path,
-				file_offset + i * fb_size,
+				file,
 				fb_size,
 				0,
 				part,
 				offset * i * fb_size,
 			)
+			file.seek(fb_size, os.SEEK_CUR)
 
 		if remainder > 0:
 			logger.info("flashing remainder")
 			self.flash_mtd_section(
 				fb_addr,
-				path,
-				file_offset + nchunks * fb_size,
+				file,
 				remainder,
 				0,
 				part,
@@ -352,8 +347,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 	def flash_mmc_section(
 		self,
 		fb_addr: int,
-		path: str,
-		file_offset: int,
+		file,
 		file_size: int,
 		dest_offset: int,
 	):
@@ -369,7 +363,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				f"Given size {file_size} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
 			)
 
-		fast.download_section(path, file_offset, file_size)
+		fast.download_section(file, file_size)
 
 		fast.oem_run(
 			f"mmc write 0x{fb_addr:x} 0x{dest_offset // MMC_LBA_SIZE:x} 0x{file_size // MMC_LBA_SIZE:x}"
@@ -377,11 +371,10 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 	def flash_mmc(
 		self,
-		path: str,
+		file,
 		offset: int,
 		device_num: int,
 		file_size: int,
-		file_offset: int = 0,
 		part: str = None,
 	):
 		logger.info("Flashing to MMC device...")
@@ -420,12 +413,11 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		if file_size <= fb_size:
 			logger.info(
-				f"flashing file {path} range start 0x{file_offset:x} size 0x{file_size:x}"
+				f"flashing file range start 0x{file.tell():x} size 0x{file_size:x}"
 			)
 			self.flash_mmc_section(
 				fb_addr,
-				path,
-				file_offset,
+				file,
 				file_size,
 				part_start + offset,
 			)
@@ -440,19 +432,18 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			target_offset = part_start + offset + i * fb_size
 			self.flash_mmc_section(
 				fb_addr,
-				path,
-				file_offset + i * fb_size_aligned,
+				file,
 				fb_size_aligned,
 				target_offset,
 			)
+			file.seek(fb_size_aligned, os.SEEK_CUR)
 
 		if remainder > 0:
 			logger.info("flashing remainder")
 			target_offset = part_start + offset + nchunks * fb_size
 			self.flash_mmc_section(
 				fb_addr,
-				path,
-				file_offset + nchunks * fb_size_aligned,
+				file,
 				remainder,
 				target_offset,
 			)
