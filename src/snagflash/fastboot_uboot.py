@@ -217,8 +217,6 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		logger.info(f"Flashing file {path}")
 
-		file_size = os.path.getsize(path)
-
 		target = self.request_env("target")
 
 		if target.startswith("mmc"):
@@ -237,34 +235,35 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		bmap_path = path + ".bmap"
 
+		ranges = []
+		if os.path.exists(bmap_path):
+			logger.info("Found a bmap file, listing sparse ranges...")
+
+			# Verify bmap checksums and get list of ranges
+			with open(bmap_path, "r") as bmap_file:
+				bmap = Bmap(image_file, bmap_file)
+				list(bmap._get_data(verify=True))
+
+				for start, end, _ in bmap._get_block_ranges():
+					range_offset = bmap.block_size * start
+					size = (end - start + 1) * bmap.block_size
+					ranges.append((size, range_offset))
+		else:
+			ranges.append((os.path.getsize(path), 0))
+
+		multi_ranges = len(ranges) > 1
 		with open(path, "rb") as image_file:
-			if os.path.exists(bmap_path):
-				logger.info("Found a bmap file, flashing in sparse mode")
-
-				# Verify bmap checksums and get list of ranges
-				with open(bmap_path, "r") as bmap_file:
-					bmap = Bmap(image_file, bmap_file)
-					list(bmap._get_data(verify=True))
-
-					ranges = []
-					for start, end, _ in bmap._get_block_ranges():
-						range_offset = bmap.block_size * start
-						size = (end - start + 1) * bmap.block_size
-						ranges.append((size, range_offset))
-
-				i = 0
-				for size, range_offset in ranges:
+			i = 0
+			for size, range_offset in ranges:
+				if multi_ranges:
 					logger.info(f"Flashing sparse range {i}/{len(ranges)}")
-					image_file.seek(range_offset)
-					flash_func(
-						file=image_file,
-						file_size=size,
-						offset=offset + range_offset,
-					)
-					i += 1
-			else:
-				logger.info("No bmap file found, flashing in non-sparse mode")
-				flash_func(file=image_file, file_size=file_size, offset=offset)
+				image_file.seek(range_offset)
+				flash_func(
+					file=image_file,
+					file_size=size,
+					offset=offset + range_offset,
+				)
+				i += 1
 
 	def flash_mtd_section(
 		self,
