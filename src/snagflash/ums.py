@@ -22,6 +22,11 @@ import shutil
 import tempfile
 from snagflash.bmaptools import BmapCreate
 from snagflash.bmaptools import BmapCopy
+from snagrecover.utils import (
+	open_compressed_file,
+	get_bmap_path,
+	get_compression_method,
+)
 import sys
 import time
 import logging
@@ -47,7 +52,7 @@ def wait_filepath(path: str):
 
 
 def bmap_copy(filepath: str, dev, src_size: int):
-	mappath = filepath + ".bmap"
+	mappath = get_bmap_path(filepath)
 	mapfile = None
 	logger.info(f"Looking for {mappath}...")
 	gen_bmap = True
@@ -76,7 +81,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 		creator.generate(True)
 		mapfileb = open(mapfile.name, "rb")
 
-	with open(filepath, "rb") as src_file:
+	with open_compressed_file(filepath, "rb") as src_file:
 		writer = BmapCopy.BmapBdevCopy(src_file, dev, mapfileb, src_size)
 		writer.copy(False, True)
 	mapfileb.close()
@@ -92,9 +97,9 @@ def write_raw(args):
 		logger.info(f"File {filepath} does not exist", file=sys.stderr)
 		sys.exit(-1)
 	logger.info(f"Reading {filepath}...")
-	with open(filepath, "rb") as file:
-		blob = file.read(-1)
-		size = len(blob)
+	size = (
+		os.path.getsize(filepath) if get_compression_method(filepath) is None else None
+	)
 	logger.info(f"Copying {filepath} to {devpath}...")
 	with open(devpath, "rb+") as dev:
 		bmap_copy(filepath, dev, size)

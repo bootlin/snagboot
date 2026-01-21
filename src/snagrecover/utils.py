@@ -1,4 +1,5 @@
 import sys
+import os
 import platform
 import re
 import usb
@@ -15,8 +16,48 @@ from snagrecover.usb import SnagbootUSBContext
 import yaml
 import importlib.resources
 
+import lzma
+import bz2
+import gzip
+
 USB_RETRIES = 9
 USB_INTERVAL = 1
+
+
+def get_compression_method(path: str) -> str:
+	path_head, ext = os.path.splitext(path)
+
+	if ext in [".xz", ".bz2", ".gz"]:
+		return ext[1:]
+
+	return None
+
+
+def get_bmap_path(path: str):
+	comp = get_compression_method(path)
+
+	if comp is not None:
+		path_head, _ = os.path.splitext(path)
+		return path_head + ".bmap"
+	else:
+		return path + ".bmap"
+
+
+def open_compressed_file(path: str, mode):
+	comp = get_compression_method(path)
+
+	if comp == "xz":
+		file = lzma.open(path, mode)
+	elif comp == "bz2":
+		file = bz2.open(path, mode)
+	elif comp == "gz":
+		file = gzip.open(path, mode)
+	else:
+		return open(path, mode)
+
+	logger.info(f"Opening {path} with on-the-fly decompression")
+
+	return file
 
 
 def get_supported_socs():

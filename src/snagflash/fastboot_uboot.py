@@ -10,6 +10,11 @@ from math import ceil
 logger = logging.getLogger("snagflash")
 
 from snagflash.bmaptools.BmapCopy import Bmap
+from snagrecover.utils import (
+	open_compressed_file,
+	get_bmap_path,
+	get_compression_method,
+)
 
 MMC_LBA_SIZE = 512
 
@@ -48,6 +53,8 @@ flash <image_path> <image_offset> [<partition_name>]
 	parse it and flash only the block ranges described.
 	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
 	by "hwpart <number>"
+
+	**Note:** Source files with ".xz", ".bz2" or ".gz" extensions will be automatically decompressed!
 
 Environment variables:
 
@@ -235,14 +242,14 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 			flash_func = functools.partial(self.flash_mtd, part=part)
 
-		bmap_path = path + ".bmap"
+		bmap_path = get_bmap_path(path)
 
 		ranges = []
 		if os.path.exists(bmap_path):
 			logger.info("Found a bmap file, listing sparse ranges...")
 
 			# Verify bmap checksums and get list of ranges
-			with open(path, "rb") as image_file:
+			with open_compressed_file(path, "rb") as image_file:
 				with open(bmap_path, "r") as bmap_file:
 					bmap = Bmap(image_file, bmap_file)
 					list(bmap._get_data(verify=True))
@@ -252,10 +259,15 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 						size = (end - start + 1) * bmap.block_size
 						ranges.append((size, range_offset))
 		else:
-			ranges.append((os.path.getsize(path), 0))
+			full_size = (
+				os.path.getsize(path)
+				if get_compression_method(path) is None
+				else sys.maxint
+			)
+			ranges.append((full_size, 0))
 
 		multi_ranges = len(ranges) > 1
-		with open(path, "rb") as image_file:
+		with open_compressed_file(path, "rb") as image_file:
 			i = 0
 			for size, range_offset in ranges:
 				if multi_ranges:
