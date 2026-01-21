@@ -135,16 +135,10 @@ class Fastboot:
 			self.dev.write(self.ep_out, chunk, timeout=self.timeout)
 		self.response()
 
-	def download_section(self, file, size: int, padding: int = 0):
-		prev_pos = file.tell()
-		blob = file.read(size)
-		file.seek(prev_pos)
-
-		self.send(blob, padding)
-
 	def download(self, path: str, padding: int = 0):
 		with open(path, "rb") as file:
-			self.download_section(file, -1, padding)
+			blob = file.read(-1)
+			self.send(blob, padding)
 
 	def erase(self, part: str):
 		packet = f"erase:{part}\x00"

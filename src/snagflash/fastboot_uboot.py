@@ -4,6 +4,8 @@ import logging
 import functools
 import random
 import os
+import sys
+from math import ceil
 
 logger = logging.getLogger("snagflash")
 
@@ -266,25 +268,66 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				)
 				i += 1
 
+	def flash_range(
+		self, file, flash_func, file_size: int, dst_offset: int, align: int
+	):
+		fb_addr = int(self.request_env("fb-addr"), 0)
+		fb_size_aligned = (self.fb_size // align) * align
+
+		file_bytes_flashed = 0
+		while file_bytes_flashed < file_size:
+			bytes_remaining = file_size - file_bytes_flashed
+			read_size = min(bytes_remaining, fb_size_aligned)
+
+			logger.debug(f"range start 0x{file.tell():x} read size 0x{read_size:x}")
+
+			blob = file.read(read_size)
+			bytes_read = len(blob)
+
+			if bytes_read == 0:
+				break
+
+			padding = align * ceil(bytes_read / align) - bytes_read
+			blob += b"\x00" * padding
+
+			logger.debug(
+				f"send size 0x{bytes_read + padding:x} dst offset 0x{dst_offset + file_bytes_flashed:x}"
+			)
+
+			flash_func(
+				fb_addr,
+				blob,
+				dst_offset + file_bytes_flashed,
+			)
+
+			file_bytes_flashed += bytes_read
+
+			logger.info(
+				f"flashed {file_bytes_flashed}/{file_size if file_size < sys.maxsize else '?'} bytes"
+			)
+
+		if file_size < sys.maxsize and file_bytes_flashed < file_size:
+			raise ValueError(
+				f"Truncated flash, only {file_bytes_flashed} bytes were flashed instead of {file_size} bytes"
+			)
+
 	def flash_mtd_section(
 		self,
 		fb_addr: int,
-		file,
-		file_size: int,
-		padding: int,
-		part: str,
+		blob: bytes,
 		dest_offset: int,
+		part: str,
 	):
 		fast = self.fast
-		dest_size = file_size + padding
+		dest_size = len(blob)
 
 		logger.debug(
 			f"erasing flash area part {part} offset 0x{dest_offset:x} size 0x{dest_size:x}..."
 		)
 		fast.oem_run(f"mtd erase {part} 0x{dest_offset:x} 0x{dest_size:x}")
 
-		logger.info(f"flashing file range start 0x{file.tell():x} size 0x{file_size:x}")
-		fast.download_section(file, file_size, padding=padding)
+		logger.debug("flashing file range")
+		fast.send(blob)
 		fast.oem_run(
 			f"mtd write {part} 0x{fb_addr:x} 0x{dest_offset:x} 0x{dest_size:x}"
 		)
@@ -292,8 +335,6 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 	def flash_mtd(self, file, offset: int, part: str, file_size: int):
 		logger.info("Flashing to MTD device...")
 
-		fb_addr = int(self.request_env("fb-addr"), 0)
-		fb_size = self.fb_size
 		eraseblk_size = int(self.request_env("eraseblk-size"), 0)
 
 		if offset % eraseblk_size != 0:
@@ -301,54 +342,18 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				f"offset 0x{offset:x} is not aligned with an eraseblock"
 			)
 
-		if file_size % eraseblk_size != 0:
-			logger.info("padding file size to align it with an eraseblock...")
-			padding = eraseblk_size - (file_size % eraseblk_size)
-		else:
-			padding = 0
-
-		flash_size = file_size + padding
-		if flash_size <= fb_size:
-			self.flash_mtd_section(fb_addr, file, file_size, padding, part, offset)
-			return
-
-		if fb_size % eraseblk_size != 0:
-			logger.debug(
-				"clipping fastboot buffer size to align it with an eraseblock..."
-			)
-			fb_size = eraseblk_size * (fb_size // eraseblk_size)
-
-		nchunks = flash_size // fb_size
-		remainder = flash_size % fb_size
-
-		for i in range(nchunks):
-			logger.info(f"flashing section {i + 1}/{nchunks}")
-			self.flash_mtd_section(
-				fb_addr,
-				file,
-				fb_size,
-				0,
-				part,
-				offset * i * fb_size,
-			)
-			file.seek(fb_size, os.SEEK_CUR)
-
-		if remainder > 0:
-			logger.info("flashing remainder")
-			self.flash_mtd_section(
-				fb_addr,
-				file,
-				remainder,
-				0,
-				part,
-				offset + nchunks * fb_size,
-			)
+		self.flash_range(
+			file,
+			functools.partial(self.flash_mtd_section, part=part),
+			file_size,
+			offset,
+			eraseblk_size,
+		)
 
 	def flash_mmc_section(
 		self,
 		fb_addr: int,
-		file,
-		file_size: int,
+		blob: bytes,
 		dest_offset: int,
 	):
 		fast = self.fast
@@ -358,15 +363,9 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				f"Given offset {dest_offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
 			)
 
-		if file_size % MMC_LBA_SIZE != 0:
-			raise ValueError(
-				f"Given size {file_size} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
-			)
-
-		fast.download_section(file, file_size)
-
+		fast.send(blob)
 		fast.oem_run(
-			f"mmc write 0x{fb_addr:x} 0x{dest_offset // MMC_LBA_SIZE:x} 0x{file_size // MMC_LBA_SIZE:x}"
+			f"mmc write 0x{fb_addr:x} 0x{dest_offset // MMC_LBA_SIZE:x} 0x{len(blob) // MMC_LBA_SIZE:x}"
 		)
 
 	def flash_mmc(
@@ -381,15 +380,10 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		fast = self.fast
 
-		fb_addr = int(self.request_env("fb-addr"), 0)
-		fb_size = self.fb_size
-
 		if offset % MMC_LBA_SIZE != 0:
 			raise ValueError(
 				f"Given offset {offset} is not aligned with a {MMC_LBA_SIZE}-byte LBA!"
 			)
-
-		fb_size_aligned = (fb_size // MMC_LBA_SIZE) * MMC_LBA_SIZE
 
 		if part is None:
 			logger.debug(f"setting MMC device to {device_num}")
@@ -411,42 +405,13 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			)
 			part_start = int(fast.getvar("part_start"), 16) * MMC_LBA_SIZE
 
-		if file_size <= fb_size:
-			logger.info(
-				f"flashing file range start 0x{file.tell():x} size 0x{file_size:x}"
-			)
-			self.flash_mmc_section(
-				fb_addr,
-				file,
-				file_size,
-				part_start + offset,
-			)
-			return
-
-		logger.info("huge file detected, flashing in sections")
-		nchunks = file_size // fb_size_aligned
-		remainder = file_size % fb_size_aligned
-
-		for i in range(nchunks):
-			logger.info(f"flashing section {i + 1}/{nchunks}")
-			target_offset = part_start + offset + i * fb_size
-			self.flash_mmc_section(
-				fb_addr,
-				file,
-				fb_size_aligned,
-				target_offset,
-			)
-			file.seek(fb_size_aligned, os.SEEK_CUR)
-
-		if remainder > 0:
-			logger.info("flashing remainder")
-			target_offset = part_start + offset + nchunks * fb_size
-			self.flash_mmc_section(
-				fb_addr,
-				file,
-				remainder,
-				target_offset,
-			)
+		self.flash_range(
+			file,
+			self.flash_mmc_section,
+			file_size,
+			part_start + offset,
+			MMC_LBA_SIZE,
+		)
 
 	def run(self, cmds: list):
 		for cmd in cmds:
