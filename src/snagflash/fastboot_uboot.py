@@ -240,14 +240,15 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			logger.info("Found a bmap file, listing sparse ranges...")
 
 			# Verify bmap checksums and get list of ranges
-			with open(bmap_path, "r") as bmap_file:
-				bmap = Bmap(image_file, bmap_file)
-				list(bmap._get_data(verify=True))
+			with open(path, "rb") as image_file:
+				with open(bmap_path, "r") as bmap_file:
+					bmap = Bmap(image_file, bmap_file)
+					list(bmap._get_data(verify=True))
 
-				for start, end, _ in bmap._get_block_ranges():
-					range_offset = bmap.block_size * start
-					size = (end - start + 1) * bmap.block_size
-					ranges.append((size, range_offset))
+					for start, end, _ in bmap._get_block_ranges():
+						range_offset = bmap.block_size * start
+						size = (end - start + 1) * bmap.block_size
+						ranges.append((size, range_offset))
 		else:
 			ranges.append((os.path.getsize(path), 0))
 
