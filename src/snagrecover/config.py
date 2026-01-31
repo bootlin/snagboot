@@ -83,6 +83,7 @@ default_usb_ids = {
 
 recovery_config = {}  # Global immutable config to be initialized with CLI args
 
+
 def complete_fw_paths(fw_config: dict, this_file_path: str) -> None:
 	paths_relative_to_conf = fw_config.pop("paths-relative-to", "CWD")
 	if paths_relative_to_conf == "CWD":

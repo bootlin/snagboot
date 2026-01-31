@@ -16,7 +16,11 @@ def list_soc_models():
 	socs = get_supported_socs()
 	aliases = get_soc_aliases(socs)
 
-	return list(socs["tested"].keys()) + list(socs["untested"].keys()) + list(aliases.keys())
+	return (
+		list(socs["tested"].keys())
+		+ list(socs["untested"].keys())
+		+ list(aliases.keys())
+	)
 
 
 soc_model_pattern = "(" + "|".join(list_soc_models()) + ")"

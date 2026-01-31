@@ -371,7 +371,9 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		fast.download_section(path, file_offset, file_size)
 
-		fast.oem_run(f"mmc write 0x{fb_addr:x} 0x{dest_offset // MMC_LBA_SIZE:x} 0x{file_size // MMC_LBA_SIZE:x}")
+		fast.oem_run(
+			f"mmc write 0x{fb_addr:x} 0x{dest_offset // MMC_LBA_SIZE:x} 0x{file_size // MMC_LBA_SIZE:x}"
+		)
 
 	def flash_mmc(
 		self,

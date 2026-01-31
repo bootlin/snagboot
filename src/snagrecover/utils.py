@@ -28,6 +28,7 @@ def get_supported_socs():
 
 	return yaml.safe_load(yaml_text)
 
+
 def get_soc_aliases(socs: dict):
 	all_socs = {**socs["tested"], **socs["untested"]}
 	aliases = {}
@@ -42,6 +43,7 @@ def get_soc_aliases(socs: dict):
 			aliases[alias] = model
 
 	return aliases
+
 
 def resolve_soc_model(soc_model: str):
 	"""
@@ -62,6 +64,7 @@ def resolve_soc_model(soc_model: str):
 		)
 
 	return soc_model
+
 
 def get_family(soc_model: str) -> str:
 	socs = get_supported_socs()
