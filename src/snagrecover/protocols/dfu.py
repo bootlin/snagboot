@@ -167,14 +167,21 @@ class DFU:
 		state = self.get_status()
 		while state != DFU.state_codes["dfuIDLE"]:
 			if state == DFU.state_codes["dfuMANIFEST"]:
-				state = self.get_status()
+				try:
+					# this fails on RZ/N1, but isn't fatal
+					state = self.get_status()
+				except usb.core.USBError:
+					logger.info("Could not read status after end of manifest phase")
+					return True
 				time.sleep(1)
 			elif state == DFU.state_codes["dfuMANIFEST-SYNC"]:
 				try:
 					# this fails on AM625, but is still necessary
 					state = self.get_status()
 				except usb.core.USBError:
-					logger.info("Could not read status after end of manifest phase")
+					logger.info(
+						"Could not read status after end of manifest-sync phase"
+					)
 					return True
 			elif state == DFU.state_codes["dfuMANIFEST-WAIT-RESET"]:
 				self.detach()

@@ -55,6 +55,8 @@ tested:
         family: keembay
   r8:
         family: sunxi
+  rzn1d:
+        family: rzn1
   sama5d2:
         family: sama5
   sama5d3:
@@ -156,6 +158,10 @@ untested:
         family: sunxi
   r528:
         family: sunxi
+  rzn1s:
+        family: rzn1
+  rzn1l:
+        family: rzn1
   t113-s3:
         family: sunxi
   v3s:

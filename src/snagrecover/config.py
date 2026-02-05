@@ -79,6 +79,7 @@ default_usb_ids = {
 	},
 	"bcm": {"bcm2711": "0a5c:2711", "bcm2712": "0a5c:2712"},
 	"amlogic": "1b8e:c003",
+	"rzn1": "045b:0239",
 }
 
 recovery_config = {}  # Global immutable config to be initialized with CLI args

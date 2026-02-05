@@ -131,6 +131,17 @@ def keembay_run(port, fw_name: str, fw_blob: bytes):
 	return None
 
 
+def rzn1_run(dev, fw_name: str, fw_blob: bytes):
+	"""
+	There isn't a lot of complicated logic to handle RZ/N1 firmware
+	so we can leave it in the common module for now
+	"""
+	dfu_cmd = dfu.DFU(dev, stm32=False)
+	logger.info("Downloading file...")
+	dfu_cmd.download_and_run(fw_blob, 0, offset=0, size=len(fw_blob))
+	logger.info("Done")
+
+
 def check_fw_blob(fw_blob: bytes):
 	"""
 	Do a quick sanity check on the firmware contents.  If the file passed
@@ -229,6 +240,8 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		from snagrecover.firmware.amlogic_fw import amlogic_run
 
 		amlogic_run(port, fw_name, fw_blob, subfw_name)
+	elif soc_family == "rzn1":
+		rzn1_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")

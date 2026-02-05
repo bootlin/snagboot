@@ -168,6 +168,11 @@ This USB cable needs to power up the board, ie it needs to have its internal VBU
 
 **DISCLAIMER: USB A to A type of cable can seriously harm your hardware, use it at your own risk.**
 
+### Renesas RZ/N1
+
+Set up your board to boot from USB DFU, connect the board to the USB device port, power the board if necessary. A new USB device should appear on your host system.
+See the U-Boot RZ/N1 [documentation](https://docs.u-boot.org/en/latest/board/renesas/rzn1.html) for more information.
+
 ## Preparing recovery firmware
 
 Snagrecover requires firmware binaries to successfully recover the board. Each
@@ -580,6 +585,24 @@ configuration:
 configuration:
   * path
   * load-addr (optional): load address of U-Boot, if not provided a default value is used.
+
+### For Renesas RZ/N1 devices
+
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/rzn1d-snarc.yaml)
+
+As long as U-Boot proper is small enough to fit in internal RAM, no other boot stage is needed. U-Boot will initialize external RAM and relocate itself in it.
+
+The U-Boot image given to snagrecover should be packaged in the SPKG format. Binman can be used to generate an SPKG image from u-boot.bin:
+
+```bash
+cd u-boot
+./tools/binman/binman -v5 build -d <path/to/your/dtb>  -O <path/to/output/dir>
+```
+
+**u-boot:** U-Boot proper in SPKG format. Must fit in internal RAM.
+
+configuration:
+  * path
 
 ## Running snagrecover
 

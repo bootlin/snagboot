@@ -89,3 +89,6 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0a5c", ATTRS{idProduct}=="2712", MODE="0660"
 
 # AMLogic rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1b8e", ATTRS{idProduct}=="c003", MODE="0660", TAG+="uaccess"
+
+# Renesas rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="045b", ATTRS{idProduct}=="0239", MODE="0660", TAG+="uaccess"
