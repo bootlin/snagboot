@@ -34,6 +34,7 @@ except Exception as e:
 	# Skip USB tests if no backend is available (e.g., in Windows CI env)
 	print(f"Skipping USB tests: {e}")
 
+print("Executing unit tests")
 unit_tests = unittest.TestLoader().discover("tests", "*.py")
 
 unit_runner = unittest.TextTestRunner()
