@@ -35,10 +35,16 @@ See doc/android/fastboot-protocol.rst in the U-Boot sources
 for more information on fastboot support in U-Boot.
 """
 
+FASTBOOT_UNSUPPORTED_CMD_RESPONSE = b"Unsupported command"
+FASTBOOT_UNRECOGNIZED_CMD_RESPONSE = b"unrecognized command"
+
+CHECK_OEM_RUN_CMD_SUPPORT = "oem run:version\x00"
+
 
 class FastbootError(Exception):
-	def __init__(self, message):
+	def __init__(self, message, data=None):
 		self.message = message
+		self.data = data
 		super().__init__(self.message)
 
 	def __str__(self):
@@ -86,6 +92,22 @@ class Fastboot:
 
 		self.max_size = MAX_LIBUSB_TRANSFER_SIZE
 
+		# The support of OEM commands is depending on the configuration
+		# u-boot was built with, so they need to be probed at runtime.
+		# The command handler for oem run is actually ucmd in the sources,
+		# therefore it's safe to use this as fallback.
+		self.oem_run_basecmd = (
+			"oem run" if self._is_cmd_supported(CHECK_OEM_RUN_CMD_SUPPORT) else "UCmd"
+		)
+
+	def _is_cmd_supported(self, cmd: str) -> bool:
+		try:
+			self.cmd(cmd)
+		except FastbootError as e:
+			if e.data and FASTBOOT_UNSUPPORTED_CMD_RESPONSE in e.data:
+				return False
+		return True
+
 	def cmd(self, packet: bytes):
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
 		status = ""
@@ -98,7 +120,9 @@ class Fastboot:
 			elif status == b"TEXT":
 				logger.debug(f"(bootloader) {bytes(ret[4:256])}", end="")
 			elif status == b"FAIL":
-				raise FastbootError(f"Fastboot fail with message: {bytes(ret[4:256])}")
+				raise FastbootError(
+					f"Fastboot fail with message: {bytes(ret[4:256])}", ret[4:256]
+				)
 			elif status == b"OKAY":
 				logger.debug("fastboot OKAY")
 				return bytes(ret[4:])
@@ -191,7 +215,7 @@ class Fastboot:
 		"""
 		Execute an arbitrary U-Boot command
 		"""
-		packet = f"oem run:{cmd}\x00"
+		packet = f"{self.oem_run_basecmd}:{cmd}\x00"
 		self.cmd(packet)
 
 	def oem_format(self):

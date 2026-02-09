@@ -18,10 +18,8 @@ class ResponseType(Enum):
 
 
 class TestFastboot(unittest.TestCase):
-	@classmethod
-	def setUpClass(cls) -> None:
-		cls.mock_device = MagicMock()
-
+	@staticmethod
+	def _get_usb_device_mock() -> MagicMock:
 		# Mock endpoint with bulk IN/OUT attributes
 		mock_ep_in = MagicMock()
 		mock_ep_in.bmAttributes = 0x02  # ENDPOINT_TYPE_BULK
@@ -38,13 +36,24 @@ class TestFastboot(unittest.TestCase):
 		mock_cfg = MagicMock()
 		mock_cfg.interfaces.return_value = [mock_intf]
 
-		# Set up device mock
-		cls.mock_device.get_active_configuration.return_value = mock_cfg
+		mock_device = MagicMock()
+		mock_device.get_active_configuration.return_value = mock_cfg
 
-		cls.fastboot = Fastboot(cls.mock_device)
+		return mock_device
+
+	def _setup_fastboot(self, has_oem_run: bool = True) -> Fastboot:
+		self.mock_device = self._get_usb_device_mock()
+		self.mock_device.read.side_effect = [
+			b"FAILunrecognized command\x00"
+			if has_oem_run
+			else b"FAILUnsupported command\x00"
+		]
+		self.fastboot = Fastboot(self.mock_device)
+		self.assert_device_write("oem run:version\x00")
+		self.mock_device.reset_mock()
 
 	def setUp(self) -> None:
-		self.mock_device.reset_mock()
+		self._setup_fastboot()
 
 	def assert_device_write(self, expected_cmd: str) -> None:
 		self.mock_device.write.assert_called_once_with(
@@ -85,3 +94,20 @@ class TestFastboot(unittest.TestCase):
 				]
 				self.fastboot.cmd(DUMMY_CMD)
 				self.assert_device_write(DUMMY_CMD)
+
+	# --- oem_run ---
+
+	def test_oem_run_accepted(self) -> None:
+		subcommand = "test_oem_subcommand"
+		self.expect_device_response(ResponseType.OKAY)
+		self.fastboot.oem_run(subcommand)
+		expected_cmd = f"oem run:{subcommand}\x00"
+		self.assert_device_write(expected_cmd)
+
+	def test_oem_run_unavailable_fallback_to_ucmd(self) -> None:
+		self._setup_fastboot(has_oem_run=False)
+
+		subcommand = "test_oem_subcommand"
+		self.expect_device_response(ResponseType.OKAY, b" executed via UCmd")
+		self.fastboot.oem_run(subcommand)
+		self.assert_device_write(f"UCmd:{subcommand}\x00")
