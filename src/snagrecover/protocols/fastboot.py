@@ -21,6 +21,8 @@ import os
 import usb
 import time
 import tempfile
+from typing import Optional, Union
+
 from snagrecover import utils
 from snagflash.android_sparse_file.utils import split
 
@@ -108,42 +110,27 @@ class Fastboot:
 				return False
 		return True
 
-	def cmd(self, packet: bytes):
-		self.dev.write(self.ep_out, packet, timeout=self.timeout)
-		status = ""
+	def cmd(
+		self, packet: Optional[bytes] = None, loglevel=logging.DEBUG
+	) -> Union[bytes, int]:
+		if packet is not None:
+			self.dev.write(self.ep_out, packet, timeout=self.timeout)
 		t0 = time.time()
 		while time.time() - t0 < 10 * self.timeout:
 			ret = self.dev.read(self.ep_in, 256, timeout=self.timeout)
 			status = bytes(ret[:4])
-			if status == b"INFO":
-				logger.debug(f"(bootloader) {bytes(ret[4:256])}")
-			elif status == b"TEXT":
-				logger.debug(f"(bootloader) {bytes(ret[4:256])}", end="")
-			elif status == b"FAIL":
-				raise FastbootError(
-					f"Fastboot fail with message: {bytes(ret[4:256])}", ret[4:256]
-				)
-			elif status == b"OKAY":
-				logger.debug("fastboot OKAY")
-				return bytes(ret[4:])
-			elif status == b"DATA":
-				length = int("0x" + (bytes(ret[4:12]).decode("ascii")), base=16)
-				logger.debug(f"fastboot DATA length: {length}")
-				return length
-		raise FastbootError("Timeout while completing fastboot transaction")
-
-	def response(self):
-		t0 = time.time()
-		while time.time() - t0 < 10 * self.timeout:
-			ret = self.dev.read(self.ep_in, 256, timeout=self.timeout)
-			status = bytes(ret[:4])
+			data = bytes(ret[4:256])
 			if status in [b"INFO", b"TEXT"]:
-				logger.info(f"(bootloader) {bytes(ret[4:256])}", end="")
+				logger.log(loglevel, f"(bootloader) {data}", end="")
 			elif status == b"FAIL":
-				raise FastbootError(f"Fastboot fail with message: {bytes(ret[4:256])}")
+				raise FastbootError(f"Fastboot fail with message: {data}", data)
 			elif status == b"OKAY":
-				logger.info("fastboot OKAY")
-				return bytes(ret[4:])
+				logger.log(loglevel, "fastboot OKAY")
+				return data
+			elif packet is not None and status == b"DATA":
+				length = int("0x" + (data.decode("ascii")), base=16)
+				logger.log(loglevel, f"fastboot DATA length: {length}")
+				return length
 		raise FastbootError("Timeout while completing fastboot transaction")
 
 	def getvar(self, var: str):
@@ -157,7 +144,7 @@ class Fastboot:
 		self.cmd(packet)
 		for chunk in utils.dnload_iter(blob + b"\x00" * padding, self.max_size):
 			self.dev.write(self.ep_out, chunk, timeout=self.timeout)
-		self.response()
+		self.cmd(loglevel=logging.INFO)
 
 	def download(self, path: str, padding: int = 0):
 		with open(path, "rb") as file:
