@@ -29,17 +29,17 @@ import sys
 if platform.system() == "Linux":
 	from snagflash.ums import ums
 
-	protocols = ["dfu", "ums", "fastboot", "fastboot-uboot"]
+	protocols = ["fastboot", "fastboot-uboot", "ums", "dfu"]
 else:
-	protocols = ["dfu", "fastboot", "fastboot-uboot"]
+	protocols = ["fastboot", "fastboot-uboot", "dfu"]
 
 
 def cli():
 	example = """Examples:
 	# U-Boot: fastboot usb 0
-	snagflash -P fastboot-uboot -p 0483:0afb -I flash.cmd
-	# U-Boot: fastboot usb 0
 	snagflash -P fastboot -p 0483:0afb -f download:boot.img -f flash:0:1 -f boot
+	# U-Boot: fastboot usb 0
+	snagflash -P fastboot-uboot -p 0483:0afb -I flash.cmd
 	# U-Boot: ums 0 mmc 0
 	snagflash -P ums -s binaries/u-boot.stm32 -b /dev/sdb1
 	snagflash -P ums -s binaries/u-boot.stm32 -d /mnt/u-boot.stm32
