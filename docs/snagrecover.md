@@ -522,7 +522,7 @@ along with a [genimage.cfg](https://github.com/raspberrypi/buildroot/blob/mass-s
  - memsys\<nn>.bin: more RAM inits
  - bootmain: the loader for the disk image
 
-In the case of Raspberry Pi, a ready made "bootfiles" firmware can be found [here](https://github.com/raspberrypi/usbboot/commit/798ea2ef893bfa11fe3dba0e088cbc9b862184a1).
+In the case of Raspberry Pi, a ready made "bootfiles" firmware can be found [here](https://github.com/raspberrypi/usbboot/blob/798ea2ef893bfa11fe3dba0e088cbc9b862184a1/firmware/bootfiles.bin).
 
 configuration:
  * path
