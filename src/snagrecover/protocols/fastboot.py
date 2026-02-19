@@ -121,7 +121,7 @@ class Fastboot:
 			status = bytes(ret[:4])
 			data = bytes(ret[4:256])
 			if status in [b"INFO", b"TEXT"]:
-				logger.log(loglevel, f"(bootloader) {data}", end="")
+				logger.log(loglevel, f"(bootloader) {data}")
 			elif status == b"FAIL":
 				raise FastbootError(f"Fastboot fail with message: {data}", data)
 			elif status == b"OKAY":
