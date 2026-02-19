@@ -93,14 +93,7 @@ class Fastboot:
 		# limits for some USB kernel syscalls.
 
 		self.max_size = MAX_LIBUSB_TRANSFER_SIZE
-
-		# The support of OEM commands is depending on the configuration
-		# u-boot was built with, so they need to be probed at runtime.
-		# The command handler for oem run is actually ucmd in the sources,
-		# therefore it's safe to use this as fallback.
-		self.oem_run_basecmd = (
-			"oem run" if self._is_cmd_supported(CHECK_OEM_RUN_CMD_SUPPORT) else "UCmd"
-		)
+		self.oem_run_basecmd = None
 
 	def _is_cmd_supported(self, cmd: str) -> bool:
 		try:
@@ -202,6 +195,17 @@ class Fastboot:
 		"""
 		Execute an arbitrary U-Boot command
 		"""
+		if self.oem_run_basecmd is None:
+			# The support of OEM commands is depending on the configuration
+			# u-boot was built with, so they need to be probed at runtime.
+			# The command handler for oem run is actually ucmd in the sources,
+			# therefore it's safe to use this as fallback.
+			self.oem_run_basecmd = (
+				"oem run"
+				if self._is_cmd_supported(CHECK_OEM_RUN_CMD_SUPPORT)
+				else "UCmd"
+			)
+
 		packet = f"{self.oem_run_basecmd}:{cmd}\x00"
 		self.cmd(packet)
 
