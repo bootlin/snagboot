@@ -365,6 +365,8 @@ structure depends on the SoC and build process.
 configuration:
  * path
 
+**Note:** Barebox has also been used successfully with this recovery flow.
+
 ### For TI AM335x devices
 
 [example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/am335x-beaglebone-black.yaml)
