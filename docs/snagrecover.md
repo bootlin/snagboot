@@ -132,6 +132,9 @@ $ sudo ./am335x_usb_setup.sh
 **Note:** If you have changed the ROM code's or SPL's USB VID/PID, you have to
 pass the new values to the script using the -s and -r args.
 
+> [!WARNING]
+> Ensure the `root` account is **not locked**. If it is, the script will fail.
+
 At this point, we recommend that you change your shell prompt, so you do not
 forget to log out of the special shell after recovery.
 
