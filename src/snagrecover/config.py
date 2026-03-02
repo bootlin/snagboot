@@ -85,11 +85,16 @@ default_usb_ids = {
 recovery_config = {}  # Global immutable config to be initialized with CLI args
 
 
-def complete_fw_paths(fw_config: dict, this_file_path: str) -> None:
+def complete_fw_paths(fw_config: dict, this_file_path: str = None) -> None:
 	paths_relative_to_conf = fw_config.pop("paths-relative-to", "CWD")
 	if paths_relative_to_conf == "CWD":
 		return
 	elif paths_relative_to_conf == "THIS_FILE":
+		if this_file_path is None:
+			cli_error(
+				"'paths-relative-to: THIS_FILE' is only valid when passing a firmware configuration by path!"
+			)
+
 		path_relative_to = os.path.dirname(this_file_path)
 	else:
 		path_relative_to = paths_relative_to_conf
@@ -135,6 +140,7 @@ def init_config(args: list):
 				cli_error(
 					"firmware config to CLI did not evaluate to Python3 dict: {fw}"
 				)
+			complete_fw_paths(fw)
 			fw_configs = {**fw_configs, **fw}
 		recovery_config["firmware"] = fw_configs
 		if args.firmware_file:
