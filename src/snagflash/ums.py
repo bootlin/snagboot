@@ -118,7 +118,7 @@ def ums(args):
 			if dirname != "":
 				wait_filepath(dirname)
 			logger.info(f"Copying {args.src} to {args.dest}...")
-		shutil.copy(args.src, args.dest)
+		shutil.copyfile(args.src, args.dest)
 		logger.info("Done")
 	elif args.blockdev:
 		write_raw(args)
