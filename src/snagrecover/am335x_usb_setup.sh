@@ -168,13 +168,6 @@ poll_interface () {
 	fi
 }
 
-{
-while true; do
-	poll_interface
-	sleep 0.1
-done
-} & poller_id=$!
-
 #network namespace
 if test -f "/run/netns/$NETNS_NAME"; then
 	fail_on_error "The network namespace $NETNS_NAME already exists! Cancelling operation..."
@@ -187,6 +180,13 @@ ip netns exec "$NETNS_NAME" iptables -t nat -A PREROUTING -p udp --dport 67 -j D
 ip netns exec "$NETNS_NAME" iptables -t nat -A PREROUTING -p udp --dport 69 -j DNAT --to-destination :9069
 ip netns exec "$NETNS_NAME" iptables -t nat -A POSTROUTING -p udp --sport 9067 -j MASQUERADE --to-ports 67
 ip netns exec "$NETNS_NAME" iptables -t nat -A POSTROUTING -p udp --sport 9069 -j MASQUERADE --to-ports 69
+
+{
+while true; do
+	poll_interface
+	sleep 0.1
+done
+} & poller_id=$!
 
 #start new shell
 printf "Logging user %s into new shell\n" "$SUDOER"
