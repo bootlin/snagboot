@@ -142,13 +142,18 @@ fi
 
 #check usb args
 USB_REGEX="^[[:xdigit:]]{4}:[[:xdigit:]]{4}$"
-if ! echo "$ROMUSB" | grep -qE "$USB_REGEX"; then
-	echo "Missing -r flag or invalid format for ROM USB gadget address vid:pid, using default value"
+if [ -z "$ROMUSB" ]; then
+	echo "Using default value for ROM USB gadget vendor/product IDs"
 	ROMUSB=$DEFAULT_ROMUSB
+elif ! echo "$ROMUSB" | grep -qE "$USB_REGEX"; then
+	fail_on_error "Missing -r flag or invalid format for ROM USB gadget address vid:pid"
 fi
-if ! echo "$SPLUSB" | grep -qE "$USB_REGEX"; then
-	echo "Missing -s flag or invalid format for SPL USB gadget address vid:pid, using default value"
+
+if [ -z "$SPLUSB" ]; then
+	echo "Using default value for SPL USB gadget vendor/product IDs"
 	SPLUSB=$DEFAULT_SPLUSB
+elif ! echo "$SPLUSB" | grep -qE "$USB_REGEX"; then
+	fail_on_error "Missing -s flag or invalid format for SPL USB gadget address vid:pid"
 fi
 
 #strip leading zeroes and replace colons with slashes
