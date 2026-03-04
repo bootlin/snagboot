@@ -37,6 +37,7 @@
 
 print_usage () {
 	echo "am335x_usb_setup.sh: Create network namespace and udev rules necessary for AM335x USB recovery"
+	echo "-p bus-port1.port2.[...] Ethernet USB gadget port path"
 	echo "-r vid:pid ROM Ethernet USB gadget address"
 	echo "-s vid:pid SPL Ethernet USB gadget address"
 	echo "-n netns_name Name of the network namespace to be created, "
@@ -92,8 +93,9 @@ config_interface () {
 }
 
 
-while getopts "r:s:n:ch:" opt; do
+while getopts "p:r:s:n:ch:" opt; do
   case $opt in
+    p) USBPATH=$OPTARG;;
     r) ROMUSB=$OPTARG;;
     s) SPLUSB=$OPTARG;;
     n) NETNS_NAME=$OPTARG;;
@@ -141,35 +143,59 @@ if [ ! -f "$SUDOER_BASHRC" ]; then
 fi
 
 #check usb args
-USB_REGEX="^[[:xdigit:]]{4}:[[:xdigit:]]{4}$"
-if [ -z "$ROMUSB" ]; then
-	echo "Using default value for ROM USB gadget vendor/product IDs"
-	ROMUSB=$DEFAULT_ROMUSB
-elif ! echo "$ROMUSB" | grep -qE "$USB_REGEX"; then
-	fail_on_error "Missing -r flag or invalid format for ROM USB gadget address vid:pid"
-fi
+USB_PATH_REGEX="^[0-9]+-[0-9]+(\.[0-9]+)*$"
+if [ -n "$USBPATH" ]; then
+	if [ -n "$ROMUSB" ] || [ -n "$SPLUSB" ]; then
+		fail_on_error "Can't use '-p' option together with '-s' and '-r' options"
+	fi
 
-if [ -z "$SPLUSB" ]; then
-	echo "Using default value for SPL USB gadget vendor/product IDs"
-	SPLUSB=$DEFAULT_SPLUSB
-elif ! echo "$SPLUSB" | grep -qE "$USB_REGEX"; then
-	fail_on_error "Missing -s flag or invalid format for SPL USB gadget address vid:pid"
-fi
+	if ! echo "$USBPATH" | grep -qE "$USB_PATH_REGEX"; then
+		fail_on_error "Invalid format for USB port path, expecting: 'bus-port1.port2.[...].portn'"
+	fi
+else
+	USB_ID_REGEX="^[[:xdigit:]]{4}:[[:xdigit:]]{4}$"
+	if [ -z "$ROMUSB" ]; then
+		echo "Using default value for ROM USB gadget vendor/product IDs"
+		ROMUSB=$DEFAULT_ROMUSB
+	elif ! echo "$ROMUSB" | grep -qE "$USB_ID_REGEX"; then
+		fail_on_error "Missing -r flag or invalid format for ROM USB gadget address vid:pid"
+	fi
 
-#strip leading zeroes and replace colons with slashes
-ROMUSB=$(printf "%s/" "$ROMUSB" | sed -e 's/^0*//' -e 's/:0*/:/' -e 's/:/\//')
-SPLUSB=$(printf "%s/" "$SPLUSB" | sed -e 's/^0*//' -e 's/:0*/:/' -e 's/:/\//')
+	if [ -z "$SPLUSB" ]; then
+		echo "Using default value for SPL USB gadget vendor/product IDs"
+		SPLUSB=$DEFAULT_SPLUSB
+	elif ! echo "$SPLUSB" | grep -qE "$USB_ID_REGEX"; then
+		fail_on_error "Missing -s flag or invalid format for SPL USB gadget address vid:pid"
+	fi
+
+	#strip leading zeroes and replace colons with slashes
+	ROMUSB=$(printf "%s/" "$ROMUSB" | sed -e 's/^0*//' -e 's/:0*/:/' -e 's/:/\//')
+	SPLUSB=$(printf "%s/" "$SPLUSB" | sed -e 's/^0*//' -e 's/:0*/:/' -e 's/:/\//')
+fi
 
 echo "Starting polling subprocess..."
 
 poll_interface () {
-	UEVENTS=$(grep -s -l "DEVTYPE=usb_interface" /sys/class/net/*/device/uevent)
-	ROMNETDEV=$(grep -s -l "PRODUCT=$ROMUSB" $UEVENTS | cut -d '/' -f 5)
-	SPLNETDEV=$(grep -s -l "PRODUCT=$SPLUSB" $UEVENTS | cut -d '/' -f 5)
-	if [ -n "$ROMNETDEV" ]; then
-		config_interface  "$ROMNETDEV" >/dev/null 2>&1
-	elif [ -n "$SPLNETDEV" ]; then
-		config_interface  "$SPLNETDEV" >/dev/null 2>&1
+	if_name=""
+
+	if [ -n "$USBPATH" ]; then
+		if [ -d "/sys/bus/usb/devices/$USBPATH:1.0/net" ]; then
+			if_name="$(ls -m "/sys/bus/usb/devices/$USBPATH:1.0/net")"
+		fi
+	else
+		UEVENTS=$(grep -s -l "DEVTYPE=usb_interface" /sys/class/net/*/device/uevent)
+		ROMNETDEV=$(grep -s -l "PRODUCT=$ROMUSB" $UEVENTS | cut -d '/' -f 5)
+		SPLNETDEV=$(grep -s -l "PRODUCT=$SPLUSB" $UEVENTS | cut -d '/' -f 5)
+
+		if [ -n "$ROMNETDEV" ]; then
+			if_name="$ROMNETDEV"
+		elif [ -n "$SPLNETDEV" ]; then
+			if_name="$SPLNETDEV"
+		fi
+	fi
+
+	if [ -n "$if_name" ]; then
+		config_interface  "$if_name" >/dev/null 2>&1
 	fi
 }
 
