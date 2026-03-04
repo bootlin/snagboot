@@ -179,8 +179,11 @@ poll_interface () {
 	if_name=""
 
 	if [ -n "$USBPATH" ]; then
-		if [ -d "/sys/bus/usb/devices/$USBPATH:1.0/net" ]; then
-			if_name="$(ls -m "/sys/bus/usb/devices/$USBPATH:1.0/net")"
+		USB_DEVICES_PATH="/sys/bus/usb/devices"
+		if [ -d "$USB_DEVICES_PATH/$USBPATH:1.0/net" ]; then
+			if_name="$(ls -m $USB_DEVICES_PATH/$USBPATH:1.0/net 2>&1 || true)"
+		elif [ -d "$USB_DEVICES_PATH/$USBPATH:2.0/net" ]; then
+			if_name="$(ls -m $USB_DEVICES_PATH/$USBPATH:2.0/net 2>&1 || true)"
 		fi
 	else
 		UEVENTS=$(grep -s -l "DEVTYPE=usb_interface" /sys/class/net/*/device/uevent)
