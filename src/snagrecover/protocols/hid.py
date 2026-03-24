@@ -76,11 +76,13 @@ def match_intr_in(desc) -> bool:
 	match &= bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
 	return match
 
+
 def match_intr_out(desc) -> bool:
 	match = bool(desc.bDescriptorType & usb.DT_ENDPOINT)
 	match &= bool(desc.bmAttributes & usb.ENDPOINT_TYPE_INTERRUPT)
 	match &= not bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
 	return match
+
 
 class HIDDevice:
 	def err(self, msg):
