@@ -76,6 +76,11 @@ def match_intr_in(desc) -> bool:
 	match &= bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
 	return match
 
+def match_intr_out(desc) -> bool:
+	match = bool(desc.bDescriptorType & usb.DT_ENDPOINT)
+	match &= bool(desc.bmAttributes & usb.ENDPOINT_TYPE_INTERRUPT)
+	match &= not bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
+	return match
 
 class HIDDevice:
 	def err(self, msg):
@@ -175,7 +180,9 @@ class HIDDevice:
 		if self.intr_in is None:
 			self.err("Could not find interrupt IN endpoint!")
 
-		# ignore the optional interrupt OUT endpoint
+		self.intr_out = usb.util.find_descriptor(
+			self.main_intf, custom_match=match_intr_out
+		)
 
 		logger.info(f"Finished initializing HID device {pretty_addr}")
 
@@ -233,6 +240,10 @@ class HIDDevice:
 		return self.hidraw.read(length + 1)[1:]
 
 	def libusb_write(self, data: bytes):
+		# Use Interrupt OUT endpoint if available
+		if self.intr_out:
+			return self.usb_dev.write(self.intr_out, data)
+
 		report_id = data[0]
 		self.set_report(report_id, data)
 
