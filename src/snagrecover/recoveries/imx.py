@@ -119,11 +119,11 @@ def build_raw_ep_dev(dev: usb.core.Device):
 			intf = cfg[(0, 0)]
 			ep_in = usb.util.find_descriptor(intf, custom_match=is_bulk_in)
 			if ep_in is None:
-				access_error("USB RAW: cannot find BULK IN endpoint")
+				access_error("USB RAW", "cannot find BULK IN endpoint")
 
 			ep_out = usb.util.find_descriptor(intf, custom_match=is_bulk_out)
 			if ep_out is None:
-				access_error("USB RAW: cannot find BULK OUT endpoint")
+				access_error("USB RAW", "cannot find BULK OUT endpoint")
 
 			self._dev = dev
 			self._read_ep = ep_in.bEndpointAddress
