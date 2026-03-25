@@ -36,6 +36,7 @@ consult the [developers guide](../developers/supporting_new_socs.md) doc.
 ## Wishlist
 
 Here are a few things which would be nice to add to the recovery tool:
+
 - testing snagrecover on supported but untested SoCs (see
   [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml))
 - snagrecover support for RaspberryPi platforms (Broadcom BCM283x and
