@@ -617,7 +617,7 @@ The following command line arguments are always required:
    This must be one of the SoCs supported by snagrecover, run
  	snagrecover --list-socs for a list of supported SoCs
  * `-f file` or `-F dict`
-	Firmware configurations. See [firmware binaries](fw_binaries.md) for more
+	Firmware configurations. See [firmware binaries](#preparing-recovery-firmware) for more
 	information on this.
 
 If you have changed your ROM code's USB VID/PID (this usually isn't the case),

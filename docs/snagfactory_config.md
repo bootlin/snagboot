@@ -15,7 +15,7 @@ boards:
 The "soc-models" section, which specifies a list of recovery and factory
 flashing parameters for each SoC model. The '<soc_name>-firmware' section
 specifies a snagrecover firmware configuration for this SoC. Please refer to
-[the snagrecover docs](fw_binaries.md) for more information. The
+[the snagrecover docs](snagrecover.md#preparing-recovery-firmware) for more information. The
 '<soc_name>-tasks' section specifies a list of factory flashing actions to be
 performed in order.
 

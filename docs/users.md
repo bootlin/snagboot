@@ -9,7 +9,7 @@ Firstly, check that your SoC is supported in snagrecover by running:
 
 Then follow these steps:
 
- - [Setup your board for recovery](board_setup.md)
+ - [Setup your board for recovery](snagrecover.md#setting-up-your-device-for-recovery)
  - [Run snagrecover](snagrecover.md)
  - [Run snagflash](snagflash.md)
 
