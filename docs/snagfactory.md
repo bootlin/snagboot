@@ -16,7 +16,7 @@ There are four main steps involved in using Snagfactory:
 
 ## Recovery images
 
-To rescue the boards from ROM recovery mode and handle the flashing operations, a special set of U-Boot images are needed. Please refer to the [corresponding documentation](fw_binaries.md) for instructions on how to build working recovery images for your device. This should preferably be done on a Linux system.
+To rescue the boards from ROM recovery mode and handle the flashing operations, a special set of U-Boot images are needed. Please refer to the [corresponding documentation](snagrecover.md#preparing-recovery-firmware) for instructions on how to build working recovery images for your device. This should preferably be done on a Linux system.
 
 Moreover, you should make sure that the following config options are enabled when compiling U-Boot:
 

@@ -21,7 +21,7 @@ directly to your computer or using only one USB hub.
 
 Make sure that your SPL supports whatever USB gadget is needed to recover your
 specific type of SoC. These are specified in the [firmware
-binaries](fw_binaries.md) section of the docs.
+binaries](snagrecover.md#preparing-recovery-firmware) section of the docs.
 
 ## U-Boot DFU/UMS/Fastboot commands fail with `Controller uninitialized`
 
