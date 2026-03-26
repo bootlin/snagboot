@@ -72,14 +72,14 @@ def is_hid(dev: usb.core.Device):
 
 def match_intr_in(desc) -> bool:
 	match = bool(desc.bDescriptorType & usb.DT_ENDPOINT)
-	match &= bool(desc.bmAttributes & usb.ENDPOINT_TYPE_INTERRUPT)
+	match &= (desc.bmAttributes & usb.ENDPOINT_TYPE_MASK) == usb.ENDPOINT_TYPE_INTERRUPT
 	match &= bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
 	return match
 
 
 def match_intr_out(desc) -> bool:
 	match = bool(desc.bDescriptorType & usb.DT_ENDPOINT)
-	match &= bool(desc.bmAttributes & usb.ENDPOINT_TYPE_INTERRUPT)
+	match &= (desc.bmAttributes & usb.ENDPOINT_TYPE_MASK) == usb.ENDPOINT_TYPE_INTERRUPT
 	match &= not bool(desc.bEndpointAddress & usb.ENDPOINT_IN)
 	return match
 
