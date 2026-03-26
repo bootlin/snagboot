@@ -37,6 +37,8 @@ tested:
         family: imx
   imx7d:
         family: imx
+  imx7s:
+        family: imx
   imx865:
         family: imx
         aliases:
