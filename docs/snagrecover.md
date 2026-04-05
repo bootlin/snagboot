@@ -51,7 +51,7 @@ booting from FEL mode. On some models, this will happen automatically. On
 others, further setup is required. We recommend that you check your board
 vendor's user guide.
 
-### TI AM62x/AM62Ax/AM62Px/AM62Lx/AM62Dx/AM64x/AM654x
+### TI AM62x/AM62Ax/AM62Px/AM62Lx/AM62Dx/AM64x/AM654x/J721e
 
 Connect the USB device port to your host PC. Power your board, making sure that
 the SoC is configured to boot from DFU. The SoC can also fall back to DFU if all
@@ -461,7 +461,9 @@ TIFS.
 configuration:
  * path
 
-AM654x SoCs require an additional "sysfw" binary:
+TI K3 SoCs using split binary boot flow (AM654x, J721e) require an additional "sysfw" binary:
+
+See: [TI K3 boot flow variations](https://docs.u-boot.org/en/v2026.04/board/ti/k3.html#boot-flow-variations)
 
 **sysfw:** FIT container with system configuration data. Usually generated as a
 tiboot3 build artifact, named "sysfw.itb".

@@ -1,0 +1,9 @@
+tiboot3:
+  path: tiboot3.bin
+sysfw:
+  path: sysfw.itb
+tispl:
+  path: tispl.bin
+u-boot:
+  path: u-boot.img
+
