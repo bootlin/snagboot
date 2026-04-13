@@ -25,6 +25,11 @@ tested:
         family: am6x
   am6548:
         family: am6x
+  j721e:
+        family: am6x
+        aliases:
+          - dra829
+          - tda4vm
   h3:
         family: sunxi
   imx28:

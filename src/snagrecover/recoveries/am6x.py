@@ -16,7 +16,7 @@ def send_tiboot3(dev):
 	# without this delay, USB device will be present but not ready
 	time.sleep(1)
 
-	if recovery_config["soc_model"].startswith("am654"):
+	if recovery_config["soc_model"].startswith(("am654", "j721e")):
 		dev = get_usb(recovery_config["usb_path"])
 		run_firmware(dev, "sysfw")
 		time.sleep(1)
