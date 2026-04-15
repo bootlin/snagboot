@@ -85,13 +85,36 @@ def fastboot(args):
 	if args.protocol == "fastboot-uboot" and args.fastboot_cmd != []:
 		cli_error("The '-f' option is not available with the fastboot_uboot protocol!")
 
+	allowed_cmds = {
+		"getvar",
+		"download",
+		"erase",
+		"flash",
+		"boot",
+		"continue",
+		"reboot",
+		"reboot_bootloader",
+		"powerdown",
+		"ucmd",
+		"acmd",
+		"oem_run",
+		"oem_format",
+		"oem_partconf",
+		"oem_bootbus",
+		"reset",
+		"flash_sparse",
+	}
+
 	for cmd in args.fastboot_cmd:
 		cmd = cmd.split(":", 1)
 		cmd, cmd_args = cmd[0], cmd[1:]
 		cmd = cmd.replace("-", "_")
-		logger.info(f"Sending command {cmd} with args {cmd_args}")
+		if cmd not in allowed_cmds:
+			logger.error(f"Unknown fastboot command: {cmd}")
+			sys.exit(-1)
 		if cmd == "continue":
 			cmd = "fbcontinue"
+		logger.info(f"Sending command {cmd} with args {cmd_args}")
 		try:
 			getattr(fast, cmd)(*cmd_args)
 		except Exception as e:
