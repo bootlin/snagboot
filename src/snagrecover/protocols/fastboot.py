@@ -65,9 +65,6 @@ class Fastboot:
 				is_bulk = (
 					ep.bmAttributes & usb.ENDPOINT_TYPE_MASK
 				) == usb.ENDPOINT_TYPE_BULK
-				is_in = (
-					ep.bmAttributes & usb.ENDPOINT_TYPE_MASK
-				) == usb.ENDPOINT_TYPE_BULK
 				if not is_bulk:
 					continue
 				is_in = (ep.bEndpointAddress & usb.ENDPOINT_DIR_MASK) == usb.ENDPOINT_IN
