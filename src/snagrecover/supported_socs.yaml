@@ -148,6 +148,14 @@ untested:
           - am67
           - tda4aen
           - tda4ven
+  J784s4:
+        family: am6x
+        aliases:
+          - am69
+          - tda4ah
+          - tda4ap
+          - tda4vh
+          - tda4vp
   h5:
         family: sunxi
   h6:
