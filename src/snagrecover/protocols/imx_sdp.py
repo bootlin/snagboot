@@ -61,6 +61,7 @@ from snagrecover.config import recovery_config
 from snagrecover.protocols.hid import HIDDevice, HIDError
 from usb.core import USBError
 import struct
+import time
 
 
 class SDPCommand:
@@ -224,31 +225,41 @@ class SDPCommand:
 
 		return self.write32(addr, value)
 
+	DCD_CHECK_TIMEOUT_S = 30.0
+	DCD_CHECK_POLL_INTERVAL_S = 0.01
+
 	def _process_dcd_check_data(self, addr, mask, param):
 		logger.debug("dcd check: addr=%08x mask=%08x param=%2x", addr, mask, param)
 		is_mask = bool(param & (1 << 3))
 		is_set = bool(param & (1 << 4))
 
-		while True:
+		deadline = time.monotonic() + __class__.DCD_CHECK_TIMEOUT_S
+		value = 0
+		while time.monotonic() < deadline:
 			value = self.read32(addr)
 			logger.debug("    check: value=%08x", value)
 			if (is_mask, is_set) == (False, False):
 				if (value & mask) == 0:
-					break
+					return True
 
 			if (is_mask, is_set) == (False, True):
 				if (value & mask) == mask:
-					break
+					return True
 
 			if (is_mask, is_set) == (True, False):
 				if (value & mask) != mask:
-					break
+					return True
 
 			if (is_mask, is_set) == (True, True):
 				if (value & mask) != 0:
-					break
+					return True
 
-		return True
+			time.sleep(__class__.DCD_CHECK_POLL_INTERVAL_S)
+
+		raise TimeoutError(
+			f"DCD check timed out after {__class__.DCD_CHECK_TIMEOUT_S}s: "
+			f"addr={addr:#010x} mask={mask:#010x} value={value:#010x}"
+		)
 
 	def write_blob(
 		self, blob: bytes, addr: int, offset: int, size: int, write_dcd: bool = False
