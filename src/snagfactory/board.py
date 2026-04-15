@@ -4,6 +4,7 @@ import uuid
 from snagrecover.utils import prettify_usb_addr, parse_usb_path
 import sys
 import os
+import contextlib
 import os.path
 import logging
 import logging.handlers
@@ -181,9 +182,6 @@ def get_recovery_config(board):
 
 
 def run_recovery(config, soc_family, log_queue):
-	sys.stdout = open(os.devnull, "w")
-	sys.stderr = open(os.devnull, "w")
-
 	import snagrecover.config
 
 	snagrecover.config.recovery_config = config
@@ -201,10 +199,12 @@ def run_recovery(config, soc_family, log_queue):
 
 	recovery = snagrecover.utils.get_recovery(soc_family)
 
-	try:
-		recovery()
-	except Exception as e:
-		logger.error(f"Caught exception from snagrecover: {e}")
-		sys.exit(-1)
+	with open(os.devnull, "w") as devnull:
+		with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+			try:
+				recovery()
+			except Exception as e:
+				logger.error(f"Caught exception from snagrecover: {e}")
+				sys.exit(-1)
 
 	logger.handlers.clear()
