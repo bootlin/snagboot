@@ -61,6 +61,8 @@ default_usb_ids = {
 		"j721e": "0451:6163",
 		# K3 J722S/TDA4VEN/TDA4AEN/AM67
 		"j722s": "0451:6165",
+		# K3 J721S2/TDA4VE/TDA4AL/TDA4VL/AM68
+		"j721s2": "0451:6168",
 	},
 	"am62lx": "0451:6165",
 	"zynqmp": "03fd:0050",

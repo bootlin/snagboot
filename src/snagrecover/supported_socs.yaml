@@ -135,6 +135,13 @@ untested:
         family: am6x
         aliases:
           - dra821
+  j721s2:
+        family: am6x
+        aliases:
+          - am68
+          - tda4al
+          - tda4ve
+          - tda4vl
   j722s:
         family: am6x
         aliases:
