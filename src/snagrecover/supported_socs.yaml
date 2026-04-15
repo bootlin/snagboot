@@ -131,6 +131,10 @@ untested:
         family: am6x
   am6546:
         family: am6x
+  j7200:
+        family: am6x
+        aliases:
+          - dra821
   h5:
         family: sunxi
   h6:
