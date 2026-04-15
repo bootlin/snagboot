@@ -135,6 +135,12 @@ untested:
         family: am6x
         aliases:
           - dra821
+  j722s:
+        family: am6x
+        aliases:
+          - am67
+          - tda4aen
+          - tda4ven
   h5:
         family: sunxi
   h6:
