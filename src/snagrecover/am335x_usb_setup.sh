@@ -99,7 +99,7 @@ while getopts "p:r:s:n:ch:" opt; do
     r) ROMUSB=$OPTARG;;
     s) SPLUSB=$OPTARG;;
     n) NETNS_NAME=$OPTARG;;
-    c) cleanup echo "Done"
+    c) cleanup && echo "Done"
       exit 0
       ;;
     h) print_usage
