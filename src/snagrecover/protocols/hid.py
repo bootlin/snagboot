@@ -220,11 +220,11 @@ class HIDDevice:
 
 	def libusb_read(self, length: int, timeout: int):
 		logger.debug(f"HID libusb read length: {length}")
-		data = self.intr_in.read(length + 1)[1:]
-		if isinstance(data, int) or data is None:
-			raise HIDError("Failed to read {length + 1} bytes from HID device")
+		raw = self.intr_in.read(length + 1)
+		if isinstance(raw, int) or raw is None:
+			raise HIDError(f"Failed to read {length + 1} bytes from HID device")
 
-		return bytes(data)
+		return bytes(raw[1:])
 
 	def close(self):
 		if self.hidraw:

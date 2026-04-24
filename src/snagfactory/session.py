@@ -208,6 +208,8 @@ class SnagFactorySession:
 		if marker == "summary:":
 			pattern = re.compile("summary: (\d+) done (\d+) failed (\d+) other")
 			match = pattern.match(logs[0])
+			if match is None:
+				raise ValueError(f"Could not parse summary line: {logs[0]!r}")
 			self.nb_done = int(match.groups()[0])
 			self.nb_failed = int(match.groups()[1])
 			self.nb_other = int(match.groups()[2])
@@ -220,6 +222,8 @@ class SnagFactorySession:
 			pattern = re.compile("([\w:]+) at ([\d\-\.]+): (\w+)")
 			for log in logs[1:-1]:
 				match = pattern.match(log)
+				if match is None:
+					raise ValueError(f"Could not parse results line: {log!r}")
 				usb_ids = match.groups()[0]
 				path = match.groups()[1]
 				phase = BoardPhase[match.groups()[2]]
@@ -234,6 +238,8 @@ class SnagFactorySession:
 		elif marker == "BOARD LOG":
 			pattern = re.compile("BOARD LOG ([\d\-\.]+):")
 			match = pattern.match(logs[0])
+			if match is None:
+				raise ValueError(f"Could not parse BOARD LOG header: {logs[0]!r}")
 			path = match.groups()[0]
 			if path not in self.board_dict:
 				raise KeyError(

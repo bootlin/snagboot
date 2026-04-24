@@ -56,6 +56,7 @@ def bmap_copy(filepath: str, dev, src_size: int):
 	mapfile = None
 	logger.info(f"Looking for {mappath}...")
 	gen_bmap = True
+	mapfileb = None
 	if os.path.exists(mappath):
 		logger.info(f"Found bmap file {mappath}")
 		gen_bmap = False
@@ -66,6 +67,8 @@ def bmap_copy(filepath: str, dev, src_size: int):
 		hdr = mapfileb.read(34)
 		if hdr == b"-----BEGIN PGP SIGNED MESSAGE-----":
 			logger.info("Warning: bmap file is clearsigned, skipping...")
+			mapfileb.close()
+			mapfileb = None
 			gen_bmap = True
 		else:
 			mapfileb.seek(0)
@@ -81,12 +84,15 @@ def bmap_copy(filepath: str, dev, src_size: int):
 		creator.generate(True)
 		mapfileb = open(mapfile.name, "rb")
 
-	with open_compressed_file(filepath, "rb") as src_file:
-		writer = BmapCopy.BmapBdevCopy(src_file, dev, mapfileb, src_size)
-		writer.copy(False, True)
-	mapfileb.close()
-	if mapfile is not None:
-		mapfile.close()
+	try:
+		with open_compressed_file(filepath, "rb") as src_file:
+			writer = BmapCopy.BmapBdevCopy(src_file, dev, mapfileb, src_size)
+			writer.copy(False, True)
+	finally:
+		if mapfileb is not None:
+			mapfileb.close()
+		if mapfile is not None:
+			mapfile.close()
 
 
 def write_raw(args):
