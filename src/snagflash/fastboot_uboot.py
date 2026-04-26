@@ -255,7 +255,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 					list(bmap._get_data(verify=True))
 
 					for start, end, _ in bmap._get_block_ranges():
-						range_offset = bmap.block_size * start
+						range_offset = bmap.block_size * (end - start)
 						size = (end - start + 1) * bmap.block_size
 						ranges.append((size, range_offset))
 		else:
