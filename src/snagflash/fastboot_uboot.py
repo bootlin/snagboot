@@ -262,7 +262,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			full_size = (
 				os.path.getsize(path)
 				if get_compression_method(path) is None
-				else sys.maxint
+				else sys.maxsize
 			)
 			ranges.append((full_size, 0))
 
