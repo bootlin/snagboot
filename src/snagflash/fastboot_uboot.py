@@ -318,11 +318,6 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 				f"flashed {file_bytes_flashed}/{file_size if file_size < sys.maxsize else '?'} bytes"
 			)
 
-		if file_size < sys.maxsize and file_bytes_flashed < file_size:
-			raise ValueError(
-				f"Truncated flash, only {file_bytes_flashed} bytes were flashed instead of {file_size} bytes"
-			)
-
 	def flash_mtd_section(
 		self,
 		fb_addr: int,
