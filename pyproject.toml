@@ -39,6 +39,7 @@ dependencies = [
 	"pylibfdt >= 1.7.2.post1",
 	"packaging >= 24.2",
 	"pyfatfs >= 1.1.0",
+	"backports.zstd; python_version < '3.14'"
 ]
 
 [project.urls]

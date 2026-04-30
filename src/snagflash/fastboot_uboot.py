@@ -54,7 +54,7 @@ flash <image_path> <image_offset> [<partition_name>]
 	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
 	by "hwpart <number>"
 
-	**Note:** Source files with ".xz", ".bz2" or ".gz" extensions will be automatically decompressed!
+	**Note:** Source files with ".xz", ".bz2", ".gz" or ".zst" extensions will be automatically decompressed!
 
 Environment variables:
 

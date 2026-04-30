@@ -114,7 +114,7 @@ flash <image_path> <image_offset> [<partition_name>]
 	partition_name: the name of a GPT or MTD partition, or a hardware partition specified
 	by "hwpart <number>"
 
-	**Note:** Source files with ".xz", ".bz2" or ".gz" extensions will be automatically decompressed!
+	**Note:** Source files with ".xz", ".bz2", ".gz" or ".zst" extensions will be automatically decompressed!
 
 Environment variables:
 
@@ -147,7 +147,7 @@ Then either one of:
  * `-b –blockdev device`
    Sets the block device for transfers to raw block devices.
 
-**Note:** For blockdev copies, source files with ".xz", ".bz2" or ".gz" extensions will be automatically decompressed!
+**Note:** For blockdev copies, source files with ".xz", ".bz2", ".gz" or ".zst" extensions will be automatically decompressed!
 
 Make sure that snagflash has the necessary access rights to the target
 devices/mount directories. If you are passing a raw block device, make sure that

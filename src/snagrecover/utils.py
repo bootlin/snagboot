@@ -20,6 +20,11 @@ import lzma
 import bz2
 import gzip
 
+if sys.version_info >= (3, 14):
+	from compression import zstd
+else:
+	from backports import zstd
+
 USB_RETRIES = 9
 USB_INTERVAL = 1
 
@@ -27,7 +32,7 @@ USB_INTERVAL = 1
 def get_compression_method(path: str) -> str:
 	path_head, ext = os.path.splitext(path)
 
-	if ext in [".xz", ".bz2", ".gz"]:
+	if ext in [".xz", ".bz2", ".gz", ".zst"]:
 		return ext[1:]
 
 	return None
@@ -52,6 +57,8 @@ def open_compressed_file(path: str, mode):
 		file = bz2.open(path, mode)
 	elif comp == "gz":
 		file = gzip.open(path, mode)
+	elif comp == "zst":
+		file = zstd.open(path, mode)
 	else:
 		return open(path, mode)
 
