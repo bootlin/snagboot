@@ -194,8 +194,8 @@ def run_recovery(config, soc_family, log_queue):
 		datefmt="%H:%M:%S",
 	)
 	log_handler.setFormatter(log_formatter)
+	log_handler.setLevel(logging.INFO)
 	logger.addHandler(log_handler)
-	logger.setLevel(logging.INFO)
 
 	recovery = snagrecover.utils.get_recovery(soc_family)
 

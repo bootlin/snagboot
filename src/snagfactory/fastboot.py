@@ -42,8 +42,8 @@ def run_fastboot_task(args, log_queue):
 		datefmt="%H:%M:%S",
 	)
 	log_handler.setFormatter(log_formatter)
+	log_handler.setLevel(logging.INFO)
 	logger.addHandler(log_handler)
-	logger.setLevel(logging.INFO)
 
 	try:
 		fastboot(args)

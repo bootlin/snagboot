@@ -118,9 +118,8 @@ Templates:
 
 	stdout_formatter = logging.Formatter("[%(levelname)s] %(message)s")
 	stdout_handler = logging.StreamHandler(sys.stdout)
-	stdout_handler.setLevel(logging.INFO)
 	stdout_handler.setFormatter(stdout_formatter)
-	logger.addHandler(stdout_handler)
+	stdout_handler.setLevel(logging.INFO)
 
 	if args.loglevel != "silent":
 		file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
@@ -128,9 +127,12 @@ Templates:
 		file_handler.setFormatter(file_formatter)
 		if args.loglevel == "debug":
 			logger.setLevel(logging.DEBUG)
+			stdout_handler.setLevel(logging.DEBUG)
 		elif args.loglevel == "info":
 			logger.setLevel(logging.INFO)
 		logger.addHandler(file_handler)
+
+	logger.addHandler(stdout_handler)
 
 	# show version
 	if args.version:
