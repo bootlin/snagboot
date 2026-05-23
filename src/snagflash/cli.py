@@ -134,21 +134,22 @@ def cli():
 	# setup logging
 	logger = logging.getLogger("snagflash")
 	logger.setLevel(logging.DEBUG)
-	log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 
+	stdout_formatter = logging.Formatter("[%(levelname)s] %(message)s")
 	stdout_handler = logging.StreamHandler(sys.stdout)
 	stdout_handler.setLevel(logging.INFO)
-	stdout_handler.setFormatter(log_formatter)
+	stdout_handler.setFormatter(stdout_formatter)
 	logger.addHandler(stdout_handler)
 
 	if args.loglevel != "silent":
-		log_handler = logging.FileHandler(args.logfile, encoding="utf-8")
-		log_handler.setFormatter(log_formatter)
+		file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+		file_handler = logging.FileHandler(args.logfile, encoding="utf-8")
+		file_handler.setFormatter(file_formatter)
 		if args.loglevel == "debug":
-			logger.setLevel(logging.DEBUG)
+			file_handler.setLevel(logging.DEBUG)
 		elif args.loglevel == "info":
-			logger.setLevel(logging.INFO)
-		logger.addHandler(log_handler)
+			file_handler.setLevel(logging.INFO)
+		logger.addHandler(file_handler)
 
 	# make sure we don't log into the recovery log when importing its modules
 	recovery_logger = logging.getLogger("snagrecover")
