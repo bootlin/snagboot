@@ -185,8 +185,10 @@ def count_duplicates(lst):
 
 def usb_addr_to_path(usb_addr: str, find_all=False) -> tuple:
 	"""
-	parses vid:pid addresses into (vid,pid)
-	and bus-port1.port2.[...] into (bus, (port1,port2,...))
+	Parses bus-port1.port2.[...] addresses into (bus, (port1,port2,...))
+	tuples.
+
+	For vid:pid addresses, attempts to find a matching USB path.
 	"""
 
 	if ":" in usb_addr:
