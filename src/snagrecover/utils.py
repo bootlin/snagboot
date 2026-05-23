@@ -248,6 +248,23 @@ def permissions_check(dev: usb.core.Device) -> bool:
 	return True
 
 
+def wait_for_usb_ids(vid: int, pid: int, timeout_s=10) -> bool:
+	logger.info(f"Waiting for USB {prettify_usb_addr((vid, pid))}")
+
+	start_s = time.monotonic()
+	while time.monotonic() - start_s < timeout_s:
+		SnagbootUSBContext.rescan()
+
+		if list(SnagbootUSBContext.find(idVendor=vid, idProduct=pid)) != []:
+			return True
+
+		time.sleep(USB_INTERVAL)
+
+	logger.info("Timeout")
+
+	return False
+
+
 def get_usb(
 	usb_path, error_on_fail=True, retries=USB_RETRIES, ready_check=active_cfg_check
 ) -> usb.core.Device:
