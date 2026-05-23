@@ -162,8 +162,7 @@ def parse_usb_path(path: str) -> tuple:
 	return (int(groups[0]), port_tuple)
 
 
-def find_usb_paths(usb_id: tuple) -> list:
-	(vid, pid) = usb_id
+def find_all_usb_paths(vid: int, pid: int) -> list:
 	usb_paths = []
 
 	logger.debug(
@@ -183,41 +182,37 @@ def count_duplicates(lst):
 	return len(lst) - len(set(lst))
 
 
-def usb_addr_to_path(usb_addr: str, find_all=False) -> tuple:
+def find_usb_path(vid: int, pid: int, find_all=False) -> tuple:
 	"""
-	Parses bus-port1.port2.[...] addresses into (bus, (port1,port2,...))
-	tuples.
-
-	For vid:pid addresses, attempts to find a matching USB path.
+	Attempts to find a matching path for a vid:pid pair.
 	"""
 
-	if ":" in usb_addr:
-		usb_id = parse_usb_ids(usb_addr)
-		usb_paths = find_usb_paths(usb_id)
-		if usb_paths == []:
-			return None
-		if find_all:
+	pretty_addr = prettify_usb_addr((vid, pid))
+	usb_paths = find_all_usb_paths(vid, pid)
+
+	if usb_paths == []:
+		return None
+
+	if find_all:
+		if count_duplicates(usb_paths) > 0:
+			time.sleep(1)
+
+			SnagbootUSBContext.hard_rescan()
+			usb_paths = find_all_usb_paths(vid, pid)
+
 			if count_duplicates(usb_paths) > 0:
-				time.sleep(1)
+				logger.error(
+					f"Found {count_duplicates(usb_paths)} duplicate USB paths! {usb_paths}"
+				)
+				access_error("USB", pretty_addr)
 
-				SnagbootUSBContext.hard_rescan()
-				usb_paths = find_usb_paths(usb_id)
+		return usb_paths
 
-				if count_duplicates(usb_paths) > 0:
-					logger.error(
-						f"Found {count_duplicates(usb_paths)} duplicate USB paths! {usb_paths}"
-					)
-					access_error("USB", usb_addr)
+	if len(usb_paths) > 1:
+		logger.error(f"Too many results for address {pretty_addr}! {usb_paths}")
+		access_error("USB", pretty_addr)
 
-			return usb_paths
-
-		if len(usb_paths) > 1:
-			logger.error(f"Too many results for address {usb_addr}! {usb_paths}")
-			access_error("USB", usb_addr)
-
-		return usb_paths[0]
-	else:
-		return parse_usb_path(usb_addr)
+	return usb_paths[0]
 
 
 def prettify_usb_addr(usb_addr) -> str:

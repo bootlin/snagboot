@@ -19,7 +19,9 @@
 
 from snagrecover.protocols import fastboot as fb
 from snagrecover.utils import (
-	usb_addr_to_path,
+	find_usb_path,
+	parse_usb_path,
+	parse_usb_ids,
 	get_usb,
 	cli_error,
 	access_error,
@@ -64,7 +66,13 @@ def fastboot(args):
 		)
 		sys.exit(-1)
 
-	usb_addr = usb_addr_to_path(args.port)
+	if ":" in args.port:
+		vid, pid = parse_usb_ids(args.port)
+
+		usb_addr = find_usb_path(vid, pid)
+	else:
+		usb_addr = parse_usb_path(args.port)
+
 	if usb_addr is None:
 		access_error("USB Fastboot", args.port)
 

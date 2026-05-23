@@ -22,7 +22,9 @@ import logging
 
 logger = logging.getLogger("snagflash")
 from snagrecover.utils import (
-	usb_addr_to_path,
+	find_usb_path,
+	parse_usb_ids,
+	parse_usb_path,
 	get_usb,
 	cli_error,
 	reset_usb,
@@ -63,7 +65,14 @@ def dfu_cli(args):
 		cli_error("missing command line argument --dfu-config")
 	if args.port is None:
 		cli_error("missing command line argument --port [vid:pid]")
-	usb_addr = usb_addr_to_path(args.port)
+
+	if ":" in args.port:
+		vid, pid = parse_usb_ids(args.port)
+
+		usb_addr = find_usb_path(vid, pid)
+	else:
+		usb_addr = parse_usb_path(args.port)
+
 	if usb_addr is None:
 		access_error("USB DFU", args.port)
 	dev = get_usb(usb_addr)

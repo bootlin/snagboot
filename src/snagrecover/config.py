@@ -21,7 +21,9 @@ import os
 import yaml
 from snagrecover.utils import (
 	cli_error,
-	usb_addr_to_path,
+	find_usb_path,
+	parse_usb_ids,
+	parse_usb_path,
 	get_family,
 	access_error,
 	resolve_soc_model,
@@ -139,13 +141,14 @@ def init_config(args: list):
 			if isinstance(usb_ids, dict):
 				usb_ids = usb_ids[soc_model]
 
-			recovery_config["usb_path"] = usb_addr_to_path(usb_ids)
+			vid, pid = parse_usb_ids(usb_ids)
+			recovery_config["usb_path"] = find_usb_path(vid, pid)
 
 			if recovery_config["usb_path"] is None:
 				access_error("USB", usb_ids)
 
 		else:
-			recovery_config["usb_path"] = usb_addr_to_path(args.usb_path)
+			recovery_config["usb_path"] = parse_usb_path(args.usb_path)
 			if recovery_config["usb_path"] is None:
 				access_error("USB", args.usb_path)
 
