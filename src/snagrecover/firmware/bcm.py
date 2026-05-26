@@ -6,8 +6,7 @@ logger = logging.getLogger("snagrecover")
 
 from dataclasses import dataclass
 from snagrecover.utils import BinFileHeader
-from fs import open_fs, errors
-from pyfatfs import PyFATException
+from snagrecover.firmware.fat import FAT
 from io import BytesIO
 from pathlib import Path
 from os.path import normpath
@@ -24,6 +23,14 @@ from snagrecover.protocols.bcm import (
 	bootcode_send_file,
 )
 from snagrecover.config import recovery_config
+
+SNAGRECOVER_CONFIG_SECTION = """
+# Start of settings added by snagrecover
+[all]
+kernel=u-boot.bin
+arm_64bit=1
+# End of settings added by snagrecover
+"""
 
 
 def tar_getmember(tar: bytes | tarfile.TarFile, member_path: str) -> tarfile.TarInfo:
@@ -253,23 +260,21 @@ def modify_boot_fw(boot_path: str, uboot_blob: bytes) -> None:
 		logger.critical(ve)
 		raise ve
 
-	with open_fs(f"fat://{boot_path}?offset={first_partition_offset}") as bootimgfs:
+	with FAT(boot_path, first_partition_offset) as bootimgfs:
 		# IMPROVE fetch kernel path from config.txt
 		# Workarround: existing files name are uppercased because they are not found otherwise (FAT SFN)
 		kernel_path = "kernel8.img".upper()
-		try:
-			# removing kernel is optional but we might need the freed space
-			# if more size is needed in future, can also delete initramfs (and remove it from settings)
-			bootimgfs.remove(kernel_path)
-			logger.debug(f"Removed '{kernel_path}' from 'boot' firmware ({boot_path})")
-		except errors.ResourceNotFound:
-			logger.debug(f"Can't delete '{kernel_path}'from 'boot' firmware: not found")
+		# removing kernel is optional but we might need the freed space
+		# if more size is needed in future, can also delete initramfs (and remove it from settings)
+		bootimgfs.delete_file(kernel_path)
+		logger.debug(f"Removed '{kernel_path}' from 'boot' firmware ({boot_path})")
 
 		uboot_path = "u-boot.bin"
 		logger.debug(f"Writting '{uboot_path}' in 'boot' firmware ({boot_path})")
 		try:
-			bootimgfs.writebytes(uboot_path, uboot_blob)
-		except PyFATException as pfe:
+			bootimgfs.delete_file(uboot_path)
+			bootimgfs.create_file(uboot_path, uboot_blob)
+		except Exception as pfe:
 			err_msg = "Error when trying to add U-Boot to 'boot' firmware"
 			logger.critical(err_msg)
 			pfe.add_note(err_msg)
@@ -278,22 +283,19 @@ def modify_boot_fw(boot_path: str, uboot_blob: bytes) -> None:
 		logger.debug(f"Updating 'config.txt' in 'boot' firmware ({boot_path})")
 		config_path = "config.txt".upper()
 		try:
-			content = bootimgfs.readtext(config_path)
-		except PyFATException as pfe:
+			content = bootimgfs.read_file(config_path)
+		except Exception as pfe:
 			err_msg = f"Error while trying to read '{config_path}' from 'boot' firmware: {pfe}"
 			logger.critical(err_msg)
 			raise pfe
 
 		# the last occurence of a settings is actually the one used
-		content += "\n# Start of settings added by snagrecover\n"
-		content += "[all]\n"
-		content += "kernel=u-boot.bin\n"
-		content += "arm_64bit=1\n"
-		content += "# End of settings added by snagrecover\n"
+		content += SNAGRECOVER_CONFIG_SECTION.encode("ascii")
 
 		try:
-			bootimgfs.writetext(config_path, content)
-		except PyFATException as pfe:
+			bootimgfs.delete_file(config_path)
+			bootimgfs.create_file(config_path, content)
+		except Exception as pfe:
 			err_msg = (
 				f"Error while trying to modify '{config_path}' from 'boot' firmware"
 			)
@@ -301,8 +303,11 @@ def modify_boot_fw(boot_path: str, uboot_blob: bytes) -> None:
 			pfe.add_note(err_msg)
 			raise pfe
 
-		logger.debug("Updated config.txt content's : " + content.replace("\n", "\\n"))
-		logger.debug(f"'boot' firmware '/' directory content: {bootimgfs.listdir('/')}")
+		logger.debug(
+			"Updated config.txt content's : "
+			+ content.decode("ascii").replace("\n", "\\n")
+		)
+		logger.debug(f"'boot' firmware '/' directory content: {bootimgfs.list_files()}")
 
 
 def bcm_run(port, fw_name: str, fw_blob: bytes, subfw_name: str) -> None:
