@@ -25,8 +25,17 @@ if sys.version_info >= (3, 14):
 else:
 	from backports import zstd
 
+from math import ceil
+
 USB_RETRIES = 9
 USB_INTERVAL = 1
+
+
+def progress_bar(current: int, maximum: int) -> str:
+	fill_max = 40
+	fill_cur = ceil(fill_max * current / maximum)
+
+	return f"[{'#' * fill_cur}{'-' * (fill_max - fill_cur)}] {ceil(100 * current / maximum)}%"
 
 
 def get_compression_method(path: str) -> str:

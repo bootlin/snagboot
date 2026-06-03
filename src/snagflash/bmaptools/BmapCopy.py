@@ -70,6 +70,7 @@ import datetime
 from typing import Optional
 from xml.etree import ElementTree
 from snagflash.bmaptools.BmapHelpers import human_size
+from snagrecover.utils import progress_bar
 
 # The highest supported bmap format version
 SUPPORTED_BMAP_VERSION = "2.0"
@@ -595,6 +596,10 @@ class BmapCopy(Bmap):
 
             blocks_written += end - start + 1
             bytes_written += len(buf)
+
+            print(f"{progress_bar(blocks_written, self.mapped_cnt)}\r", end="")
+
+        print("")
 
         if not self.image_size:
             # The image size was unknown up until now, set it
