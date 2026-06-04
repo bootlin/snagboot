@@ -44,9 +44,9 @@ class TestFastboot(unittest.TestCase):
 	def _setup_fastboot(self, has_oem_run: bool = True) -> Fastboot:
 		self.mock_device = self._get_usb_device_mock()
 		self.mock_device.read.side_effect = [
-			b"FAILunrecognized command\x00"
+			b"FAILUnsupported command\x00"
 			if has_oem_run
-			else b"FAILUnsupported command\x00",
+			else b"FAILunrecognized command\x00",
 			b"OKAY\n",
 		]
 		self.fastboot = Fastboot(self.mock_device)

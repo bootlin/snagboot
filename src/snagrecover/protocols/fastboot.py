@@ -37,7 +37,6 @@ See doc/android/fastboot-protocol.rst in the U-Boot sources
 for more information on fastboot support in U-Boot.
 """
 
-FASTBOOT_UNSUPPORTED_CMD_RESPONSE = b"Unsupported command"
 FASTBOOT_UNRECOGNIZED_CMD_RESPONSE = b"unrecognized command"
 
 CHECK_OEM_RUN_CMD_SUPPORT = "oem run:version\x00"
@@ -96,10 +95,7 @@ class Fastboot:
 		try:
 			self.cmd(cmd)
 		except FastbootError as e:
-			if e.data and (
-				FASTBOOT_UNSUPPORTED_CMD_RESPONSE in e.data
-				or FASTBOOT_UNRECOGNIZED_CMD_RESPONSE in e.data
-			):
+			if e.data and FASTBOOT_UNRECOGNIZED_CMD_RESPONSE in e.data:
 				return False
 		return True
 
