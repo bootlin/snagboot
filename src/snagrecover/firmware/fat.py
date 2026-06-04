@@ -22,6 +22,7 @@ from snagrecover.utils import BinFileHeader, dnload_iter
 from dataclasses import dataclass
 from math import floor
 import logging
+
 logger = logging.getLogger("snagrecover")
 
 import re
@@ -125,8 +126,8 @@ class FATFileEntry:
 		return self.name.lower() == name.lower()
 
 	def set_first_cluster(self, cluster: int):
-		self.dirent.FstClusHI = (cluster >> 16) & 0xFF
-		self.dirent.FstClusLO = cluster & 0xFF
+		self.dirent.FstClusHI = (cluster >> 16) & 0xFFFF
+		self.dirent.FstClusLO = cluster & 0xFFFF
 
 
 def file_name_is_8_3(name: str):
@@ -345,9 +346,10 @@ class FAT:
 
 		dirent = FATDirent.read(dirent_bytes)
 
-		clusters = self.get_clusters(dirent)
-		for cluster in clusters:
-			self.write_cluster_fat(cluster, 0)
+		if dirent.Attr & FAT_ATTR_LONG_NAME != FAT_ATTR_LONG_NAME:
+			clusters = self.get_clusters(dirent)
+			for cluster in clusters:
+				self.write_cluster_fat(cluster, 0)
 
 		dirent.Name = b"\xe5"
 
@@ -391,24 +393,12 @@ class FAT:
 			self.sec_to_bytes(self.root_dir_sectors()) / FAT_DIRENT_SIZE
 		)
 
-		f_entry = self.get_file_entry(dirent_pos)
-		if is_last_dirent(f_entry.dirent):
-			return None
+		dirent_index = 0
 
-		if dirent_is_free(f_entry.dirent):
-			return f_entry
-
-		dirent_pos += f_entry.num_dirents * FAT_DIRENT_SIZE
-		dirent_index = 1
-
-		while True:
+		while dirent_index < max_root_dirents:
 			f_entry = self.get_file_entry(dirent_pos)
 
 			if is_last_dirent(f_entry.dirent):
-				if dirent_index + 1 >= max_root_dirents:
-					# No free dirents left for root directory
-					return None
-
 				# Mark next dirent as last dirent
 				next_f_entry = self.get_file_entry(dirent_pos + FAT_DIRENT_SIZE)
 				next_f_entry.dirent.Name = b"\x00"
@@ -428,9 +418,10 @@ class FAT:
 		return (n - 2) * self.bpb.SecPerClus + self.cluster_2_first_sector()
 
 	def cluster_n_fat_offset(self, n: int) -> int:
-		if self.fat_type in [16, 32]:
-			fat_sz = self.get_fat_sz()
-			fat_offset = n * fat_sz
+		if self.fat_type == 16:
+			fat_offset = n * 2
+		elif self.fat_type == 32:
+			fat_offset = n * 4
 		else:
 			fat_offset = n + floor(n / 2)
 
@@ -550,6 +541,7 @@ class FAT:
 		f_entry.dirent.Attr = 0
 		f_entry.dirent.Name = (f"{f_name:<8}" + f"{ext:<3}").encode("ascii")
 		f_entry.dirent.FileSize = len(data)
+		f_entry.dirent.NTRes = b"\x00"
 
 		end_of_chain = None
 
