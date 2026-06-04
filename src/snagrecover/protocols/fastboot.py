@@ -96,7 +96,10 @@ class Fastboot:
 		try:
 			self.cmd(cmd)
 		except FastbootError as e:
-			if e.data and FASTBOOT_UNSUPPORTED_CMD_RESPONSE in e.data:
+			if e.data and (
+				FASTBOOT_UNSUPPORTED_CMD_RESPONSE in e.data
+				or FASTBOOT_UNRECOGNIZED_CMD_RESPONSE in e.data
+			):
 				return False
 		return True
 
