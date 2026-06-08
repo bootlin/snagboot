@@ -148,7 +148,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			raise SnagflashCmdError("GPT partitioning not supported for MTD targets")
 
 		device_num = int(target[-1])
-		self.cmd_run(f"oem_run:gpt write mmc {device_num} {partitions}")
+		self.cmd_run(f"oem_run:gpt write mmc {device_num} '{partitions}'")
 		self.cmd_run(f"oem_run:part list mmc {device_num}")
 
 	def get_fb_size(self):
