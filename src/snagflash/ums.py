@@ -41,9 +41,7 @@ def wait_filepath(path: str):
 	retries = 0
 	while not os.path.exists(path):
 		if retries >= FILEPATH_RETRIES:
-			logger.info(
-				f"Timeout: file or directory {path} does not exist", file=sys.stderr
-			)
+			logger.error(f"Timeout: file or directory {path} does not exist")
 			sys.exit(-1)
 		time.sleep(2)
 		logger.info(f"Retrying: find {path} {retries}/{FILEPATH_RETRIES}")
@@ -100,7 +98,7 @@ def write_raw(args):
 	filepath = args.src
 	wait_filepath(devpath)
 	if not os.path.exists(filepath):
-		logger.info(f"File {filepath} does not exist", file=sys.stderr)
+		logger.error(f"File {filepath} does not exist")
 		sys.exit(-1)
 	logger.info(f"Reading {filepath}...")
 	size = (
