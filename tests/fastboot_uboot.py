@@ -1,9 +1,14 @@
+import os
 import unittest
 import unittest.mock
 import tempfile
 import random
 
-from snagflash.fastboot_uboot import SnagflashFastbootUboot, MMC_LBA_SIZE
+from snagflash.fastboot_uboot import (
+	SnagflashFastbootUboot,
+	SnagflashCmdError,
+	MMC_LBA_SIZE,
+)
 
 MAX_IMAGE_LEN = 100000000
 MAX_FLASH_OFFSET = 4096
@@ -79,3 +84,42 @@ class TestFastbootUboot(unittest.TestCase):
 				)
 
 				offset += rd_size
+
+
+class TestResolvePath(unittest.TestCase):
+	def setUp(self):
+		self.fb = SnagflashFastbootUboot(unittest.mock.MagicMock())
+
+	def test_default_is_cwd(self):
+		# paths-relative-to unset -> path returned unchanged (relative to CWD)
+		self.assertEqual(self.fb.resolve_path("img/boot.bin"), "img/boot.bin")
+
+	def test_explicit_cwd(self):
+		self.fb.env["paths-relative-to"] = "CWD"
+		self.assertEqual(self.fb.resolve_path("img/boot.bin"), "img/boot.bin")
+
+	def test_absolute_path_is_untouched(self):
+		self.fb.env["paths-relative-to"] = "THIS_FILE"
+		self.fb.cmdfile = "/some/dir/flash.cmds"
+		self.assertEqual(self.fb.resolve_path("/abs/boot.bin"), "/abs/boot.bin")
+
+	def test_this_file_joins_cmdfile_dir(self):
+		self.fb.env["paths-relative-to"] = "THIS_FILE"
+		self.fb.cmdfile = "/some/dir/flash.cmds"
+		self.assertEqual(
+			self.fb.resolve_path("img/boot.bin"),
+			os.path.join("/some/dir", "img/boot.bin"),
+		)
+
+	def test_this_file_without_cmdfile_raises(self):
+		self.fb.env["paths-relative-to"] = "THIS_FILE"
+		self.fb.cmdfile = None
+		with self.assertRaises(SnagflashCmdError):
+			self.fb.resolve_path("img/boot.bin")
+
+	def test_unsupported_value_raises(self):
+		self.fb.env["paths-relative-to"] = (
+			"this_file"  # case-sensitive: lowercase invalid
+		)
+		with self.assertRaises(SnagflashCmdError):
+			self.fb.resolve_path("img/boot.bin")

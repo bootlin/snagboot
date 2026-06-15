@@ -145,7 +145,7 @@ def fastboot(args):
 		with open(args.interactive_cmdfile, "r") as file:
 			cmds = file.read(-1).splitlines()
 
-		session.run(cmds)
+		session.run(cmds, args.interactive_cmdfile)
 
 	if args.interactive:
 		if args.protocol == "fastboot":
