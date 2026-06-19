@@ -48,6 +48,7 @@ flash <image_path> <image_offset> [<partition_name>]
 
 	Optional environment variables:
 		- fb-size
+		- paths-relative-to
 
 	If a file named "<image_path>.bmap" exists, snagflash will automatically
 	parse it and flash only the block ranges described.
@@ -67,7 +68,11 @@ fb-addr: address in memory of the Fastboot buffer
 eraseblk-size: size in bytes of an erase block on the target Flash device
 
 fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
-         the U-Boot Fastboot buffer size, not increase it.
+	the U-Boot Fastboot buffer size, not increase it.
+
+paths-relative-to: controls how relative image paths in flash commands are resolved
+	CWD       (default) paths are relative to the current working directory
+	THIS_FILE paths are relative to the directory containing the cmdfile
 """
 
 	op_pattern = r"[\w\-]+"
@@ -77,6 +82,7 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		self.fast = fast
 		self.env = {}
 		self.checked = False
+		self.cmdfile = None
 
 	def err(self, msg: str):
 		print(f"CLI Error: {msg}")
@@ -206,6 +212,24 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 
 		self.checked = True
 
+	def resolve_path(self, path: str) -> str:
+		if os.path.isabs(path):
+			return path
+		paths_relative_to = self.env.get("paths-relative-to", "CWD")
+		if paths_relative_to == "CWD":
+			pass  # path is relative to CWD by default
+		elif paths_relative_to == "THIS_FILE":
+			if self.cmdfile is None:
+				raise SnagflashCmdError(
+					"paths-relative-to is THIS_FILE but no cmdfile is set"
+				)
+			path = os.path.join(os.path.dirname(self.cmdfile), path)
+		else:
+			raise SnagflashCmdError(
+				f"unsupported paths-relative-to value: '{paths_relative_to}'"
+			)
+		return path
+
 	def cmd_flash(self, args: str):
 		self.preflash_checks()
 
@@ -214,6 +238,8 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 		path, sep, rest = args.partition(" ")
 		path = path.strip('"').strip('"')
 		rest = rest.strip(" ")
+
+		path = self.resolve_path(path)
 
 		if " " in rest:
 			offset, sep, part = rest.partition(" ")
@@ -420,7 +446,8 @@ fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
 			MMC_LBA_SIZE,
 		)
 
-	def run(self, cmds: list):
+	def run(self, cmds: list, cmdfile: str = None):
+		self.cmdfile = os.path.abspath(cmdfile) if cmdfile is not None else None
 		for cmd in cmds:
 			cmd = cmd.strip()
 

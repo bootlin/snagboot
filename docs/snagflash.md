@@ -108,6 +108,7 @@ flash <image_path> <image_offset> [<partition_name>]
 
 	Optional environment variables:
 		- fb-size
+		- paths-relative-to
 
 	If a file named "<image_path>.bmap" exists, snagflash will automatically
 	parse it and flash only the block ranges described.
@@ -127,8 +128,11 @@ fb-addr: address in memory of the Fastboot buffer
 eraseblk-size: size in bytes of an erase block on the target Flash device
 
 fb-size: size in bytes of the Fastboot buffer, this can only be used to reduce
-         the U-Boot Fastboot buffer size, not increase it.
+  the U-Boot Fastboot buffer size, not increase it.
 
+paths-relative-to: controls how relative image paths in flash commands are resolved
+	CWD       (default) paths are relative to the current working directory
+	THIS_FILE paths are relative to the directory containing the cmdfile
 ```
 
 ## UMS mode
