@@ -362,7 +362,15 @@ class SDPCommand:
 		"""
 		logger.info(f"SDPS write with parameters size:0x{size:x} offset:0x00")
 		soc_model = recovery_config["soc_model"]
-		if soc_model not in ["imx8qm", "imx8qxp", "imx815", "imx865", "imx91", "imx93"]:
+		if soc_model not in [
+			"imx8qm",
+			"imx8qxp",
+			"imx815",
+			"imx865",
+			"imx91",
+			"imx93",
+			"imx95",
+		]:
 			# only some mpu models require a preliminary command before the report 2
 			# transfer
 			packet1_arr = bytearray(b"\x01")  # report 1
@@ -376,14 +384,26 @@ class SDPCommand:
 			packet1_arr += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"  # reserved
 			packet1 = bytes(packet1_arr)
 			self.dev.write(packet1)
-		if soc_model in ["imx815", "imx865", "imx91", "imx93"]:
+		if soc_model in ["imx815", "imx865", "imx91", "imx93", "imx95"]:
 			transfer_size = 1020
 		else:
 			transfer_size = 1024
 
+		sent = 0
 		for chunk in utils.dnload_iter(blob[0:size], transfer_size):
 			packet2 = b"\x02" + chunk
-			self.dev.write(packet2)
+			try:
+				self.dev.write(packet2)
+			except USBError:
+				# i.MX95's ROM re-enumerates once it has the first container, aborting the last transfer
+				if sent >= size - transfer_size:
+					logger.debug(
+						f"Device re-enumerated after {sent}/{size} bytes, "
+						"assuming first stage was accepted"
+					)
+					break
+				raise
+			sent += len(chunk)
 		"""
 		self.check_hab()
 		complete_status = self.dev.read(64, timeout=5)[:4]
