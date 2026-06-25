@@ -28,6 +28,7 @@ HID features are required.
 from snagrecover.utils import prettify_usb_addr
 import glob
 import usb
+from usb.backend.libusb1 import LIBUSB_ERROR_NO_DEVICE
 import os
 import platform
 import select
@@ -111,7 +112,7 @@ class HIDDevice:
 
 		return hidraw_path
 
-	def __init__(self, usb_dev: usb.core.Device):
+	def __init__(self, usb_dev: usb.core.Device, prefer_libusb: bool = False):
 		pretty_addr = prettify_usb_addr((usb_dev.bus, usb_dev.port_numbers))
 		if not is_hid(usb_dev):
 			raise IOError(f"Device {pretty_addr}, is USB but not HID!")
@@ -135,9 +136,11 @@ class HIDDevice:
 			)
 			self.usb_dev.set_configuration(self.main_cfg.bConfigurationValue)
 
-		if platform.system() == "Linux" and self.usb_dev.is_kernel_driver_active(
-			self.main_intf.bInterfaceNumber
-		):
+		kernel_driver_active = platform.system() == "Linux" and (
+			self.usb_dev.is_kernel_driver_active(self.main_intf.bInterfaceNumber)
+		)
+
+		if kernel_driver_active and not prefer_libusb:
 			# The kernel driver in question should be usbhid
 			hidraw_path = self.get_hidraw_device()
 			if hidraw_path is None:
@@ -151,6 +154,9 @@ class HIDDevice:
 			logger.info(f"HID device {pretty_addr} has hidraw dev {hidraw_path}")
 
 		else:
+			if kernel_driver_active:
+				self.usb_dev.detach_kernel_driver(self.main_intf.bInterfaceNumber)
+
 			# This case is for systems which don't
 			# have usbhid loaded for some reason.
 			# It is also suitable for Windows. if
@@ -230,7 +236,15 @@ class HIDDevice:
 		if self.hidraw:
 			self.hidraw.close()
 		else:
-			usb.util.release_interface(self.usb_dev, self.main_intf.bInterfaceNumber)
+			try:
+				usb.util.release_interface(
+					self.usb_dev, self.main_intf.bInterfaceNumber
+				)
+			except usb.USBError as err:
+				# the device may already be gone (re-enumerated after jumping to firmware)
+				# and don't silently ignore any other errors
+				if err.backend_error_code != LIBUSB_ERROR_NO_DEVICE:
+					raise
 
 	def hidraw_read(self, length: int, timeout: int):
 		r, w, e = select.select([self.hidraw], [], [], timeout)
@@ -244,7 +258,7 @@ class HIDDevice:
 	def libusb_write(self, data: bytes):
 		# Use Interrupt OUT endpoint if available
 		if self.intr_out:
-			return self.usb_dev.write(self.intr_out, data)
+			return self.usb_dev.write(self.intr_out, data, timeout=5000)
 
 		report_id = data[0]
 		self.set_report(report_id, data)
