@@ -1,8 +1,7 @@
 from snagfactory.config import read_config
-from snagfactory.gui import SnagFactory
+from snagfactory.gui import SnagFactoryApp
 from snagfactory.session import SnagFactorySession
 from snagrecover.usb import SnagbootUSBContext
-from kivy.lang import Builder
 
 import unittest
 
@@ -13,12 +12,11 @@ config_files = ["docs/snagfactory-emmc.yaml", "docs/snagfactory-mtd.yaml"]
 for config_file in config_files:
 	read_config(config_file, check_paths=False)
 
-print("Testing Kivy application builder")
+print("Testing QML correctness")
 
-app = SnagFactory()
+app = SnagFactoryApp()
 
-Builder.load_file("src/snagfactory/gui.kv")
-Builder.load_file("src/snagfactory/config.kv")
+app.shutdown()
 
 print("Testing Snagfactory session init")
 

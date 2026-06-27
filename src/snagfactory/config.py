@@ -33,10 +33,10 @@ def str_rule(pattern: str):
 	}
 
 
-name_rule = str_rule("[\w\-]+")
-path_rule = str_rule("[\w\-\/\.:]+")
+name_rule = str_rule(r"[\w\-]+")
+path_rule = str_rule(r"[\w\-\/\.:]+")
 
-fastboot_cmd_rule = str_rule("\w+(:.+)?")
+fastboot_cmd_rule = str_rule(r"\w+(:.+)?")
 
 int_rule = {"type": int}
 bool_rule = {"type": bool}
@@ -57,40 +57,40 @@ gp_rule = {
 
 emmc_hwpart_task_rule = {
 	"type": dict,
-	"task": str_rule("emmc-hwpart"),
+	"task": str_rule(r"emmc-hwpart"),
 	"args": {
 		"type": dict,
 		"euda": euda_rule,
-		"gp\d": gp_rule,
+		r"gp\d": gp_rule,
 		"skip-pwr-cycle": bool_rule,
 	},
 }
 
 prompt_operator_task_rule = {
 	"type": dict,
-	"task": str_rule("prompt-operator"),
+	"task": str_rule(r"prompt-operator"),
 	"args": {
 		"type": dict,
-		"prompt": str_rule(".+"),
+		"prompt": str_rule(r".+"),
 		"reset-before": bool_rule,
 	},
 }
 
 reset_task_rule = {
 	"type": dict,
-	"task": str_rule("reset"),
+	"task": str_rule(r"reset"),
 }
 
 flash_rule = {
 	"type": dict,
-	"part": str_rule("([\w\-\.]+|hwpart \d)"),
+	"part": str_rule(r"([\w\-\.]+|hwpart \d)"),
 	"image": path_rule,
 	"image-offset": int_rule,
 }
 
 flash_task_rule = {
 	"type": dict,
-	"task": str_rule("flash"),
+	"task": str_rule(r"flash"),
 	"args": {
 		"type": list,
 		"rules": [
@@ -103,7 +103,7 @@ mtd_part_rule = {
 	"type": dict,
 	"image": path_rule,
 	"image-offset": int_rule,
-	"name": str_rule("[\w][\w\-\.]*"),
+	"name": str_rule(r"[\w][\w\-\.]*"),
 	"start": int_rule,
 	"size": int_rule,
 	"ro": bool_rule,
@@ -113,17 +113,17 @@ partition_rule = {
 	"type": dict,
 	"image": path_rule,
 	"image-offset": int_rule,
-	"name": str_rule("[\w][\w\-]*"),
+	"name": str_rule(r"[\w][\w\-]*"),
 	"start": int_rule,
 	"size": int_rule,
 	"bootable": bool_rule,
-	"uuid": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
-	"type()": str_rule("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+	"uuid": str_rule(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+	"type()": str_rule(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
 }
 
 run_task_rule = {
 	"type": dict,
-	"task": str_rule("run"),
+	"task": str_rule(r"run"),
 	"args": {
 		"type": list,
 		"rules": [
@@ -134,7 +134,7 @@ run_task_rule = {
 
 mtd_parts_task_rule = {
 	"type": dict,
-	"task": str_rule("mtd-parts"),
+	"task": str_rule(r"mtd-parts"),
 	"args": {
 		"type": list,
 		"rules": [
@@ -145,7 +145,7 @@ mtd_parts_task_rule = {
 
 gpt_task_rule = {
 	"type": dict,
-	"task": str_rule("gpt"),
+	"task": str_rule(r"gpt"),
 	"args": {
 		"type": list,
 		"rules": [
@@ -156,7 +156,7 @@ gpt_task_rule = {
 
 globals_rule = {
 	"type": dict,
-	"target-device": str_rule("[\w\-]+"),
+	"target-device": str_rule(r"[\w\-]+"),
 	"fb-buffer-size": int_rule,
 	"fb-buffer-addr": int_rule,
 	"eraseblk-size": int_rule,
@@ -180,7 +180,7 @@ config_rule = {
 	"type": dict,
 	"boards": {
 		"type": dict,
-		"[\da-fA-F]{4}:[\da-fA-F]{4}": str_rule(soc_model_pattern),
+		r"[\da-fA-F]{4}:[\da-fA-F]{4}": str_rule(soc_model_pattern),
 	},
 	"soc-models": {
 		"type": dict,
@@ -215,7 +215,7 @@ def map_config(config, modify):
 
 
 def suffixed_num_to_int(param) -> int:
-	pattern = re.compile("^\d+[GMKgmk]?$")
+	pattern = re.compile(r"^\d+[GMKgmk]?$")
 
 	if not isinstance(param, str) or pattern.match(param) is None:
 		return param
@@ -238,7 +238,7 @@ def suffixed_num_to_int(param) -> int:
 def preprocess_config(config):
 	"""
 	This performs the following transformations on the parsed YAML config file:
-	- find strings of the form "\d+(M|k)?" and convert them to integers
+	- find strings of the form "[0-9]+(M|k)?" and convert them to integers
 	"""
 
 	map_config(config, suffixed_num_to_int)
@@ -353,23 +353,21 @@ def check_config(config, check_paths=True):
 	# Check config syntax
 	check_entry(config, config_rule)
 
-	for soc_key, soc_config in config["soc-models"].items():
+	soc_models = set(config["boards"].values())
+	for soc_model in soc_models:
 		# check that each soc has a task section and a firmware section
-		soc_model, sep, suffix = soc_key.partition("-")
-
-		if suffix != "firmware":
-			if f"{soc_model}-tasks" not in config["soc-models"]:
-				raise SnagFactoryConfigError(f"Section {soc_model}-tasks is missing!")
-
-			continue
-
 		if f"{soc_model}-firmware" not in config["soc-models"]:
 			raise SnagFactoryConfigError(f"Section {soc_model}-firmware is missing!")
+
+		if f"{soc_model}-tasks" not in config["soc-models"]:
+			raise SnagFactoryConfigError(f"Section {soc_model}-tasks is missing!")
 
 		if not check_paths:
 			continue
 
-		for firmware in soc_config.values():
+		# check that specified firmware files exist
+
+		for firmware in config["soc-models"][f"{soc_model}-firmware"].values():
 			if not os.path.exists(firmware["path"]):
 				raise SnagFactoryConfigError(
 					f"firmware file {firmware['path']} does not exist!"
