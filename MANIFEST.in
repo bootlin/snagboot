@@ -6,8 +6,6 @@ include src/snagrecover/templates/*
 include src/snagrecover/50-snagboot.rules
 include src/snagrecover/am335x_usb_setup.sh
 include src/snagrecover/prompt.ps1
-include src/snagfactory/gui.kv
-include src/snagfactory/config.kv
-include src/snagfactory/assets/*
+include src/snagfactory/qml/*
 include src/snagfactory/gui-requirements.txt
 

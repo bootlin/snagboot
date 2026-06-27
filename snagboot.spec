@@ -3,7 +3,6 @@
 # Snagboot spec file, for PyInstaller
 #
 
-from kivy.tools.packaging.pyinstaller_hooks import get_deps_minimal, runtime_hooks
 from PyInstaller.utils.hooks import copy_metadata
 import packaging.requirements
 import os
@@ -48,11 +47,6 @@ gui_reqs = [packaging.requirements.Requirement(req_str) for req_str in gui_depen
 for req in gui_reqs:
 	snagfactory_datas += copy_metadata(req.name)
 
-# Include hidden Kivy dependencies
-
-snagfactory_deps = get_deps_minimal(video=None, audio=None)
-snagfactory_deps["hiddenimports"].append("win32timezone")
-
 snagrecover = Analysis(
 	['src/snagrecover/cli.py'],
 	datas=snagrecover_datas,
@@ -70,7 +64,6 @@ snagfactory = Analysis(
 	datas=snagfactory_datas,
 	optimize=0,
 	runtime_hooks=runtime_hooks(),
-	**snagfactory_deps,
 )
 
 # Refer to snagrecover analysis for common data files

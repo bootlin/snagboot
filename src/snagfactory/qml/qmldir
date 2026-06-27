@@ -1,0 +1,8 @@
+module gui
+typeinfo coercion.qmltypes
+SnagMainWindow 254.0 SnagMainWindow.qml
+SnagToolbar 254.0 SnagToolbar.qml
+SnagTabButton 254.0 SnagTabButton.qml
+SnagConfigEntry 254.0 SnagConfigEntry.qml
+SnagBoardList 254.0 SnagBoardList.qml
+SnagUnpauseButton 254.0 SnagUnpauseButton.qml

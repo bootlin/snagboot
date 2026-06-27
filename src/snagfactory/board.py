@@ -188,6 +188,7 @@ def run_recovery(config, soc_family, log_queue):
 	logger = logging.getLogger("snagrecover")
 	logger.propagate = False
 	logger.handlers.clear()
+	logger.setLevel(logging.DEBUG)
 	log_handler = logging.handlers.QueueHandler(log_queue)
 	log_formatter = logging.Formatter(
 		f"%(asctime)s,%(msecs)03d [{prettify_usb_addr(config['usb_path'])}][%(levelname)-8s] %(message)s",

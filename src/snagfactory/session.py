@@ -39,6 +39,10 @@ class SnagFactorySession:
 	def update(self):
 		# Main state machine for factory session
 
+		if self.phase == "standby":
+			# No config loaded: nothing changes
+			return
+
 		if self.phase == "scanning":
 			if self.scan_tick == 0:
 				self.scan_for_boards()
@@ -107,11 +111,13 @@ class SnagFactorySession:
 
 		if config_path is None:
 			self.config = default_config
+			self.board_list = []
+			self.phase = "standby"
 		else:
 			self.config, self.pipelines = read_config(config_path)
 
-		self.board_list = self.scan_for_boards()
-		self.phase = "scanning"
+			self.board_list = self.scan_for_boards()
+			self.phase = "scanning"
 
 		if platform.system() == "Windows":
 			snagboot_data = os.getenv("APPDATA") + "/snagboot"
@@ -122,6 +128,13 @@ class SnagFactorySession:
 		self.snagfactory_logs = self.snagboot_data + "/snagfactory/logs"
 		if not os.path.exists(self.snagfactory_logs):
 			os.makedirs(self.snagfactory_logs)
+
+		self.nb_recovering = 0
+		self.nb_flashing = 0
+		self.nb_done = 0
+		self.nb_failed = 0
+		self.nb_paused = 0
+		self.nb_other = 0
 
 	def start(self):
 		if self.phase != "scanning":
@@ -207,7 +220,7 @@ class SnagFactorySession:
 	def load_log_section(self, marker: str, logs: list):
 		factory_logger.info(f"marker {marker}: logs {logs}")
 		if marker == "summary:":
-			pattern = re.compile("summary: (\d+) done (\d+) failed (\d+) other")
+			pattern = re.compile(r"summary: (\d+) done (\d+) failed (\d+) other")
 			match = pattern.match(logs[0])
 			if match is None:
 				raise ValueError(f"Could not parse summary line: {logs[0]!r}")
@@ -218,9 +231,9 @@ class SnagFactorySession:
 			# remove leading tab from each line
 			config_yaml = "\n".join([line[1:] for line in logs[1:]])
 			self.config = yaml.safe_load(config_yaml)
-			print(self.config)
+			factory_logger.debug(self.config)
 		elif marker == "results:":
-			pattern = re.compile("([\w:]+) at ([\d\-\.]+): (\w+)")
+			pattern = re.compile(r"([\w:]+) at ([\d\-\.]+): (\w+)")
 			for log in logs[1:-1]:
 				match = pattern.match(log)
 				if match is None:
@@ -237,7 +250,7 @@ class SnagFactorySession:
 				mock_board.phase = phase
 				self.board_dict[path] = mock_board
 		elif marker == "BOARD LOG":
-			pattern = re.compile("BOARD LOG ([\d\-\.]+):")
+			pattern = re.compile(r"BOARD LOG ([\d\-\.]+):")
 			match = pattern.match(logs[0])
 			if match is None:
 				raise ValueError(f"Could not parse BOARD LOG header: {logs[0]!r}")
@@ -293,4 +306,4 @@ class SnagFactorySession:
 		with open(self.logfile_path, "w") as logfile:
 			logfile.write(session_logs)
 
-		print(f"Session logs have been written to {self.logfile_path}")
+		factory_logger.info(f"Session logs have been written to {self.logfile_path}")

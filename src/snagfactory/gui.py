@@ -1,12 +1,25 @@
-# Check that required Kivy version is installed
-# Kivy is an optional dependency for snagboot but snagfactory requires it
+# Check that required PySide6 version is installed
+# PySide6 is an optional dependency for snagboot but snagfactory requires it
 import sys
 import os
-import platform
 import importlib.metadata
 import importlib.resources
 import packaging.requirements
 import packaging.version
+
+from PySide6.QtGui import QIcon, QGuiApplication
+from PySide6.QtQml import QQmlEngine, QQmlComponent
+from PySide6.QtCore import QObject, Slot, QUrl, QTimer
+from PySide6.QtQml import QmlElement
+from PySide6.QtQuick import QQuickItem
+import signal
+import functools
+
+QML_IMPORT_NAME = "gui"
+QML_IMPORT_MAJOR_VERSION = 1
+
+UI_REFRESH_INTERVAL_MS = 1000 / 8
+DEFAULT_SCREEN_DPI = 96
 
 gui_dependencies = (
 	importlib.resources.files("snagfactory")
@@ -36,25 +49,6 @@ for req in gui_reqs:
 		print(f"underlying cause: {dep_error}")
 		sys.exit(1)
 
-from kivy import Config
-
-# workaround for OpenGL version detection failure on some Windows systems
-if platform.system() == "Windows":
-	Config.set("graphics", "multisamples", "0")
-
-from kivy.logger import Logger as kivy_logger
-from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.popup import Popup
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.accordion import AccordionItem
-from kivy.uix.button import Button
-from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
-from kivy.properties import ListProperty, ObjectProperty, StringProperty, ColorProperty
-from kivy.clock import Clock
-from kivy.lang import Builder
-import kivy.resources
 import time
 import yaml
 from math import ceil
@@ -71,21 +65,540 @@ LOG_VIEW_CAPACITY = 100
 PROGBAR_TICKS = 20
 
 
-class SnagFactoryPanelItem(TabbedPanelItem):
-	content_text = StringProperty("")
+class WidgetFactory:
+	instance = None
+
+	def __new__(cls):
+		if cls.instance is None:
+			cls.instance = super().__new__(cls)
+			cls.instance.widgets = {}
+			cls.instance.qml_path = str(
+				importlib.resources.files("snagfactory").joinpath("qml").resolve()
+			)
+			cls.instance.components = {}
+		return cls.instance
+
+	def set_app(self, app):
+		self.app = app
+		self.engine = QQmlEngine(self.app)
+
+	def load_component(self, kind: str):
+		if kind in self.components:
+			raise ValueError(
+				f"Component {kind} was already loaded! Was load_component() called twice with the same parameter?"
+			)
+
+		component = QQmlComponent(
+			self.engine, QUrl.fromLocalFile(os.path.join(self.qml_path, f"{kind}.qml"))
+		)
+		if component.errors() != []:
+			raise ValueError(
+				f"Failed to load QML component {kind}! {component.errorString()}"
+			)
+			self.app.quit()
+
+		self.components[kind] = component
+
+	def spawn(self, parent: QObject, kind: str, properties: dict, top_level=False):
+		obj = self.components[kind].createObject(parent, properties=properties)
+		if obj is None:
+			factory_logger.error(f"Failed to create QML object {kind}!")
+			if not top_level:
+				self.app.quit()
+
+		return obj
+
+	def cleanup(self):
+		self.app = None
+		self.components = []
+		__class__.instance = None
 
 
-class SnagFactoryBoardID(BoxLayout):
-	usb_ids = StringProperty("")
-	soc_model = StringProperty("")
+class SnagBoardHandler:
+	def __init__(self, widget, board):
+		self.widget = widget
+		self.path = ""
+		self.soc_model = ""
+		self.log = False
+
+		self.progbar = "|" + PROGBAR_TICKS * "-" + "|"
+
+		self.status = ""
+		self.spinner_symbols = ["◰", "◳", "◲", "◱"]
+		self.spinner_cur = 0
+		self.resume_btn = None
+
+		self.board_path = self.widget.findChild(QObject, "board_path")
+		self.soc_model = self.widget.findChild(QObject, "soc_model")
+		self.progress_bar = self.widget.findChild(QObject, "progress_bar")
+		self.phase = self.widget.findChild(QObject, "phase")
+		self.status = self.widget.findChild(QObject, "status")
+		self.board_box = self.widget.findChild(QObject, "board_box")
+		self.log_button = self.widget.findChild(QObject, "log_button")
+
+		self.board = board
+
+		self.board_path.setProperty("text", board.path)
+		self.soc_model.setProperty("text", board.soc_model)
+		self.phase.setProperty("text", board.phase.name)
+		self.phase.setProperty("color", "green")
+		self.status.setProperty("text", board.status)
+		self.status.setProperty("color", "black")
+
+	def set_log_enabled(self, enabled: bool):
+		if enabled != self.log:
+			if enabled:
+				self.log_button.setProperty("text", "logs displayed")
+			else:
+				self.log_button.setProperty("text", "show logs")
+				self.log_button.setProperty("checked", False)
+
+		self.log = enabled
+
+	def log_was_enabled(self):
+		return self.log_button.property("checked") and not self.log
+
+	def set_width(self, width):
+		self.board_box.setWidth(width)
+
+	phase_colors = {
+		"ROM": "grey",
+		"RECOVERING": "darkblue",
+		"FLASHER": "blue",
+		"FLASHING": "blue",
+		"DONE": "green",
+		"FAILURE": "red",
+		"PAUSED": "orange",
+	}
+
+	def unpause(self):
+		self.resume_btn.setParentItem(None)
+		self.resume_btn = None
+		self.board.paused = False
+		self.status.setProperty("color", "black")
+
+	def is_paused(self):
+		return hasattr(self, "board") and self.board.paused
+
+	def update_ui(self):
+		board = self.board
+
+		if self.is_paused() and self.resume_btn is None:
+			self.status.setProperty("color", "orange")
+			self.resume_btn = WidgetFactory().spawn(
+				self.board_box, "SnagUnpauseButton", {}
+			)
+			self.resume_btn.clicked.connect(self.unpause)
+
+		self.phase.setProperty("text", board.phase.name)
+		if board.phase.name in ["FLASHING", "RECOVERING"]:
+			self.spinner_cur = (self.spinner_cur + 1) % 4
+			self.status.setProperty(
+				"text", f"{self.spinner_symbols[self.spinner_cur]} {board.status}"
+			)
+		else:
+			self.status.setProperty("text", board.status)
+
+		self.phase.setProperty("color", __class__.phase_colors[board.phase.name])
+
+		progress = self.board.progress
+		num_prog_ticks = ceil(PROGBAR_TICKS * progress / 100)
+		self.progress_bar.setProperty(
+			"text",
+			(
+				f"{ceil(progress)}% |"
+				+ num_prog_ticks * "#"
+				+ (PROGBAR_TICKS - num_prog_ticks) * "—"
+				+ "|"
+			),
+		)
 
 
-class SnagFactorySoCFamily(TabbedPanel):
-	name = StringProperty("")
+@QmlElement
+class SnagBoardListHandler(QQuickItem):
+	def __init__(self):
+		super().__init__()
+		self.log_target = ""
+		self.board_handlers = []
 
-	def set_config(self, fw_config: dict, tasks_config: dict):
+	@Slot()
+	def cleanup_ui(self):
+		self.board_area.widthChanged.disconnect(self.resize_width)
+
+		num_widgets = len(self.board_handlers)
+		while num_widgets > 0:
+			board_handler = self.board_handlers.pop(-1)
+
+			board_widget = board_handler.widget
+			board_widget.log_button_clicked.disconnect(self.log_button_pressed)
+			board_widget.setParentItem(None)
+			board_widget.setParent(None)
+
+			num_widgets -= 1
+
+	@Slot()
+	def resize_width(self):
+		new_width = self.board_area.width()
+		for board_handler in self.board_handlers:
+			board_handler.set_width(new_width)
+
+	@Slot()
+	def complete(self):
+		self.log_area = self.findChild(QObject, "log_area")
+		self.log_target_label = self.findChild(QObject, "log_target_label")
+		self.board_area = self.findChild(QObject, "board_area")
+
+		self.board_area.widthChanged.connect(self.resize_width)
+
+	def update_board_widgets(self):
+		for board_handler in self.board_handlers:
+			board_handler.update_ui()
+
+	def update_board_list(self, session) -> int:
+		self.cleanup_ui()
+
+		self.board_area.widthChanged.connect(self.resize_width)
+
+		for board in session.board_list:
+			board_widget = WidgetFactory().spawn(self.board_area, "SnagBoard", {})
+			board_widget.log_button_clicked.connect(self.log_button_pressed)
+
+			board_handler = SnagBoardHandler(board_widget, board)
+			board_handler.set_width(self.board_area.width())
+			board_handler.set_log_enabled(False)
+			self.board_handlers.append(board_handler)
+
+		self.update_board_widgets()
+
+		return len(self.board_handlers)
+
+	@Slot()
+	def log_button_pressed(self):
+		for board_handler in self.board_handlers:
+			if board_handler.log_was_enabled():
+				self.log_target = board_handler.board.path
+				board_handler.set_log_enabled(True)
+			else:
+				board_handler.set_log_enabled(False)
+
+	@Slot()
+	def update_verbose_logs(self):
+		if self.log_target == "":
+			return
+
+		board = None
+
+		for board_handler in self.board_handlers:
+			if board_handler.board.path == self.log_target:
+				board = board_handler.board
+				break
+
+		if board is not None:
+			self.log_target_label.setProperty("text", self.log_target)
+			self.log_area.setProperty(
+				"text", "\n".join(board.session_log[-LOG_VIEW_CAPACITY:])
+			)
+
+
+def sigint_handler(sig, frame, window=None):
+	window.close()
+
+
+class SnagFactoryApp(QGuiApplication):
+	def __init__(self):
+		super().__init__()
+
+		self.session = SnagFactorySession(None)
+		self.phase_text = "standby"
+		self.status_text = ""
+		self.config_view_items = []
+
+		WidgetFactory().set_app(self)
+
+		WidgetFactory().load_component("SnagMainWindow")
+		WidgetFactory().load_component("SnagBoardID")
+		WidgetFactory().load_component("SnagTabButton")
+		WidgetFactory().load_component("SnagConfigEntry")
+		WidgetFactory().load_component("SnagConfigTab")
+		WidgetFactory().load_component("SnagConfigField")
+		WidgetFactory().load_component("SnagUnpauseButton")
+		WidgetFactory().load_component("SnagBoard")
+
+		qml_path = importlib.resources.files("snagfactory").joinpath("qml").resolve()
+		self.window = WidgetFactory().spawn(self, "SnagMainWindow", {}, top_level=True)
+
+		if self.window is None:
+			WidgetFactory().cleanup()
+			raise ValueError("Failed to create main window!")
+
+		self.lastWindowClosed.connect(self.cleanup)
+		signal.signal(
+			signal.SIGINT, functools.partial(sigint_handler, window=self.window)
+		)
+
+		self.setWindowIcon(QIcon(os.path.join(qml_path, "lab_penguins.ico")))
+
+		self.quit_dialog = self.window.findChild(QObject, "quit_dialog")
+		self.error_dialog = self.window.findChild(QObject, "error_dialog")
+		self.file_dialog = self.window.findChild(QObject, "file_dialog")
+		self.board_list = self.window.findChild(QObject, "board_list")
+		self.main_page = self.window.findChild(QObject, "main_page")
+		self.start_button = self.window.findChild(QObject, "start_button")
+		self.phase_label = self.window.findChild(QObject, "phase_label")
+		self.status_label = self.window.findChild(QObject, "status_label")
+		self.config_label = self.window.findChild(QObject, "config_label")
+
+		self.start_button.clicked.connect(self.start_button_pressed)
+		self.window.findChild(QObject, "logs_button").clicked.connect(
+			self.log_button_pressed
+		)
+		self.window.findChild(QObject, "configs_button").clicked.connect(
+			self.configs_button_pressed
+		)
+		self.window.findChild(QObject, "config_button").clicked.connect(
+			self.view_config
+		)
+		self.window.findChild(QObject, "boards_button").clicked.connect(
+			self.view_board_list
+		)
+
+		self.refresh_timer = QTimer(self)
+		self.refresh_timer.setSingleShot(True)
+		self.refresh_timer.timeout.connect(self.update_ui)
+		self.refresh_timer.start(UI_REFRESH_INTERVAL_MS)
+
+		self.board_ids_area = self.window.findChild(QObject, "board_ids_area")
+		self.soc_families_tab_bar = self.window.findChild(
+			QObject, "soc_families_tab_bar"
+		)
+		self.soc_families_view = self.window.findChild(QObject, "soc_families_view")
+
+		placeholder_item = WidgetFactory().spawn(
+			self.board_ids_area, "SnagConfigField", {}
+		)
+		placeholder_item.findChild(QObject, "field_label").setProperty(
+			"text", "No configuration file loaded yet."
+		)
+
+		self.config_view_items.append(placeholder_item)
+
+		self.ui_running = True
+		self.window.closing.connect(self.stop_ui)
+		self.window.confirm_quit.connect(self.confirm_quit)
+		self.window.open_file.connect(self.open_file)
+
+		self.window.showMaximized()
+
+
+	@Slot()
+	def start_button_pressed(self):
+		self.phase_label_color = "black"
+
+		if self.session.phase == "scanning":
+			self.phase_text = "running factory session"
+			self.view_board_list()
+			self.board_list.update_board_list(self.session)
+			self.session.start()
+			self.start_button.background_normal = "rescan.png"
+			self.start_button.text = "rescan"
+		elif self.session.phase == "logview":
+			# Keep the same config file and start a new session
+			self.phase_label_color = "blue"
+			new_session = SnagFactorySession(self.session.config_path)
+			self.session = new_session
+			self.start_button.background_normal = "start.png"
+			self.start_button.text = "start"
+
+	@Slot()
+	def view_board_list(self):
+		self.main_page.setProperty("currentIndex", 0)
+
+	@Slot()
+	def view_config(self):
+		self.main_page.setProperty("currentIndex", 1)
+
+	@Slot()
+	def update_ui(self):
+		last_phase = self.session.phase
+		self.session.update()
+		self.phase_label_color = "black"
+
+		if self.session.phase == "scanning":
+			self.phase_text = "scanning for boards..."
+			board_count = self.board_list.update_board_list(self.session)
+			self.status_text = f"{board_count} boards found"
+		elif self.session.phase == "running":
+			ts = time.time()
+			self.phase_text = (
+				"running factory session... |"
+				+ "  " * int(ts % 3)
+				+ "=="
+				+ "  " * int(3 - (ts % 3))
+				+ "|"
+			)
+			self.status_text = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    paused: {self.session.nb_paused}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
+
+			self.board_list.update_board_widgets()
+
+		elif self.session.phase == "logview":
+			self.phase_label_color = "blue"
+			if last_phase == "running":
+				self.board_list.update_board_widgets()
+
+			self.phase_text = "viewing session logs: " + os.path.basename(
+				self.session.logfile_path
+			)
+			self.status_text = f"done: {self.session.nb_done}    failed: {self.session.nb_failed}    other: {self.session.nb_other}"
+		else:
+			self.phase_text = "standby"
+
+		if self.session.phase != "scanning":
+			self.board_list.update_verbose_logs()
+
+		self.phase_label.setProperty("text", self.phase_text)
+		self.phase_label.setProperty("color", self.phase_label_color)
+		self.status_label.setProperty("text", self.status_text)
+
+		if self.ui_running:
+			self.refresh_timer.start(UI_REFRESH_INTERVAL_MS)
+
+	@Slot()
+	def log_button_pressed(self):
+		self.file_dialog.setProperty("usage", "logs")
+		self.file_dialog.setProperty(
+			"currentFolder", f"file://{self.session.snagfactory_logs}"
+		)
+		self.file_dialog.setProperty("nameFilters", [])
+		self.file_dialog.open()
+
+	@Slot()
+	def configs_button_pressed(self):
+		self.file_dialog.setProperty("usage", "config")
+
+		last_dir = self.session.read_session_store("last_config_dir")
+		user_home = os.path.expanduser("~")
+		file_path = last_dir if last_dir is not None else user_home
+		self.file_dialog.setProperty("currentFolder", f"file://{file_path}")
+		self.file_dialog.setProperty("nameFilters", ["YAML files (*.yml *.yaml)"])
+		self.file_dialog.open()
+
+	@Slot()
+	def confirm_quit(self):
+		self.quit_dialog.setProperty("title", "Quit Snagfactory")
+		self.quit_dialog.setProperty(
+			"text", "Are you sure you want to close Snagfactory?"
+		)
+		self.quit_dialog.open()
+
+	@Slot()
+	def stop_ui(self):
+		self.ui_running = False
+		self.refresh_timer.stop()
+
+		timeout = 10
+		start = time.monotonic()
+		while self.refresh_timer.isActive():
+			if time.monotonic() - start > timeout:
+				factory_logger.error("Refresh timer did not stop in time!")
+
+			time.sleep(0.5)
+
+		self.board_list.cleanup_ui()
+
+	@Slot()
+	def cleanup(self):
+		self.window.destroy()
+		self.window = None
+		WidgetFactory().cleanup()
+
+	@Slot(str, str)
+	def open_file(self, file_path, usage):
+		if usage == "config":
+			self.load_config(file_path.removeprefix("file://"))
+		elif usage == "logs":
+			self.load_log(file_path.removeprefix("file://"))
+
+	def load_config(self, filename):
+		max_error_length = 80
+
+		self.session.write_session_store("last_config_dir", os.path.dirname(filename))
+		try:
+			session = SnagFactorySession(filename)
+		except SnagFactoryConfigError as e:
+			self.error_dialog.setProperty("title", "Config error")
+
+			error = str(e)
+			if len(error) <= max_error_length - 3:
+				self.error_dialog.setProperty("informativeText", error)
+				self.error_dialog.setProperty("detailedText", "")
+			else:
+				self.error_dialog.setProperty(
+					"informativeText", error[:max_error_length] + "..."
+				)
+				self.error_dialog.setProperty("detailedText", error)
+
+			self.error_dialog.open()
+
+			return
+
+		self.session = session
+
+		self.update_config_view(self.session)
+		self.config_label.setProperty("text", f"config: {os.path.basename(filename)}")
+
+	def load_log(self, filename):
+		self.session = SnagFactorySession(None)
+		self.session.load_log(filename)
+		self.board_list.update_board_list(self.session)
+		self.update_config_view(self.session)
+		self.config_label.setProperty("text", "config: none")
+
+	@Slot()
+	def cleanup_config_view(self):
+		num_widgets = len(self.config_view_items)
+		while num_widgets > 0:
+			widget = self.config_view_items.pop(-1)
+			widget.setParentItem(None)
+			widget.setParent(None)
+			del widget
+
+			num_widgets -= 1
+
+	def update_config_view(self, session):
+		self.cleanup_config_view()
+
+		soc_models = []
+
+		for usb_ids, soc_model in session.config["boards"].items():
+			if soc_model not in soc_models:
+				soc_models.append(soc_model)
+
+			board_ids_item = WidgetFactory().spawn(
+				self.board_ids_area,
+				"SnagBoardID",
+				{"usb_ids": usb_ids, "soc_model": soc_model},
+			)
+			self.config_view_items.append(board_ids_item)
+
+		soc_models_config = session.config["soc-models"]
+		for soc_model in soc_models:
+			# Config validation ensures that these keys exist
+			fw_config = soc_models_config[f"{soc_model}-firmware"]
+			tasks_config = soc_models_config[f"{soc_model}-tasks"]
+
+			tab_button = WidgetFactory().spawn(
+				self.soc_families_tab_bar, "SnagTabButton", {"text": soc_model}
+			)
+			self.config_view_items.append(tab_button)
+			self.create_soc_model_widget(
+				self.soc_families_view, soc_model, fw_config, tasks_config
+			)
+
+	def create_soc_model_widget(self, parent, soc_model, fw_config, tasks_config):
+		soc_model_widget = WidgetFactory().spawn(parent, "SnagConfigEntry", {})
+		self.config_view_items.append(soc_model_widget)
+
 		tabs = []
-
 		for key, value in fw_config.items():
 			tabs.append((key, yaml.dump(value)))
 
@@ -114,361 +627,41 @@ class SnagFactorySoCFamily(TabbedPanel):
 			else:
 				globals["global variables"].update(config)
 
-		panel_items = [
-			SnagFactoryPanelItem(text=key, content_text=value) for key, value in tabs
-		]
-
-		for panel_item in panel_items:
-			self.add_widget(panel_item)
-
-		self.default_tab = panel_items[0]
-
-
-class SnagFactoryFileDialog(FloatLayout):
-	rootpath = StringProperty("")
-	path = StringProperty("")
-	sort_func = ObjectProperty(lambda files, fs_class: sorted(files))
-	filters = ListProperty([])
-
-	def handle_load(self):
-		pass
-
-
-class SnagFactoryErrorDialog(FloatLayout):
-	msg = StringProperty("")
-	filepath = StringProperty("")
-
-
-class SnagFactoryBoard(Widget):
-	path = StringProperty("")
-	soc_model = StringProperty("")
-
-	phase = StringProperty("")
-	phase_color = ListProperty([0, 1, 0])
-	progbar = StringProperty("|" + PROGBAR_TICKS * "-" + "|")
-	status = StringProperty("")
-	status_color = ListProperty([0, 0, 0])
-	ui = ObjectProperty(None)
-
-	phase_colors = {
-		"ROM": [0.8, 0.8, 0.8],
-		"RECOVERING": [0, 0.2, 0.8],
-		"FLASHER": [0, 0, 1],
-		"FLASHING": [0, 0, 1],
-		"DONE": [0, 1, 0],
-		"FAILURE": [1, 0, 0],
-		"PAUSED": [1, 0.5, 0.5],
-	}
-
-	def show_verbose_log(self, btn):
-		if self.ui.verbose_log_target == self.board.path:
-			btn.background_color = [0.6, 0.76, 1]
-			btn.text = "show logs"
-			self.ui.hide_verbose_logs()
-		else:
-			btn.background_color = [0.3, 0.45, 1]
-			btn.text = "hide logs"
-			self.ui.verbose_log_target = self.board.path
-
-	def attach_board(self, board, ui):
-		self.board = board
-
-		self.path = board.path
-		self.soc_model = board.soc_model
-		self.phase = board.phase.name
-		self.status = ""
-		self.ui = ui
-		self.spinner_symbols = ["\\", "-", "/", "|"]
-		self.spinner_cur = 0
-		self.resume_btn = None
-
-	def unpause(self, event):
-		self.board.paused = False
-		self.board_box.remove_widget(self.resume_btn)
-		self.resume_btn = None
-		self.status_color = [0, 0, 0]
-
-	def is_paused(self):
-		return hasattr(self, "board") and self.board.paused
-
-	def update(self):
-		if self.is_paused() and self.resume_btn is None:
-			self.status_color = [1, 0.5, 0.5]
-			self.resume_btn = Button(
-				text="resume",
-				on_press=self.unpause,
-				background_normal="",
-				background_color=(0, 1, 0),
-				size_hint_x=0.2,
+		for key, value in tabs:
+			item = WidgetFactory().spawn(
+				soc_model_widget.findChild(QObject, "entry_tab_bar"),
+				"SnagConfigTab",
+				{"text": key},
 			)
-			self.board_box.add_widget(self.resume_btn)
+			self.config_view_items.append(item)
 
-		self.status = self.board.status
-		self.phase = self.board.phase.name
-		if self.phase in ["FLASHING", "RECOVERING"]:
-			self.spinner_cur = (self.spinner_cur + 1) % 4
-			self.status = f"[{self.spinner_symbols[self.spinner_cur]}] " + self.status
-
-		self.phase_color = __class__.phase_colors[self.phase]
-
-		progress = self.board.progress
-		num_prog_ticks = ceil(PROGBAR_TICKS * progress / 100)
-		self.progbar = (
-			f"{ceil(progress)}% |"
-			+ num_prog_ticks * "#"
-			+ (PROGBAR_TICKS - num_prog_ticks) * "—"
-			+ "|"
-		)
-
-
-class SnagFactoryUI(Widget):
-	widget_container = ObjectProperty(None)
-	board_widgets = ListProperty([])
-	status = StringProperty("Scanning for boards...")
-	phase_label = StringProperty("")
-	phase_label_color = ColorProperty((0, 0, 0))
-
-	def __init__(self, session):
-		super().__init__()
-		self.session = session
-		self.session.update()
-		self.verbose_log_target = None
-		self.update_board_list()
-
-	def view_board_list(self):
-		self.main_page.page = 0
-
-	def view_config(self):
-		self.main_page.page = 1
-
-	def dismiss_popup(self):
-		self._popup.dismiss()
-
-	def open_config_dialog(self):
-		if self.session.phase == "running":
-			return
-
-		last_dir = self.session.read_session_store("last_config_dir")
-
-		content = SnagFactoryFileDialog()
-		content.rootpath = os.path.expanduser("~")
-		content.path = last_dir if last_dir is not None else content.rootpath
-		content.handle_load = self.load_config
-		content.filters = ["*.yaml", "*.yml"]
-		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
-		self._popup.open()
-
-	def open_log_dialog(self):
-		if self.session.phase == "running":
-			return
-
-		content = SnagFactoryFileDialog()
-		content.rootpath = self.session.snagfactory_logs
-		content.handle_load = self.load_log
-		content.sort_func = lambda files, fs_class: sorted(files, reverse=True)
-		self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
-		self._popup.open()
-
-	def load_config(self, filenames):
-		try:
-			session = SnagFactorySession(filenames[0])
-			session.write_session_store(
-				"last_config_dir", os.path.dirname(filenames[0])
+			item = WidgetFactory().spawn(
+				soc_model_widget.findChild(QObject, "entry_field"),
+				"SnagConfigField",
+				{},
 			)
-		except SnagFactoryConfigError as e:
-			self.dismiss_popup()
+			item.findChild(QObject, "field_label").setProperty("text", value)
 
-			content = SnagFactoryErrorDialog(filepath=filenames[0], msg=str(e))
-			self._popup = Popup(
-				title="Config error", content=content, size_hint=(0.7, 0.7)
-			)
-			self._popup.open()
+			self.config_view_items.append(item)
 
-			return
-
-		self.session = session
-
-		self.update_config_view()
-
-		self.dismiss_popup()
-
-	def load_log(self, filenames):
-		if filenames == []:
-			return
-
-		self.session = SnagFactorySession(None)
-		self.session.load_log(filenames[0])
-		self.update_board_list()
-		self.update_config_view()
-		self.dismiss_popup()
-
-	def update_config_view(self):
-		soc_families_view = self.session_config.soc_families_view
-		board_ids_view = self.session_config.board_ids_view
-
-		board_ids_items = [
-			widget
-			for widget in board_ids_view.children
-			if isinstance(widget, SnagFactoryBoardID)
-		]
-		for board_ids_item in board_ids_items:
-			board_ids_view.remove_widget(board_ids_item)
-
-		accordion_items = list(soc_families_view.children)
-		for accordion_item in accordion_items:
-			soc_families_view.remove_widget(accordion_item)
-
-		for usb_ids, soc_model in self.session.config["boards"].items():
-			board_ids_item = SnagFactoryBoardID(usb_ids=usb_ids, soc_model=soc_model)
-			board_ids_view.add_widget(board_ids_item)
-
-		for name, config in self.session.config["soc-models"].items():
-			soc_model, sep, suffix = name.partition("-")
-
-			if suffix == "firmware":
-				continue
-
-			fw_config = self.session.config["soc-models"][f"{soc_model}-firmware"]
-			tasks_config = config
-
-			accordion_item = AccordionItem(title=soc_model)
-			soc_model_widget = SnagFactorySoCFamily(name=soc_model)
-			soc_model_widget.set_config(fw_config, tasks_config)
-			accordion_item.add_widget(soc_model_widget)
-			soc_families_view.add_widget(accordion_item)
-
-	def update_board_list(self):
-		for board_widget in self.board_widgets:
-			self.widget_container.remove_widget(board_widget)
-
-		self.board_widgets = []
-
-		self.session.update()
-
-		for board in self.session.board_list:
-			board_widget = SnagFactoryBoard()
-			board_widget.attach_board(board, self)
-			self.widget_container.add_widget(board_widget)
-			self.board_widgets.append(board_widget)
-
-		for board_widget in self.board_widgets:
-			board_widget.update()
-
-	def hide_verbose_logs(self):
-		self.verbose_log_target = None
-		self.log_area.text = ""
-		self.log_boxlayout.size_hint_x = 0
-
-	def start(self, btn):
-		self.phase_label_color = (0, 0, 0)
-
-		if self.session.phase == "scanning":
-			self.phase_label = "running factory session"
-			self.view_board_list()
-			self.update_board_list()
-			self.session.start()
-			btn.background_normal = "rescan.png"
-			btn.text = "rescan"
-		elif self.session.phase == "logview":
-			# Keep the same config file and start a new session
-			self.phase_label_color = (0, 0, 1)
-			new_session = SnagFactorySession(self.session.config_path)
-			self.session = new_session
-			btn.background_normal = "start.png"
-			btn.text = "start"
-
-	def update(self, dt):
-		last_phase = self.session.phase
-		self.session.update()
-		self.phase_label_color = (0, 0, 0)
-
-		if self.session.phase == "scanning":
-			self.phase_label = ""
-			self.update_board_list()
-			self.status = f"{len(self.board_widgets)} boards found"
-			self.hide_verbose_logs()
-		elif self.session.phase == "running":
-			ts = time.time()
-			self.phase_label = (
-				"running factory session... |"
-				+ "  " * int(ts % 3)
-				+ "=="
-				+ "  " * int(3 - (ts % 3))
-				+ "|"
-			)
-			self.status = f"recovering: {self.session.nb_recovering}    flashing: {self.session.nb_flashing}    paused: {self.session.nb_paused}    done: {self.session.nb_done}    failed: {self.session.nb_failed}"
-
-			for board_widget in self.board_widgets:
-				board_widget.update()
-
-		elif self.session.phase == "logview":
-			self.phase_label_color = (0, 0, 1)
-			if last_phase == "running":
-				for board_widget in self.board_widgets:
-					board_widget.update()
-
-			self.phase_label = "viewing session logs: " + os.path.basename(
-				self.session.logfile_path
-			)
-			self.status = f"done: {self.session.nb_done}    failed: {self.session.nb_failed}    other: {self.session.nb_other}"
-
-		if self.session.phase != "scanning" and self.verbose_log_target is not None:
-			self.log_boxlayout.size_hint_x = 0.5
-
-			log_target = None
-			for board_widget in self.board_widgets:
-				if board_widget.board.path == self.verbose_log_target:
-					log_target = board_widget.board
-					break
-
-			if log_target is not None:
-				self.log_board_path.text = self.verbose_log_target
-				self.log_area.text = "\n".join(
-					log_target.session_log[-LOG_VIEW_CAPACITY:]
-				)
-
-
-class SnagFactory(App):
-	def call_ui(self, method: str, *args):
-		if self.ui is None:
-			return
-
-		getattr(self.ui, method)(*args)
-
-	def build(self):
-		self.icon = "lab_penguins.ico"
-
-		Builder.load_string(
-			importlib.resources.files("snagfactory").joinpath("gui.kv").read_text()
-		)
-		Builder.load_string(
-			importlib.resources.files("snagfactory").joinpath("config.kv").read_text()
-		)
-
-		session = SnagFactorySession(None)
-		self.ui = SnagFactoryUI(session)
-
-		Clock.schedule_interval(self.ui.update, 1.0 / 8)
-
-		return self.ui
+		return soc_model_widget
 
 
 def gui():
 	multiprocessing.set_start_method("spawn")
 
-	factory_logger.setLevel("INFO")
-	kivy_logger.parent = factory_logger
+	factory_logger.setLevel(logging.INFO)
 
 	stdout_handler = logging.StreamHandler(sys.stdout)
 	stdout_handler.setLevel(logging.WARNING)
 	factory_logger.addHandler(stdout_handler)
 
-	assets_path = str(
-		importlib.resources.files("snagfactory").joinpath("assets").resolve()
-	)
-	kivy.resources.resource_add_path(assets_path)
+	app = SnagFactoryApp()
 
-	SnagFactory().run()
+	exit_code = app.exec()
+
+	app.shutdown()
+	sys.exit(exit_code)
 
 
 if __name__ == "__main__":

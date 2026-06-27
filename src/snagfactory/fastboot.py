@@ -36,6 +36,7 @@ def run_fastboot_task(args, log_queue):
 
 	logger.propagate = False
 	logger.handlers.clear()
+	logger.setLevel(logging.DEBUG)
 	log_handler = logging.handlers.QueueHandler(log_queue)
 	log_formatter = logging.Formatter(
 		f"%(asctime)s,%(msecs)03d [{args.port}][%(levelname)-8s] %(message)s",
