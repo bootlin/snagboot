@@ -2,6 +2,7 @@
 # PySide6 is an optional dependency for snagboot but snagfactory requires it
 import sys
 import os
+import platform
 import importlib.metadata
 import importlib.resources
 import packaging.requirements
@@ -389,7 +390,6 @@ class SnagFactoryApp(QGuiApplication):
 
 		self.window.showMaximized()
 
-
 	@Slot()
 	def start_button_pressed(self):
 		self.phase_label_color = "black"
@@ -466,7 +466,7 @@ class SnagFactoryApp(QGuiApplication):
 	def log_button_pressed(self):
 		self.file_dialog.setProperty("usage", "logs")
 		self.file_dialog.setProperty(
-			"currentFolder", f"file://{self.session.snagfactory_logs}"
+			"currentFolder", QUrl.fromLocalFile(self.session.snagfactory_logs)
 		)
 		self.file_dialog.setProperty("nameFilters", [])
 		self.file_dialog.open()
@@ -478,7 +478,7 @@ class SnagFactoryApp(QGuiApplication):
 		last_dir = self.session.read_session_store("last_config_dir")
 		user_home = os.path.expanduser("~")
 		file_path = last_dir if last_dir is not None else user_home
-		self.file_dialog.setProperty("currentFolder", f"file://{file_path}")
+		self.file_dialog.setProperty("currentFolder", QUrl.fromLocalFile(file_path))
 		self.file_dialog.setProperty("nameFilters", ["YAML files (*.yml *.yaml)"])
 		self.file_dialog.open()
 
@@ -513,10 +513,15 @@ class SnagFactoryApp(QGuiApplication):
 
 	@Slot(str, str)
 	def open_file(self, file_path, usage):
+		if platform.system() == "Windows":
+			prefix = "file:///"
+		else:
+			prefix = "file://"
+
 		if usage == "config":
-			self.load_config(file_path.removeprefix("file://"))
+			self.load_config(file_path.removeprefix(prefix))
 		elif usage == "logs":
-			self.load_log(file_path.removeprefix("file://"))
+			self.load_log(file_path.removeprefix(prefix))
 
 	def load_config(self, filename):
 		max_error_length = 80
