@@ -22,6 +22,7 @@ ToolBar {
 			icon.source: "start.png"
 			icon.width: Layout.minimumWidth
 			icon.height: parent.height
+			icon.color: "transparent"
 
 			ToolTip.delay: 800
 			ToolTip.visible: hovered
@@ -43,6 +44,7 @@ ToolBar {
 			icon.source: "load_config.png"
 			icon.width: Layout.minimumWidth
 			icon.height: parent.height
+			icon.color: "transparent"
 
 			ToolTip.delay: 800
 			ToolTip.visible: hovered
@@ -64,6 +66,7 @@ ToolBar {
 			icon.source: "view_logs.png"
 			icon.width: Layout.minimumWidth
 			icon.height: parent.height
+			icon.color: "transparent"
 
 			ToolTip.delay: 800
 			ToolTip.visible: hovered
@@ -87,6 +90,7 @@ ToolBar {
 			icon.source: "boards.png"
 			icon.width: Layout.minimumWidth
 			icon.height: parent.height
+			icon.color: "transparent"
 
 			height: parent.height
 			Layout.alignment: Qt.AlignLeft
@@ -107,6 +111,7 @@ ToolBar {
 			icon.source: "config.png"
 			icon.width: Layout.minimumWidth
 			icon.height: parent.height
+			icon.color: "transparent"
 
 			height: parent.height
 			Layout.alignment: Qt.AlignLeft
