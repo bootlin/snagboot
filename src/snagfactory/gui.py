@@ -327,6 +327,8 @@ class SnagFactoryApp(QGuiApplication):
 
 		qml_path = importlib.resources.files("snagfactory").joinpath("qml").resolve()
 		self.window = WidgetFactory().spawn(self, "SnagMainWindow", {}, top_level=True)
+		self.window.setMinimumWidth(700)
+		self.window.setMinimumHeight(500)
 
 		if self.window is None:
 			WidgetFactory().cleanup()

@@ -25,6 +25,7 @@ SnagBoardListHandler {
 				Text {
 					id: boards_area_title
 					text: "Scanned boards"
+					font.pointSize: 14
 				}
 
 				ColumnLayout {
@@ -44,11 +45,13 @@ SnagBoardListHandler {
 			Label {
 				id: log_area_title
 				text: "Detailed logs"
+				font.pointSize: 14
 			}
 
 			Label {
 				objectName: "log_target_label"
 				text: ""
+				font.pointSize: 12
 			}
 
 			ScrollView {
@@ -61,6 +64,7 @@ SnagBoardListHandler {
 					objectName: "log_area"
 					width: parent.width - 5
 					wrapMode: Text.WordWrap
+					font.pointSize: 12
 				}
 			}
 		}

@@ -7,5 +7,6 @@ Frame {
 	Label {
 		objectName: "field_label"
 		text: ""
+		font.pointSize: 12
 	}
 }
