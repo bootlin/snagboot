@@ -18,27 +18,33 @@ Frame {
 
 		Text {
 			objectName: "board_path"
+			font.pointSize: 12
 		}
 
 		Text {
 			objectName: "soc_model"
+			font.pointSize: 12
 		}
 
 		Text {
 			objectName: "progress_bar"
+			font.pointSize: 12
 		}
 
 		Text {
 			objectName: "phase"
+			font.pointSize: 12
 		}
 
 		Text {
 			objectName: "status"
+			font.pointSize: 12
 		}
 
 		Button {
 			objectName: "log_button"
 			text: "show logs"
+			font.pointSize: 12
 			font.bold: true
 			checkable: true
 

@@ -86,6 +86,7 @@ ApplicationWindow {
 
 				Label {
 					text: "USB targets"
+					font.pointSize: 15
 				}
 			}
 
