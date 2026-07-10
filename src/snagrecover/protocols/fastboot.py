@@ -24,7 +24,7 @@ import tempfile
 from typing import Optional, Union
 
 from snagrecover import utils
-from snagflash.android_sparse_file.utils import split
+from snagflash.android_sparse_file.utils import split_streaming
 
 import logging
 
@@ -253,7 +253,7 @@ class Fastboot:
 			) from e
 		if maxsize == 0:
 			raise FastbootError("Fastboot variable max-download-size is 0")
-		arg_list = args.split(":")
+		arg_list = args.split(":",1)
 		cnt = len(arg_list)
 		if cnt != 2:
 			raise FastbootError(
@@ -262,22 +262,50 @@ class Fastboot:
 		fname = arg_list[0]
 		if not os.path.exists(fname):
 			raise FastbootError(f"File {fname} does not exist")
+
+		# Verify the file is a valid Android sparse file by checking magic cookie
+		try:
+			with open(fname, "rb") as f:
+				magic_bytes = f.read(4)
+				if len(magic_bytes) < 4:
+					raise FastbootError(f"File {fname} is too small to be a valid sparse file")
+				magic = int.from_bytes(magic_bytes, byteorder='little')
+				if magic != 0xED26FF3A:
+					raise FastbootError(
+						f"File {fname} is not a valid Android sparse file. "
+						f"Expected magic 0xED26FF3A, got 0x{magic:08X}"
+					)
+				logger.info(f"Verified {fname} is a valid Android sparse file")
+		except IOError as e:
+			raise FastbootError(f"Failed to read file {fname}: {e}") from e
+
 		part = arg_list[1]
+
+		# Use streaming approach to minimize memory usage
+		# Each split file is created, downloaded, flashed, and then reused for the next split
+		# This allows processing of arbitrarily large sparse files with constant memory usage
 		with tempfile.TemporaryDirectory() as tmp:
 			temppath = os.path.join(tmp, "sparse.img")
 			try:
-				splitfiles = split(fname, temppath, maxsize)
-				logger.info(f"Split fastboot file into {len(splitfiles)} file(s)")
-				for f in splitfiles:
-					logger.info(f"Downloading {f}")
+				split_count = 0
+				logger.info("Starting streaming sparse file flash...")
+
+				for split_file in split_streaming(fname, temppath, maxsize):
+					split_count += 1
+					logger.info(f"Processing split {split_count}: Downloading {split_file}")
 					try:
-						self.download(f)
+						self.download(split_file)
 					except Exception as e:
-						raise FastbootError(f"Failed to download: {e}") from e
-					logger.info(f"Flashing {f}")
+						raise FastbootError(f"Failed to download split {split_count}: {e}") from e
+
+					logger.info(f"Processing split {split_count}: Flashing to {part}")
 					try:
 						self.flash(part)
 					except Exception as e:
-						raise FastbootError(f"Failed to flash: {e}") from e
+						raise FastbootError(f"Failed to flash split {split_count}: {e}") from e
+
+					logger.debug(f"Split {split_count} completed successfully")
+
+				logger.info(f"Successfully flashed {split_count} split file(s) to {part}")
 			except Exception as e:
-				raise FastbootError(f"{e}") from e
+				raise FastbootError(f"Streaming sparse flash failed: {e}") from e
