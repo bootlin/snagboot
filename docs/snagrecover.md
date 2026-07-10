@@ -175,6 +175,15 @@ This USB cable needs to power up the board, ie it needs to have its internal VBU
 Set up your board to boot from USB DFU, connect the board to the USB device port, power the board if necessary. A new USB device should appear on your host system.
 See the U-Boot RZ/N1 [documentation](https://docs.u-boot.org/en/latest/board/renesas/rzn1.html) for more information.
 
+### Qualcomm
+
+#### IQ9075
+
+To set up the board in recovery mode, refer to the section *"Force the device
+into Emergency Download mode"* in the reference [documentation](https://docs.qualcomm.com/doc/80-70023-261/topic/iq9-ug-update-the-sw.html#panel-0-VWJ1bnR1tab$force-the-device-into-emergency-download-mode)
+
+**Note:** For the exact DIP switch position required to enable EDL mode, refer to the board schematic.
+
 ## Preparing recovery firmware
 
 Snagrecover requires firmware binaries to successfully recover the board. Each
@@ -610,6 +619,26 @@ cd u-boot
 configuration:
   * path
 
+### For Qualcomm devices
+
+#### IQ9075
+
+**xbl:** XBL is a Qualcomm proprietary image, which can be downloaded using the following steps:
+
+1. Download the [ZIP](https://softwarecenter.qualcomm.com/nexus/generic/product/chip/tech-package/QCS9100_bootbinaries.1.0/qcs9100_bootbinaries.1.0-test-device-public/00133/QCS9100_bootbinaries.zip) file
+
+2. Extract the ZIP file and locate the XBL image:
+   prog_snagboot_ddr.elf
+
+
+configuration:
+  * path
+
+**u-boot:** TBD: U-Boot support for Snagboot recovery is currently under upstream review
+
+configuration:
+  * path
+
 ## Running snagrecover
 
 You can run “snagrecover -h” for a detailed overview of the available options.
@@ -647,4 +676,3 @@ Examples:
 snagrecover -s stm32mp15 -f stm32mp15.yaml
 snagrecover -s stm32mp15 -F "{'tf-a': {'path': 'binaries/tf-a-stm32.bin'}}" -F "{'fip': {'path': 'binaries/u-boot.stm32'}}"
 ```
-

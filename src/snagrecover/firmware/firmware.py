@@ -242,6 +242,10 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		amlogic_run(port, fw_name, fw_blob, subfw_name)
 	elif soc_family == "rzn1":
 		rzn1_run(port, fw_name, fw_blob)
+	elif soc_family == "qcom":
+		from snagrecover.firmware.qcom_fw import qcom_run
+
+		qcom_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")

@@ -1,0 +1,6 @@
+xbl:
+  path: prog_snagboot_ddr.elf
+  image_id: 13
+u-boot:
+  path: u-boot.mbn
+  image_id: 5
