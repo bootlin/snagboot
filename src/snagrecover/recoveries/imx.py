@@ -74,6 +74,7 @@ sdps_socs = [
 	"imx865",
 	"imx91",
 	"imx93",
+	"imx95",
 ]
 
 # SoCs that use raw bulk endpoints rather than HID
@@ -145,18 +146,21 @@ def main():
 	soc_model = recovery_config["soc_model"]
 	usb_dev = get_usb(recovery_config["usb_path"])
 
+	# i.MX95 needs the libusb backend to reach its interrupt OUT endpoint
+	prefer_libusb = soc_model == "imx95"
+
 	if soc_model in raw_bulk_ep_socs:
 		sdp_cmd = SDPCommand(build_raw_ep_dev(usb_dev))
 	else:
-		sdp_cmd = SDPCommand(HIDDevice(usb_dev))
+		sdp_cmd = SDPCommand(HIDDevice(usb_dev, prefer_libusb=prefer_libusb))
 
 	rom_path = (usb_dev.bus, usb_dev.port_numbers)
 	rom_devnum = usb_dev.address
 
 	if soc_model in sdps_socs:
 		run_firmware(sdp_cmd, "flash-bin", "spl-sdps")
-		# On some SoCs (e.g.: i.MX8QM) we can have a second stage based on SPDV
-		if soc_model not in ["imx8qm", "imx8qxp"]:
+		# On some SoCs (e.g.: i.MX8QM, i.MX95) we can have a second stage based on SPDV
+		if soc_model not in ["imx8qm", "imx8qxp", "imx95"]:
 			return None
 	elif "u-boot-with-dcd" in recovery_config["firmware"]:
 		run_firmware(sdp_cmd, "u-boot-with-dcd")
@@ -185,10 +189,10 @@ def main():
 	if usb_dev is None:
 		access_error("SPL USB HID", f"{prettify_usb_addr(rom_path)}")
 
-	sdp_cmd = SDPCommand(HIDDevice(usb_dev))
+	sdp_cmd = SDPCommand(HIDDevice(usb_dev, prefer_libusb=prefer_libusb))
 	# MX8 boot images are more complicated to generate so we allow everything to be
 	# packaged in a single blob
-	if "imx8" in soc_model:
+	if "imx8" in soc_model or soc_model == "imx95":
 		if not dev_uses_sdpv(usb_dev):
 			raise Exception(
 				"Error: The installed SPL version does not support autofinding U-Boot"

@@ -350,7 +350,7 @@ You can generate this by compiling the u-boot.imx target in U-Boot.
 configuration:
  * path
 
-### For NXP i.MX8, i.MX28 , i.MX91 and i.MX93 devices
+### For NXP i.MX8, i.MX28 , i.MX91, i.MX93 and i.MX95 devices
 
 [example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/imx8-dart-mx8m-mini.yaml)
 
