@@ -248,6 +248,7 @@ class SnagBoardListHandler(QQuickItem):
 		self.log_area = self.findChild(QObject, "log_area")
 		self.log_target_label = self.findChild(QObject, "log_target_label")
 		self.board_area = self.findChild(QObject, "board_area")
+		self.board_layout = self.findChild(QObject, "board_layout")
 
 		self.board_area.widthChanged.connect(self.resize_width)
 
@@ -261,7 +262,7 @@ class SnagBoardListHandler(QQuickItem):
 		self.board_area.widthChanged.connect(self.resize_width)
 
 		for board in session.board_list:
-			board_widget = WidgetFactory().spawn(self.board_area, "SnagBoard", {})
+			board_widget = WidgetFactory().spawn(self.board_layout, "SnagBoard", {})
 			board_widget.log_button_clicked.connect(self.log_button_pressed)
 
 			board_handler = SnagBoardHandler(board_widget, board)
@@ -347,8 +348,8 @@ class SnagFactoryApp(QGuiApplication):
 		self.board_list = self.window.findChild(QObject, "board_list")
 		self.main_page = self.window.findChild(QObject, "main_page")
 		self.start_button = self.window.findChild(QObject, "start_button")
-		self.phase_label = self.window.findChild(QObject, "phase_label")
 		self.status_label = self.window.findChild(QObject, "status_label")
+		self.board_status_label = self.window.findChild(QObject, "board_status_label")
 		self.config_label = self.window.findChild(QObject, "config_label")
 
 		self.start_button.clicked.connect(self.start_button_pressed)
@@ -357,12 +358,6 @@ class SnagFactoryApp(QGuiApplication):
 		)
 		self.window.findChild(QObject, "configs_button").clicked.connect(
 			self.configs_button_pressed
-		)
-		self.window.findChild(QObject, "config_button").clicked.connect(
-			self.view_config
-		)
-		self.window.findChild(QObject, "boards_button").clicked.connect(
-			self.view_board_list
 		)
 
 		self.refresh_timer = QTimer(self)
@@ -394,36 +389,23 @@ class SnagFactoryApp(QGuiApplication):
 
 	@Slot()
 	def start_button_pressed(self):
-		self.phase_label_color = "black"
-
 		if self.session.phase == "scanning":
 			self.phase_text = "running factory session"
-			self.view_board_list()
 			self.board_list.update_board_list(self.session)
 			self.session.start()
 			self.start_button.background_normal = "rescan.png"
 			self.start_button.text = "rescan"
 		elif self.session.phase == "logview":
 			# Keep the same config file and start a new session
-			self.phase_label_color = "blue"
 			new_session = SnagFactorySession(self.session.config_path)
 			self.session = new_session
 			self.start_button.background_normal = "start.png"
 			self.start_button.text = "start"
 
 	@Slot()
-	def view_board_list(self):
-		self.main_page.setProperty("currentIndex", 0)
-
-	@Slot()
-	def view_config(self):
-		self.main_page.setProperty("currentIndex", 1)
-
-	@Slot()
 	def update_ui(self):
 		last_phase = self.session.phase
 		self.session.update()
-		self.phase_label_color = "black"
 
 		if self.session.phase == "scanning":
 			self.phase_text = "scanning for boards..."
@@ -443,7 +425,6 @@ class SnagFactoryApp(QGuiApplication):
 			self.board_list.update_board_widgets()
 
 		elif self.session.phase == "logview":
-			self.phase_label_color = "blue"
 			if last_phase == "running":
 				self.board_list.update_board_widgets()
 
@@ -457,9 +438,8 @@ class SnagFactoryApp(QGuiApplication):
 		if self.session.phase != "scanning":
 			self.board_list.update_verbose_logs()
 
-		self.phase_label.setProperty("text", self.phase_text)
-		self.phase_label.setProperty("color", self.phase_label_color)
-		self.status_label.setProperty("text", self.status_text)
+		self.status_label.setProperty("text", self.phase_text)
+		self.board_status_label.setProperty("text", self.status_text)
 
 		if self.ui_running:
 			self.refresh_timer.start(UI_REFRESH_INTERVAL_MS)

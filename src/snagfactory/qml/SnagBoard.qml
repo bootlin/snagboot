@@ -7,8 +7,6 @@ Frame {
 
 	signal log_button_clicked
 
-	Layout.minimumHeight: board_box.height
-
 	Flow {
 		id: board_box
 		objectName: "board_box"
@@ -18,33 +16,33 @@ Frame {
 
 		Text {
 			objectName: "board_path"
-			font.pointSize: 12
+			font.pointSize: 14
 		}
 
 		Text {
 			objectName: "soc_model"
-			font.pointSize: 12
+			font.pointSize: 14
 		}
 
 		Text {
 			objectName: "progress_bar"
-			font.pointSize: 12
+			font.pointSize: 14
 		}
 
 		Text {
 			objectName: "phase"
-			font.pointSize: 12
+			font.pointSize: 14
 		}
 
 		Text {
 			objectName: "status"
-			font.pointSize: 12
+			font.pointSize: 14
 		}
 
 		Button {
 			objectName: "log_button"
 			text: "show logs"
-			font.pointSize: 12
+			font.pointSize: 14
 			font.bold: true
 			checkable: true
 

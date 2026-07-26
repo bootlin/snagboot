@@ -4,5 +4,5 @@ import gui
 
 TabButton {
 	width: implicitWidth
-	font.pointSize: 12
+	font.pointSize: 14
 }

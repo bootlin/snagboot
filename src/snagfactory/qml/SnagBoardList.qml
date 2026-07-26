@@ -9,62 +9,73 @@ SnagBoardListHandler {
 	objectName: "board_list"
 	property string log_target: ""
 
-	SplitView {
+	ColumnLayout {
 		anchors.fill: parent
 
-		ScrollView {
-			SplitView.minimumWidth: boards_area_title.width
-			SplitView.minimumHeight: parent.height
-			SplitView.preferredWidth: parent.width * 0.5
+		Frame {
+			Layout.preferredWidth: parent.width
 
-			contentWidth: availableWidth
-
-			ColumnLayout {
-				width: parent.width
-
-				Text {
-					id: boards_area_title
-					text: "Scanned boards"
-					font.pointSize: 14
-				}
-
-				ColumnLayout {
-					id: board_area
-					objectName: "board_area"
-					width: parent.width - 5
-				}
+			Text {
+				objectName: "board_status_label"
+				font.pointSize: 15
 			}
 		}
 
-		ColumnLayout {
-			property string board_path: ""
-			SplitView.minimumHeight: parent.height
-			SplitView.minimumWidth: log_area_title.width
-			SplitView.fillWidth: true
-
-			Label {
-				id: log_area_title
-				text: "Detailed logs"
-				font.pointSize: 14
-			}
-
-			Label {
-				objectName: "log_target_label"
-				text: ""
-				font.pointSize: 12
+		SplitView {
+			Layout.fillHeight: true
+			Layout.preferredWidth: parent.width
+			handle: Rectangle {
+				implicitWidth: 4
+				implicitHeight: 4
+				color: "darkgrey"
 			}
 
 			ScrollView {
-				Layout.fillHeight: true
-				width: parent.width
-
+				objectName: "board_area"
 				contentWidth: availableWidth
+				SplitView.minimumWidth: boards_area_title.width
+				SplitView.fillWidth: true
 
-				Text {
-					objectName: "log_area"
-					width: parent.width - 5
-					wrapMode: Text.WordWrap
-					font.pointSize: 12
+				ColumnLayout {
+					Text {
+						id: boards_area_title
+						text: "Scanned boards"
+						font.pointSize: 14
+					}
+
+					ColumnLayout {
+						objectName: "board_layout"
+					}
+				}
+			}
+
+			Pane {
+				ColumnLayout {
+					property string board_path: ""
+					SplitView.minimumWidth: log_area_title.width
+					SplitView.preferredWidth: 300
+
+					Label {
+						id: log_area_title
+						text: "Detailed logs"
+						font.pointSize: 14
+					}
+
+					Label {
+						objectName: "log_target_label"
+						text: ""
+						font.pointSize: 12
+					}
+
+					ScrollView {
+						contentWidth: availableWidth
+
+						Text {
+							objectName: "log_area"
+							wrapMode: Text.WordWrap
+							font.pointSize: 12
+						}
+					}
 				}
 			}
 		}

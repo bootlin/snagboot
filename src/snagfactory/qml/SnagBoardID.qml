@@ -8,16 +8,16 @@ RowLayout {
 
 	Label {
 		text: parent.usb_ids
-		font.pointSize: 12
+		font.pointSize: 14
 	}
 
 	Label {
 		text: "->"
-		font.pointSize: 12
+		font.pointSize: 14
 	}
 
 	Label {
 		text: parent.soc_model
-		font.pointSize: 12
+		font.pointSize: 14
 	}
 }

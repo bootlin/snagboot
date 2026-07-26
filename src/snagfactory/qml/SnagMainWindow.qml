@@ -10,6 +10,7 @@ ApplicationWindow {
 	title: "Snagfactory"
 	color: "white"
 	header: toolbar
+	footer: status_bar
 
 	signal confirm_quit
 	signal open_file(string file, string usage)
@@ -40,66 +41,127 @@ ApplicationWindow {
 		onAccepted: main_window.open_file(selectedFile, usage)
 	}
 
-	SnagToolbar {
+	ToolBar {
 		id: toolbar
-		Layout.minimumWidth: parent.width
+
+		ButtonGroup {
+			id: main_view_toggle
+		}
+
+		RowLayout {
+			ToolButton {
+				objectName: "start_button"
+				text: "Start"
+
+				ToolTip.delay: 800
+				ToolTip.visible: hovered
+				ToolTip.text: "Start/stop factory session"
+
+				onClicked: boards_btn.click()
+			}
+
+			ToolButton {
+				objectName: "configs_button"
+				text: "Config"
+
+				ToolTip.delay: 800
+				ToolTip.visible: hovered
+				ToolTip.text: "Load configuration"
+			}
+
+			ToolButton {
+				objectName: "logs_button"
+				text: "Logs"
+
+				ToolTip.delay: 800
+				ToolTip.visible: hovered
+				ToolTip.text: "Load logs"
+			}
+
+			ToolSeparator {
+			}
+
+			Label {
+				objectName: "config_label"
+				text: "config: none"
+				color: "darkgrey"
+			}
+
+			ToolSeparator {
+			}
+
+			ToolButton {
+				id: boards_btn
+				text: "Boards"
+
+				ButtonGroup.group: main_view_toggle
+				checkable: true
+				checked: true
+				onClicked: stack.pop()
+
+				ToolTip.delay: 800
+				ToolTip.visible: hovered
+				ToolTip.text: "View board list"
+			}
+
+			ToolButton {
+				text: "Config"
+
+				ButtonGroup.group: main_view_toggle
+				checkable: true
+				onClicked: stack.push(config_view)
+
+				ToolTip.delay: 800
+				ToolTip.visible: hovered
+				ToolTip.text: "View current configuration"
+			}
+		}
 	}
 
-	StackLayout {
-		objectName: "main_page"
+	StackView {
+		id: stack
+		initialItem: board_view
+		anchors.fill: parent
+	}
 
-		width: parent.width - 5
-		height: parent.height
-		x: parent.x + 5
+	SnagBoardList {
+		id: board_view
+	}
+
+	ColumnLayout {
+		id: config_view
+		visible: false
 
 		ColumnLayout {
-			Layout.minimumWidth: parent.width
-			Layout.minimumHeight: parent.height
+			objectName: "board_ids_area"
+			Layout.preferredWidth: parent.width
 
-			Text {
-				objectName: "phase_label"
-				Layout.preferredWidth: parent.width
-				text: "standby"
+			Label {
+				text: "USB targets"
 				font.pointSize: 15
-			}
-
-			Text {
-				objectName: "status_label"
-				Layout.preferredWidth: parent.width
-				font.pointSize: 15
-			}
-
-			SnagBoardList {
-				Layout.preferredWidth: parent.width
-				Layout.fillHeight: true
 			}
 		}
 
-		ColumnLayout {
-            		objectName: "config_view"
-			Layout.minimumWidth: parent.width
-			Layout.minimumHeight: parent.height
+		TabBar {
+			id: tab_bar
+			objectName: "soc_families_tab_bar"
+			Layout.preferredWidth: parent.width
+		}
 
-			ColumnLayout {
-				width: parent.width
-				objectName: "board_ids_area"
+		StackLayout {
+			objectName: "soc_families_view"
+			Layout.fillHeight: true
+			Layout.preferredWidth: parent.width
+			currentIndex: tab_bar.currentIndex
+		}
+	}
 
-				Label {
-					text: "USB targets"
-					font.pointSize: 15
-				}
-			}
+	Frame {
+		id: status_bar
 
-			TabBar {
-				id: tab_bar
-				objectName: "soc_families_tab_bar"
-			}
-
-			StackLayout {
-            			objectName: "soc_families_view"
-				Layout.fillHeight: true
-				currentIndex: tab_bar.currentIndex
-			}
+		Label {
+			objectName: "status_label"
+			text: "standby"
 		}
 	}
 }
