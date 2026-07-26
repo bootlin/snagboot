@@ -511,10 +511,10 @@ class SnagFactoryApp(QGuiApplication):
 		self.session.write_session_store("last_config_dir", os.path.dirname(filename))
 		try:
 			session = SnagFactorySession(filename)
-		except SnagFactoryConfigError as e:
-			self.error_dialog.setProperty("title", "Config error")
+		except Exception as e:
+			self.error_dialog.setProperty("title", "Error loading config")
 
-			error = str(e)
+			error = "Error: " + str(e)
 			if len(error) <= max_error_length - 3:
 				self.error_dialog.setProperty("informativeText", error)
 				self.error_dialog.setProperty("detailedText", "")
