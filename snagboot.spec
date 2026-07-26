@@ -63,7 +63,6 @@ snagfactory = Analysis(
 	['src/snagfactory/gui.py'],
 	datas=snagfactory_datas,
 	optimize=0,
-	runtime_hooks=runtime_hooks(),
 )
 
 # Refer to snagrecover analysis for common data files
