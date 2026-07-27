@@ -393,14 +393,12 @@ class SnagFactoryApp(QGuiApplication):
 			self.phase_text = "running factory session"
 			self.board_list.update_board_list(self.session)
 			self.session.start()
-			self.start_button.background_normal = "rescan.png"
-			self.start_button.text = "rescan"
+			self.start_button.setProperty("text", "Rescan")
 		elif self.session.phase == "logview":
 			# Keep the same config file and start a new session
 			new_session = SnagFactorySession(self.session.config_path)
 			self.session = new_session
-			self.start_button.background_normal = "start.png"
-			self.start_button.text = "start"
+			self.start_button.setProperty("text", "Start")
 
 	@Slot()
 	def update_ui(self):
