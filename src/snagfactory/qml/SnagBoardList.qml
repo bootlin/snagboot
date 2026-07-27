@@ -50,10 +50,12 @@ SnagBoardListHandler {
 			}
 
 			Pane {
+				id: log_pane
+				SplitView.minimumWidth: log_area_title.width
+				SplitView.preferredWidth: 300
+
 				ColumnLayout {
-					property string board_path: ""
-					SplitView.minimumWidth: log_area_title.width
-					SplitView.preferredWidth: 300
+					height: parent.height
 
 					Label {
 						id: log_area_title
@@ -69,11 +71,15 @@ SnagBoardListHandler {
 
 					ScrollView {
 						contentWidth: availableWidth
+						ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+						Layout.fillHeight: true
+						Layout.preferredWidth: log_pane.width
 
 						Text {
 							objectName: "log_area"
+							width: log_pane.width
 							wrapMode: Text.WordWrap
-							font.pointSize: 12
+							font.pointSize: 14
 						}
 					}
 				}
