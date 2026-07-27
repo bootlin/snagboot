@@ -99,7 +99,7 @@ snagfactory_exe = EXE(
 	name='snagfactory',
 	upx=True,
 	console=False,
-	icon="src/snagfactory/assets/lab_penguins.ico"
+	icon="src/snagfactory/qml/lab_penguins.ico"
 )
 
 coll = COLLECT(
