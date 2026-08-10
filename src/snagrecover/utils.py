@@ -16,15 +16,6 @@ from snagrecover.usb import SnagbootUSBContext
 import yaml
 import importlib.resources
 
-import lzma
-import bz2
-import gzip
-
-if sys.version_info >= (3, 14):
-	from compression import zstd
-else:
-	from backports import zstd
-
 from math import ceil
 
 USB_RETRIES = 9
@@ -61,12 +52,22 @@ def open_compressed_file(path: str, mode):
 	comp = get_compression_method(path)
 
 	if comp == "xz":
+		import lzma
+
 		file = lzma.open(path, mode)
 	elif comp == "bz2":
+		import bz2
+
 		file = bz2.open(path, mode)
 	elif comp == "gz":
+		import gzip
+
 		file = gzip.open(path, mode)
 	elif comp == "zst":
+		if sys.version_info >= (3, 14):
+			from compression import zstd
+		else:
+			from backports import zstd
 		file = zstd.open(path, mode)
 	else:
 		return open(path, mode)
