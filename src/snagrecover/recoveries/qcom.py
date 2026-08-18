@@ -26,9 +26,9 @@ from snagrecover.firmware.firmware import run_firmware
 from snagrecover.config import recovery_config
 from snagrecover.utils import get_usb
 import logging
-import time
 
 logger = logging.getLogger("snagrecover")
+
 
 def main():
 	"""

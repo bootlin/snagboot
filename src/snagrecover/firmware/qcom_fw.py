@@ -32,7 +32,7 @@ def qcom_run(sahara, fw_name: str, fw_blob: bytes):
 
 	This function:
 	Transfers the firmware to the device via QSahara protocol along with
-    image_id
+	image_id
 
 	Args:
 		sahara: QSahara protocol instance
@@ -45,9 +45,9 @@ def qcom_run(sahara, fw_name: str, fw_blob: bytes):
 	"""
 	# Get Sahara image ID for this firmware
 	image_id = 0
-	for key, value in recovery_config['firmware'].items():
+	for key, value in recovery_config["firmware"].items():
 		if key == fw_name:
-			image_id = value['image_id']
+			image_id = value["image_id"]
 	logger.debug(f"Firmware '{fw_name}' maps to image ID {image_id:#x}")
 
 	# Validate firmware size

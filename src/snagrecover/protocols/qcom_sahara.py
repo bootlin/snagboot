@@ -26,7 +26,6 @@ import usb.core
 import usb.util
 import struct
 import logging
-import time
 from dataclasses import dataclass
 
 from snagrecover.utils import BinFileHeader as Header, dnload_iter
@@ -130,12 +129,12 @@ class QSahara:
 	# Sahara protocol command constants
 	SAHARA_HELLO_REQ = 0x01
 	SAHARA_HELLO_RESP = 0x02
-	SAHARA_READ_DATA = 0x03        # 32-bit READ_DATA
+	SAHARA_READ_DATA = 0x03  # 32-bit READ_DATA
 	SAHARA_END_IMAGE_TX = 0x04
 	SAHARA_DONE_REQ = 0x05
 	SAHARA_DONE_RESP = 0x06
 	SAHARA_RESET_REQ = 0x07
-	SAHARA_READ_DATA_64 = 0x12     # 64-bit READ_DATA
+	SAHARA_READ_DATA_64 = 0x12  # 64-bit READ_DATA
 
 	# USB packet size - must match MHI_MAX_MTU
 	SAHARA_PACKET_MAX_SIZE = 0xFFFF  # 65535 bytes
@@ -196,22 +195,20 @@ class QSahara:
 		ep_in = usb.util.find_descriptor(
 			intf,
 			custom_match=lambda e: (
-				usb.util.endpoint_type(e.bmAttributes) ==
-				usb.util.ENDPOINT_TYPE_BULK and
-				usb.util.endpoint_direction(e.bEndpointAddress) ==
-				usb.util.ENDPOINT_IN
-			)
+				usb.util.endpoint_type(e.bmAttributes) == usb.util.ENDPOINT_TYPE_BULK
+				and usb.util.endpoint_direction(e.bEndpointAddress)
+				== usb.util.ENDPOINT_IN
+			),
 		)
 
 		# Find bulk OUT endpoint
 		ep_out = usb.util.find_descriptor(
 			intf,
 			custom_match=lambda e: (
-				usb.util.endpoint_type(e.bmAttributes) ==
-				usb.util.ENDPOINT_TYPE_BULK and
-				usb.util.endpoint_direction(e.bEndpointAddress) ==
-				usb.util.ENDPOINT_OUT
-			)
+				usb.util.endpoint_type(e.bmAttributes) == usb.util.ENDPOINT_TYPE_BULK
+				and usb.util.endpoint_direction(e.bEndpointAddress)
+				== usb.util.ENDPOINT_OUT
+			),
 		)
 
 		if ep_in is None or ep_out is None:
@@ -241,13 +238,14 @@ class QSahara:
 
 			# Find the OUT endpoint descriptor
 			ep_desc = usb.util.find_descriptor(
-				cfg[(0, 0)],
-				custom_match=lambda e: e.bEndpointAddress == self.ep_out
+				cfg[(0, 0)], custom_match=lambda e: e.bEndpointAddress == self.ep_out
 			)
 
-			if ep_desc and hasattr(ep_desc, 'wMaxPacketSize'):
+			if ep_desc and hasattr(ep_desc, "wMaxPacketSize"):
 				max_packet_size = ep_desc.wMaxPacketSize
-				logger.debug(f"USB max packet size from descriptor: {max_packet_size} bytes")
+				logger.debug(
+					f"USB max packet size from descriptor: {max_packet_size} bytes"
+				)
 				return max_packet_size
 		except Exception as e:
 			logger.warning(f"Could not read max packet size from descriptor: {e}")
@@ -299,7 +297,7 @@ class QSahara:
 				f"Total transfer size {total_bytes_sent} is multiple of "
 				f"max packet size {self.max_packet_size}, sending ZLP"
 			)
-			zlp_written = self.dev.write(self.ep_out, b'')
+			zlp_written = self.dev.write(self.ep_out, b"")
 			logger.debug(f"ZLP sent ({zlp_written} bytes)")
 
 	def transfer_image(self, image_id, data):
@@ -314,7 +312,9 @@ class QSahara:
 		Raises:
 			Exception: Any error that occurred during transfer
 		"""
-		logger.debug(f"Starting transfer of image ID {image_id:#x}, size {len(data)} bytes")
+		logger.debug(
+			f"Starting transfer of image ID {image_id:#x}, size {len(data)} bytes"
+		)
 
 		# Setup state for this transfer
 		self.current_image_id = image_id
@@ -373,9 +373,9 @@ class QSahara:
 		"""
 		try:
 			# 10 second timeout
-			data = bytes(self.dev.read(
-				self.ep_in, self.SAHARA_PACKET_MAX_SIZE, timeout=10000
-			))
+			data = bytes(
+				self.dev.read(self.ep_in, self.SAHARA_PACKET_MAX_SIZE, timeout=10000)
+			)
 		except Exception as e:
 			logger.error(f"Timeout or error waiting for packet from device: {e}")
 			raise
@@ -384,9 +384,11 @@ class QSahara:
 			raise ValueError(f"Received undersized packet: {len(data)} bytes")
 
 		# Parse header to get actual packet length
-		command, length = struct.unpack('<II', data[:8])
+		command, length = struct.unpack("<II", data[:8])
 
-		logger.debug(f"RECEIVED: cmd={command:#x} length={length} actual_bytes={len(data)}")
+		logger.debug(
+			f"RECEIVED: cmd={command:#x} length={length} actual_bytes={len(data)}"
+		)
 
 		# Validate that we received the complete packet
 		if len(data) < length:
@@ -414,7 +416,7 @@ class QSahara:
 		Raises:
 			ValueError: If command is unknown
 		"""
-		command = struct.unpack('<I', packet[:4])[0]
+		command = struct.unpack("<I", packet[:4])[0]
 
 		logger.debug(f"Dispatching command {command:#x}")
 
@@ -434,7 +436,7 @@ class QSahara:
 		hello = SaharaHelloReq.read(packet)
 
 		logger.info(
-			f"Received HELLO message from device. "
+			"Received HELLO message from device. "
 			f"Protocol version: {hello.version:#x}, Mode: {hello.mode:#x}"
 		)
 
@@ -463,7 +465,7 @@ class QSahara:
 		if self.active_image_id is None:
 			# First READ_DATA for this image - set active image ID
 			self.active_image_id = image_id
-			logger.info(f"Received first READ DATA (32-bit) message from device")
+			logger.info("Received first READ DATA (32-bit) message from device")
 			logger.debug(f"Device requesting image ID {image_id:#x}")
 
 			# Validate it matches what we're trying to send
@@ -484,7 +486,9 @@ class QSahara:
 
 		# Validate offset and length
 		if offset >= len(self.current_image_data):
-			raise ValueError(f"Invalid offset {offset}, image size {len(self.current_image_data)}")
+			raise ValueError(
+				f"Invalid offset {offset}, image size {len(self.current_image_data)}"
+			)
 
 		if offset + length > len(self.current_image_data):
 			raise ValueError(
@@ -493,7 +497,7 @@ class QSahara:
 			)
 
 		# Extract requested data
-		data = self.current_image_data[offset:offset+length]
+		data = self.current_image_data[offset : offset + length]
 
 		# Send data in chunks to avoid USB buffer limitations in the USB stack
 		# Chunking ensures all data is actually transmitted
@@ -512,7 +516,9 @@ class QSahara:
 			bytes_written = self.send_chunk(chunk_data)
 			total_bytes_sent += bytes_written
 
-		logger.debug(f"Successfully sent {total_bytes_sent} bytes in {chunk_count} chunks")
+		logger.debug(
+			f"Successfully sent {total_bytes_sent} bytes in {chunk_count} chunks"
+		)
 
 		# Send Zero-Length Packet (ZLP) if needed - ONCE after ALL chunks
 		# ZLP is required when TOTAL data size is a multiple of USB max packet size
@@ -539,7 +545,7 @@ class QSahara:
 		if self.active_image_id is None:
 			# First READ_DATA for this image - set active image ID
 			self.active_image_id = image_id
-			logger.info(f"Received first READ DATA (64-bit) message from device")
+			logger.info("Received first READ DATA (64-bit) message from device")
 			logger.debug(f"Device requesting image ID {image_id:#x}")
 
 			# Validate it matches what we're trying to send
@@ -556,11 +562,15 @@ class QSahara:
 					f"but device requested {image_id:#x}"
 				)
 
-		logger.debug(f"Device requests data (64-bit): offset={offset} length={length} bytes")
+		logger.debug(
+			f"Device requests data (64-bit): offset={offset} length={length} bytes"
+		)
 
 		# Validate offset and length (with 64-bit support)
 		if offset >= len(self.current_image_data):
-			raise ValueError(f"Invalid offset {offset}, image size {len(self.current_image_data)}")
+			raise ValueError(
+				f"Invalid offset {offset}, image size {len(self.current_image_data)}"
+			)
 
 		if offset + length > len(self.current_image_data):
 			raise ValueError(
@@ -569,7 +579,7 @@ class QSahara:
 			)
 
 		# Extract requested data
-		data = self.current_image_data[offset:offset+length]
+		data = self.current_image_data[offset : offset + length]
 
 		# Send data in chunks to avoid Linux USB buffer limitations
 		# Linux USB subsystem may truncate large transfers (e.g., 1MB → 240KB)
@@ -589,7 +599,9 @@ class QSahara:
 			bytes_written = self.send_chunk(chunk_data)
 			total_bytes_sent += bytes_written
 
-		logger.debug(f"Successfully sent {total_bytes_sent} bytes in {chunk_count} chunks")
+		logger.debug(
+			f"Successfully sent {total_bytes_sent} bytes in {chunk_count} chunks"
+		)
 
 		# Send Zero-Length Packet (ZLP) if needed - ONCE after ALL chunks
 		# ZLP is required when TOTAL data size is a multiple of USB max packet size
@@ -655,14 +667,19 @@ class QSahara:
 			mode: Mode from device
 		"""
 		packet = struct.pack(
-			'<IIIIIIIIIIII',  # 12 uint32_t fields (little-endian)
+			"<IIIIIIIIIIII",  # 12 uint32_t fields (little-endian)
 			self.SAHARA_HELLO_RESP,  # command
-			48,                       # length
-			version,                  # version
-			version,                  # version_min (same as version)
-			0,                        # status (0 = success)
-			mode,                     # mode (echo back)
-			0, 0, 0, 0, 0, 0         # reserved fields
+			48,  # length
+			version,  # version
+			version,  # version_min (same as version)
+			0,  # status (0 = success)
+			mode,  # mode (echo back)
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,  # reserved fields
 		)
 		logger.debug(f"Sending HELLO_RESP packet ({len(packet)} bytes)")
 		logger.debug(f"  First 24 bytes: {packet[:24].hex(' ')}")
@@ -674,9 +691,9 @@ class QSahara:
 		Send DONE command to device.
 		"""
 		packet = struct.pack(
-			'<II',  # 2 uint32_t fields (little-endian)
+			"<II",  # 2 uint32_t fields (little-endian)
 			self.SAHARA_DONE_REQ,  # command
-			8                       # length
+			8,  # length
 		)
 		logger.debug(f"Sending DONE packet ({len(packet)} bytes)")
 		logger.debug(f"  First 24 bytes: {packet[:24].hex(' ')}")
@@ -695,9 +712,9 @@ class QSahara:
 		try:
 			logger.info("Sending RESET message to device...")
 			packet = struct.pack(
-				'<II',  # 2 uint32_t fields (little-endian)
+				"<II",  # 2 uint32_t fields (little-endian)
 				self.SAHARA_RESET_REQ,  # command
-				8                        # length
+				8,  # length
 			)
 			logger.debug(f"Sending RESET packet ({len(packet)} bytes)")
 			logger.debug(f"  First 24 bytes: {packet[:24].hex(' ')}")

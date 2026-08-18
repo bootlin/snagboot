@@ -268,8 +268,10 @@ class Fastboot:
 			with open(fname, "rb") as f:
 				magic_bytes = f.read(4)
 				if len(magic_bytes) < 4:
-					raise FastbootError(f"File {fname} is too small to be a valid sparse file")
-				magic = int.from_bytes(magic_bytes, byteorder='little')
+					raise FastbootError(
+						f"File {fname} is too small to be a valid sparse file"
+					)
+				magic = int.from_bytes(magic_bytes, byteorder="little")
 				if magic != 0xED26FF3A:
 					raise FastbootError(
 						f"File {fname} is not a valid Android sparse file. "
@@ -291,24 +293,38 @@ class Fastboot:
 				total_splits = sum(1 for _ in split_streaming(fname, temppath, maxsize))
 
 				split_count = 0
-				logger.info(f"Starting streaming sparse file flash ({total_splits} split(s))...")
+				logger.info(
+					f"Starting streaming sparse file flash ({total_splits} split(s))..."
+				)
 
 				for split_file in split_streaming(fname, temppath, maxsize):
 					split_count += 1
-					logger.info(f"Processing split {split_count}/{total_splits}: Downloading {split_file}")
+					logger.info(
+						f"Processing split {split_count}/{total_splits}: Downloading {split_file}"
+					)
 					try:
 						self.download(split_file)
 					except Exception as e:
-						raise FastbootError(f"Failed to download split {split_count}/{total_splits}: {e}") from e
+						raise FastbootError(
+							f"Failed to download split {split_count}/{total_splits}: {e}"
+						) from e
 
-					logger.info(f"Processing split {split_count}/{total_splits}: Flashing to {part}")
+					logger.info(
+						f"Processing split {split_count}/{total_splits}: Flashing to {part}"
+					)
 					try:
 						self.flash(part)
 					except Exception as e:
-						raise FastbootError(f"Failed to flash split {split_count}/{total_splits}: {e}") from e
+						raise FastbootError(
+							f"Failed to flash split {split_count}/{total_splits}: {e}"
+						) from e
 
-					logger.debug(f"Split {split_count}/{total_splits} completed successfully")
+					logger.debug(
+						f"Split {split_count}/{total_splits} completed successfully"
+					)
 
-				logger.info(f"Successfully flashed {split_count}/{total_splits} split file(s) to {part}")
+				logger.info(
+					f"Successfully flashed {split_count}/{total_splits} split file(s) to {part}"
+				)
 			except Exception as e:
 				raise FastbootError(f"Streaming sparse flash failed: {e}") from e

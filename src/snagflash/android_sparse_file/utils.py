@@ -22,7 +22,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import os
 import logging
 
 from snagflash.android_sparse_file.sparse import (
@@ -66,9 +65,9 @@ class SplitFragmentState:
 	"""
 
 	def __init__(self):
-		self.pending = []            # List of (chunk_type, num_blocks, payload) for current fragment
+		self.pending = []  # List of (chunk_type, num_blocks, payload) for current fragment
 		self.pending_payload_bytes = 0  # Running sum of payload bytes in pending
-		self.piece_blocks_sum = 0    # Total logical blocks covered by pending
+		self.piece_blocks_sum = 0  # Total logical blocks covered by pending
 
 
 def ensure_prefix_skip(state, blocks_done):
@@ -126,7 +125,9 @@ def flush_fragment(state, dest, block_size, original_total_blks):
 	if suffix_blocks > 0:
 		state.pending.append((CHUNK_TYPE_DONTCARE, suffix_blocks, None))
 		state.piece_blocks_sum += suffix_blocks
-		logger.debug(f"Added DONT_CARE suffix: {suffix_blocks} blocks (total: {state.piece_blocks_sum})")
+		logger.debug(
+			f"Added DONT_CARE suffix: {suffix_blocks} blocks (total: {state.piece_blocks_sum})"
+		)
 
 	# Serialize the fragment: file header + all chunk headers + payloads
 	outf = AndroidSparseFile(False)
@@ -158,7 +159,9 @@ def flush_fragment(state, dest, block_size, original_total_blks):
 	return dest
 
 
-def process_raw_chunk(input_fd, header, state, blocks_done, bufsize, block_size, dest, original_total_blks):
+def process_raw_chunk(
+	input_fd, header, state, blocks_done, bufsize, block_size, dest, original_total_blks
+):
 	"""
 	Stage (and flush as needed) a RAW chunk, which may need to be split
 	across multiple fragments since RAW payloads can be large.
@@ -178,23 +181,25 @@ def process_raw_chunk(input_fd, header, state, blocks_done, bufsize, block_size,
 	Returns via StopIteration value: updated blocks_done
 	"""
 	total = header.size  # Total blocks in this RAW chunk
-	off = 0              # Current block offset within this RAW chunk
+	off = 0  # Current block offset within this RAW chunk
 
 	while off < total:
 		ensure_prefix_skip(state, blocks_done)
 
 		# Compute bytes already committed in this fragment (overhead)
 		overhead = (
-			SPARSE_FILEHEADER_LEN +
-			(len(state.pending) + 1) * SPARSE_CHUNKHEADER_LEN +
-			state.pending_payload_bytes +
-			SUFFIX_RESERVE
+			SPARSE_FILEHEADER_LEN
+			+ (len(state.pending) + 1) * SPARSE_CHUNKHEADER_LEN
+			+ state.pending_payload_bytes
+			+ SUFFIX_RESERVE
 		)
 		avail = bufsize - overhead  # Available bytes for new RAW payload
 
 		if avail < block_size:
 			# Not enough room for even one block — flush and yield
-			flushed_fragment = flush_fragment(state, dest, block_size, original_total_blks)
+			flushed_fragment = flush_fragment(
+				state, dest, block_size, original_total_blks
+			)
 			if flushed_fragment:
 				yield flushed_fragment
 			continue  # Re-enter loop: recalculate overhead after flush
@@ -221,7 +226,9 @@ def process_raw_chunk(input_fd, header, state, blocks_done, bufsize, block_size,
 	return blocks_done
 
 
-def process_dontcare_chunk(header, state, blocks_done, bufsize, block_size, dest, original_total_blks):
+def process_dontcare_chunk(
+	header, state, blocks_done, bufsize, block_size, dest, original_total_blks
+):
 	"""
 	Stage a DONT_CARE chunk, flushing the current fragment first if the
 	chunk header doesn't fit within bufsize.
@@ -233,10 +240,10 @@ def process_dontcare_chunk(header, state, blocks_done, bufsize, block_size, dest
 
 	# Check if adding this chunk header would exceed bufsize
 	overhead = (
-		SPARSE_FILEHEADER_LEN +
-		(len(state.pending) + 1) * SPARSE_CHUNKHEADER_LEN +
-		state.pending_payload_bytes +
-		SUFFIX_RESERVE
+		SPARSE_FILEHEADER_LEN
+		+ (len(state.pending) + 1) * SPARSE_CHUNKHEADER_LEN
+		+ state.pending_payload_bytes
+		+ SUFFIX_RESERVE
 	)
 
 	flushed_fragment = None
@@ -254,7 +261,9 @@ def process_dontcare_chunk(header, state, blocks_done, bufsize, block_size, dest
 	return blocks_done, flushed_fragment
 
 
-def process_fill_chunk(input_fd, header, state, blocks_done, bufsize, block_size, dest, original_total_blks):
+def process_fill_chunk(
+	input_fd, header, state, blocks_done, bufsize, block_size, dest, original_total_blks
+):
 	"""
 	Stage a FILL chunk (always exactly 4 bytes of payload), flushing the
 	current fragment first if it doesn't fit within bufsize.
@@ -270,10 +279,11 @@ def process_fill_chunk(input_fd, header, state, blocks_done, bufsize, block_size
 
 	# Check if adding this 4-byte payload + header fits within bufsize
 	overhead = (
-		SPARSE_FILEHEADER_LEN +
-		(len(state.pending) + 1) * SPARSE_CHUNKHEADER_LEN +
-		state.pending_payload_bytes + 4 +  # Include the 4-byte FILL payload
-		SUFFIX_RESERVE
+		SPARSE_FILEHEADER_LEN
+		+ (len(state.pending) + 1) * SPARSE_CHUNKHEADER_LEN
+		+ state.pending_payload_bytes
+		+ 4  # Include the 4-byte FILL payload
+		+ SUFFIX_RESERVE
 	)
 
 	flushed_fragment = None
@@ -321,10 +331,10 @@ def split_streaming(path, dest, bufsize):
 
 	# Pre-flight validation: ensure bufsize can hold at least one block with all headers
 	min_required = (
-		SPARSE_FILEHEADER_LEN +      # 28 bytes: file header
-		2 * SPARSE_CHUNKHEADER_LEN + # 24 bytes: prefix + one data chunk header
-		block_size +                  # At least one block of data
-		SPARSE_CHUNKHEADER_LEN       # 12 bytes: suffix reserve
+		SPARSE_FILEHEADER_LEN  # 28 bytes: file header
+		+ 2 * SPARSE_CHUNKHEADER_LEN  # 24 bytes: prefix + one data chunk header
+		+ block_size  # At least one block of data
+		+ SPARSE_CHUNKHEADER_LEN  # 12 bytes: suffix reserve
 	)
 	if bufsize <= min_required:
 		sparse_file.close()
@@ -339,13 +349,18 @@ def split_streaming(path, dest, bufsize):
 
 	input_fd = sparse_file.fd  # Direct file handle for streaming reads
 
-	logger.debug(f"Starting streaming split: total_blocks={original_total_blks}, block_size={block_size}")
+	logger.debug(
+		f"Starting streaming split: total_blocks={original_total_blks}, block_size={block_size}"
+	)
 
 	try:
 		while True:
 			# Read chunk header (not data yet)
 			chunk_header_bytes = input_fd.read(SPARSE_CHUNKHEADER_LEN)
-			if not chunk_header_bytes or len(chunk_header_bytes) < SPARSE_CHUNKHEADER_LEN:
+			if (
+				not chunk_header_bytes
+				or len(chunk_header_bytes) < SPARSE_CHUNKHEADER_LEN
+			):
 				# End of input file - finalize current output
 				result = flush_fragment(state, dest, block_size, original_total_blks)
 				if result:
@@ -363,7 +378,14 @@ def split_streaming(path, dest, bufsize):
 
 			if header.type == CHUNK_TYPE_RAW:
 				raw_gen = process_raw_chunk(
-					input_fd, header, state, blocks_done, bufsize, block_size, dest, original_total_blks
+					input_fd,
+					header,
+					state,
+					blocks_done,
+					bufsize,
+					block_size,
+					dest,
+					original_total_blks,
 				)
 				# process_raw_chunk is a generator that yields flushed fragment
 				# paths and returns the updated blocks_done via StopIteration.value
@@ -377,14 +399,27 @@ def split_streaming(path, dest, bufsize):
 
 			elif header.type == CHUNK_TYPE_DONTCARE:
 				blocks_done, flushed_fragment = process_dontcare_chunk(
-					header, state, blocks_done, bufsize, block_size, dest, original_total_blks
+					header,
+					state,
+					blocks_done,
+					bufsize,
+					block_size,
+					dest,
+					original_total_blks,
 				)
 				if flushed_fragment:
 					yield flushed_fragment
 
 			elif header.type == CHUNK_TYPE_FILL:
 				blocks_done, flushed_fragment = process_fill_chunk(
-					input_fd, header, state, blocks_done, bufsize, block_size, dest, original_total_blks
+					input_fd,
+					header,
+					state,
+					blocks_done,
+					bufsize,
+					block_size,
+					dest,
+					original_total_blks,
 				)
 				if flushed_fragment:
 					yield flushed_fragment
