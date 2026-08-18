@@ -3,6 +3,7 @@ import os
 import re
 
 from snagrecover.utils import get_supported_socs, get_soc_aliases
+from snagrecover.config import complete_fw_paths
 
 from snagfactory.fastboot import task_table
 from snagfactory.utils import SnagFactoryConfigError
@@ -235,20 +236,33 @@ def suffixed_num_to_int(param) -> int:
 	return int(num) * multiplier
 
 
-def preprocess_config(config):
+def preprocess_config(config_path: str, config: dict):
 	"""
 	This performs the following transformations on the parsed YAML config file:
 	- find strings of the form "[0-9]+(M|k)?" and convert them to integers
+	- convert relative firmware paths to absolute paths
 	"""
 
 	map_config(config, suffixed_num_to_int)
+
+	if "boards" not in config:
+		# This will be caught by check_config() later.
+		return
+
+	soc_models = set(config["boards"].values())
+	for soc_model in soc_models:
+		if f"{soc_model}-firmware" not in config["soc-models"]:
+			# This will be caught by check_config() later.
+			continue
+
+		complete_fw_paths(config["soc-models"][f"{soc_model}-firmware"], config_path)
 
 
 def read_config(path, check_paths=True):
 	with open(path, "r") as file:
 		config = yaml.safe_load(file)
 
-	preprocess_config(config)
+	preprocess_config(path, config)
 
 	check_config(config, check_paths)
 
