@@ -43,10 +43,10 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pip
         shell: bash
-      - name: Install QT6 and xvfb
+      - name: Install QT6, libxcb-cursor0 and xvfb
         run: |
           if [ "$RUNNER_OS" != "Windows" ]; then
-            sudo apt install qt6-base-dev xvfb
+            sudo apt install qt6-base-dev libxcb-cursor0 xvfb
           fi
         shell: bash
       - name: Build and install
