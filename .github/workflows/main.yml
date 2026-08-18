@@ -43,6 +43,12 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pip
         shell: bash
+      - name: Install QT6 and xvfb
+        run: |
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            sudo apt install qt6-base-dev xvfb
+          fi
+        shell: bash
       - name: Build and install
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
@@ -55,4 +61,10 @@ jobs:
           fi
         shell: bash
       - name: Run tests
-        run: python tests.py
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python tests.py
+          else
+            xvfb-run python tests.py
+          fi
+        shell: bash
