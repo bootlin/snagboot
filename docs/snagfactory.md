@@ -221,6 +221,13 @@ name of a GPT partition on the backend device, or the name of an MTD device or
 partition. The "hwpart <hwpart_num>" syntax can be used with the "part" parameter
 to target a hardware partition on an MMC device.
 
+```
+image: path of an image to flash to the target device
+part: GPT or MTD partition to flash the image to. Can be set to "hwpart <index>"
+      to flash an eMMC hardware partition
+image-offset: offset to which the image must be flashed
+```
+
 **Note**: the "part: hwpart <part_num>" syntax can only be used with an eMMC backend
 **Note**: "part: hwpart 0" targets the user area, "part: hwpart 1" targets the first eMMC boot partition, and so on...
 
