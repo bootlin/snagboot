@@ -19,9 +19,9 @@ jobs:
       - name: Install ruff
         run: python -m pip install --upgrade pip ruff
       - name: Check formatting
-        run: ruff format --check .
+        run: ruff format --check src tests tests.py
       - name: Lint with ruff
-        run: ruff check --output-format=github .
+        run: ruff check --output-format=github src tests tests.py
 
   test:
     name: Test Python ${{ matrix.python-version }} ${{ matrix.os }}
