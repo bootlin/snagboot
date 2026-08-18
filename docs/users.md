@@ -13,7 +13,7 @@ Then follow these steps:
  - [Run snagrecover](snagrecover.md)
  - [Run snagflash](snagflash.md)
 
-For recovering and flashing large batches of boards efficiently, you may use the Snagfactory application which is included in Snagboot. Usage instructions for Snagfactory are available at [snagfactory.md](snagfactory.md). The configuration file syntax for Snagfactory is documented at [snagfactory_config.md](snagfactory_config.md).
+For recovering and flashing large batches of boards efficiently, you may use the Snagfactory application which is included in Snagboot. Usage instructions for Snagfactory are available at [snagfactory.md](snagfactory.md).
 
 
 Note that Snagfactory support is only included in the "gui" package variant: `pip install snagboot[gui]`
