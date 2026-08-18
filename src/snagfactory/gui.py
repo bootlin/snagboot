@@ -55,7 +55,6 @@ import yaml
 from math import ceil
 
 from snagfactory.session import SnagFactorySession
-from snagfactory.config import SnagFactoryConfigError
 
 import multiprocessing
 import logging
