@@ -7,6 +7,7 @@ System requirements:
  * libusb 1.x, libusb 0.1.x or OpenUSB
  * The ensurepip Python package. On Debian, you can install the
    python[your python version]-venv package
+ * Qt6 base
 
 Snagboot is available on pip: `python3 -m pip install --user snagboot`.
 
