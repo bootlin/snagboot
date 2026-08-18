@@ -201,10 +201,10 @@ fw_3:
 ```
 
 The firmware needed for each SoC family are listed below. Some
-[templates](../src/snagrecover/templates) are provided for reference. Whichever
-type of SoC you are using, you will probably want to configure your U-Boot build
-so that it can interact with snagflash correctly after recovery (e.g. use DFU,
-UMS or fastboot).
+[templates](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates)
+are provided for reference. Whichever type of SoC you are using, you will
+probably want to configure your U-Boot build so that it can interact with
+snagflash correctly after recovery (e.g. use DFU, UMS or fastboot).
 
 The key `paths-relative-to` is optional and indicates that paths to images are
 relative to a specific path, either:
