@@ -24,7 +24,12 @@ import tempfile
 from typing import Optional, Union
 
 from snagrecover import utils
-from snagflash.android_sparse_file.utils import split_streaming
+from snagflash.android_sparse_file.utils import (
+	split_streaming,
+	split_streaming_raw,
+	is_sparse_file,
+)
+from snagflash.android_sparse_file.sparse import MAGIC
 
 import logging
 
@@ -239,11 +244,10 @@ class Fastboot:
 
 		self.dev.write(self.ep_out, packet, timeout=self.timeout)
 
-	def flash_sparse(self, args: str):
+	def get_max_download_size(self) -> int:
 		"""
-		Download and flash an android sparse file.
-		If the file is too big, it's splitting into
-		smaller android sparse files.
+		Read the "max-download-size" Fastboot variable from U-Boot.
+		Raises a FastbootError if it cannot be read, or if it is 0.
 		"""
 		try:
 			maxsize = int(self.getvar("max-download-size"), 0)
@@ -253,51 +257,33 @@ class Fastboot:
 			) from e
 		if maxsize == 0:
 			raise FastbootError("Fastboot variable max-download-size is 0")
-		arg_list = args.split(":", 1)
-		cnt = len(arg_list)
-		if cnt != 2:
-			raise FastbootError(
-				f"Wrong arguments count {cnt}, expected 2. Given {args}"
-			)
-		fname = arg_list[0]
-		if not os.path.exists(fname):
-			raise FastbootError(f"File {fname} does not exist")
+		return maxsize
 
-		# Verify the file is a valid Android sparse file by checking magic cookie
-		try:
-			with open(fname, "rb") as f:
-				magic_bytes = f.read(4)
-				if len(magic_bytes) < 4:
-					raise FastbootError(
-						f"File {fname} is too small to be a valid sparse file"
-					)
-				magic = int.from_bytes(magic_bytes, byteorder="little")
-				if magic != 0xED26FF3A:
-					raise FastbootError(
-						f"File {fname} is not a valid Android sparse file. "
-						f"Expected magic 0xED26FF3A, got 0x{magic:08X}"
-					)
-				logger.info(f"Verified {fname} is a valid Android sparse file")
-		except IOError as e:
-			raise FastbootError(f"Failed to read file {fname}: {e}") from e
+	def split_and_flash(self, splitter, fname: str, part: str, maxsize: int):
+		"""
+		Split 'fname' into a series of android sparse fragments (each no
+		bigger than 'maxsize') using the given 'splitter' generator
+		function, then download and flash each fragment in turn to 'part'.
 
-		part = arg_list[1]
+		'splitter' is expected to have the same signature/semantics as
+		split_streaming()/split_streaming_raw(): splitter(path, dest, bufsize)
+		is a generator yielding the path to each fragment file (dest, reused
+		and overwritten for every fragment).
 
-		# Use streaming approach to minimize memory usage
-		# Each split file is created, downloaded, flashed, and then reused for the next split
-		# This allows processing of arbitrarily large sparse files with constant memory usage
+		Each split file is created, downloaded, flashed, and then reused for
+		the next split. This allows processing of arbitrarily large images
+		with constant memory usage.
+		"""
 		with tempfile.TemporaryDirectory() as tmp:
-			temppath = os.path.join(tmp, "sparse.img")
+			temppath = os.path.join(tmp, "split.img")
 			try:
 				# Count total splits upfront for "split X/N" logging below
-				total_splits = sum(1 for _ in split_streaming(fname, temppath, maxsize))
+				total_splits = sum(1 for _ in splitter(fname, temppath, maxsize))
 
 				split_count = 0
-				logger.info(
-					f"Starting streaming sparse file flash ({total_splits} split(s))..."
-				)
+				logger.info(f"Starting streaming flash ({total_splits} split(s))...")
 
-				for split_file in split_streaming(fname, temppath, maxsize):
+				for split_file in splitter(fname, temppath, maxsize):
 					split_count += 1
 					logger.info(
 						f"Processing split {split_count}/{total_splits}: Downloading {split_file}"
@@ -327,4 +313,96 @@ class Fastboot:
 					f"Successfully flashed {split_count}/{total_splits} split file(s) to {part}"
 				)
 			except Exception as e:
-				raise FastbootError(f"Streaming sparse flash failed: {e}") from e
+				raise FastbootError(f"Streaming flash failed: {e}") from e
+
+	def flash_sparse(self, args: str):
+		"""
+		Download and flash an android sparse file.
+		If the file is too big, it's splitting into
+		smaller android sparse files.
+		"""
+		maxsize = self.get_max_download_size()
+
+		arg_list = args.split(":", 1)
+		cnt = len(arg_list)
+		if cnt != 2:
+			raise FastbootError(
+				f"Wrong arguments count {cnt}, expected 2. Given {args}"
+			)
+		fname = arg_list[0]
+		if not os.path.exists(fname):
+			raise FastbootError(f"File {fname} does not exist")
+
+		# Verify the file is a valid Android sparse file by checking magic cookie
+		try:
+			if not is_sparse_file(fname):
+				raise FastbootError(
+					f"File {fname} is not a valid Android sparse file, "
+					f"or is too small to be a valid sparse file. "
+					f"Expected magic 0x{MAGIC:08X}"
+				)
+			logger.info(f"Verified {fname} is a valid Android sparse file")
+		except IOError as e:
+			raise FastbootError(f"Failed to read file {fname}: {e}") from e
+
+		part = arg_list[1]
+
+		self.split_and_flash(split_streaming, fname, part, maxsize)
+
+	def flash_image(self, args: str):
+		"""
+		Download and flash an image file (raw binary or android sparse) to
+		a partition, handling both formats transparently:
+
+		1. Reads "max-download-size" from U-Boot (fails if unavailable or 0).
+		2. If the file fits within max-download-size, downloads and flashes
+		it directly, with no splitting required.
+		3. If the file is bigger than max-download-size:
+			- If it's an Android sparse file, it's split into smaller sparse
+			fragments (reusing the same logic as flash_sparse()).
+			- If it's a raw binary file, it's split by synthesizing a single
+			logical RAW region covering the whole image, then splitting
+			that into smaller sparse fragments the same way. This gives
+			raw files automatic splitting support that they otherwise
+			don't have with a plain download()+flash().
+
+		Each emitted fragment (sparse or raw-derived) is downloaded and
+		flashed in turn, with progress logged as "split X/N".
+		"""
+		arg_list = args.split(":", 1)
+		cnt = len(arg_list)
+		if cnt != 2:
+			raise FastbootError(
+				f"Wrong arguments count {cnt}, expected 2. Given {args}"
+			)
+		fname = arg_list[0]
+		part = arg_list[1]
+
+		if not os.path.exists(fname):
+			raise FastbootError(f"File {fname} does not exist")
+
+		maxsize = self.get_max_download_size()
+
+		filesize = os.path.getsize(fname)
+
+		if filesize <= maxsize:
+			logger.info(
+				f"File {fname} ({filesize} bytes) fits within "
+				f"max-download-size (0x{maxsize:x}), flashing directly"
+			)
+			self.download(fname)
+			self.flash(part)
+			return
+
+		if is_sparse_file(fname):
+			logger.info(
+				f"File {fname} is an Android sparse file, splitting to fit "
+				f"max-download-size (0x{maxsize:x})"
+			)
+			self.split_and_flash(split_streaming, fname, part, maxsize)
+		else:
+			logger.info(
+				f"File {fname} is a raw binary file, splitting into sparse "
+				f"fragments to fit max-download-size (0x{maxsize:x})"
+			)
+			self.split_and_flash(split_streaming_raw, fname, part, maxsize)
