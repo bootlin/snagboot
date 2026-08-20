@@ -114,6 +114,7 @@ def fastboot(args):
 		"oem_bootbus",
 		"reset",
 		"flash_sparse",
+		"flash_image",
 	}
 
 	for cmd in args.fastboot_cmd:
