@@ -1,5 +1,7 @@
 # Snagboot
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14233/badge)](https://www.bestpractices.dev/projects/14233)
+
 Snagboot intends to be an open-source and generic replacement to the
 vendor-specific, sometimes proprietary, tools used to recover and/or reflash
 embedded platforms. Examples of such tools include STM32CubeProgrammer, SAM-BA
