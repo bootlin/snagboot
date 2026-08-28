@@ -15,6 +15,8 @@
 - operators are surrounded by spaces e.g. a = 3 + 2 not a=3+2
 - function arguments are separated by spaces e.g. foo(a, b, c)
 - please lint your code with ruff: `cd snagboot && ruff check src`
+- when adding major changes to flashing or firmware handling code, please add
+  unit tests for these functionalities.
 - and run the test suite: `cd snagboot && python tests.py`
 
 ## Code architecture
