@@ -29,3 +29,5 @@ You can play the snagrecover tutorial in your terminal!
 sudo apt install asciinema
 asciinema play -s=2 docs/tutorial_snagrecover.cast
 ```
+
+To report a security vulnerability: [SECURITY.md](https://github.com/bootlin/snagboot/blob/main/SECURITY.md)

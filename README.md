@@ -35,4 +35,5 @@ Please check [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main
 or run `snagrecover --list-socs` for a more precise list of supported SoCs.
 
 Documentation: https://snagboot.readthedocs.io
+To report a security vulnerability: [SECURITY.md](https://github.com/bootlin/snagboot/blob/main/SECURITY.md)
 
