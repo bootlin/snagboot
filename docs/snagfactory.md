@@ -90,7 +90,7 @@ configuration variables, that are common to all tasks. It must contain the
 following values:
 
 ```yaml
-target-device: The device configured as the Fastboot flashing backend in U-Boot. Either 'mmc<num>' or 'nand'.
+target-device: The device configured as the Fastboot flashing backend in U-Boot. Either 'mmc<num>', 'ufs<num>' or 'nand'.
 fb-buffer-addr: The size in bytes of the Fastboot buffer.
 eraseblk-size: The size in bytes of an erase block for MTD targets
 fb-buffer-size: (optional) The size in bytes of the Fastboot buffer. This can only be used to reduce the default U-Boot buffer size.
@@ -314,6 +314,21 @@ Example:
 
   skip-pwr-cycle: False
 ```
+
+#### UFS backends
+
+`target-device: ufs<num>` is supported for boards whose storage is UFS rather
+than eMMC/MTD. With a `ufs<num>` target-device:
+
+- `eraseblk-size` is **not** required (same as for `mmc<num>`), since UFS is
+  LBA-addressable like eMMC.
+- The **`gpt`**, **`flash`**, **`mtd-parts`** and **`emmc-hwpart`** tasks are
+  **not supported currently** for `ufs<num>` targets and will raise a clear
+  configuration error if used. This is because U-Boot addresses UFS storage
+  through the `scsi` command family rather than the `mmc`-specific commands
+  these tasks generate.
+- Instead, use the **`run`** task to issue the equivalent raw commands
+  directly
 
 
 ## libusb-win32
