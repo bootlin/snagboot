@@ -94,6 +94,10 @@ target-device: The device configured as the Fastboot flashing backend in U-Boot.
 fb-buffer-addr: The size in bytes of the Fastboot buffer.
 eraseblk-size: The size in bytes of an erase block for MTD targets
 fb-buffer-size: (optional) The size in bytes of the Fastboot buffer. This can only be used to reduce the default U-Boot buffer size.
+usb-wait-timeout: (optional) The number of seconds to wait for the board's USB Fastboot
+  device to (re-)enumerate before giving up, for example after U-Boot boots following
+  snagrecover. This is useful for boards which take longer than the default (~9 seconds)
+  to boot up to the U-Boot Fastboot prompt.
 ```
 
 These variables may be updated during the factory flashing process, e.g.:

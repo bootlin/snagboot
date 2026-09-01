@@ -27,9 +27,12 @@ from snagrecover.utils import (
 	cli_error,
 	access_error,
 	prettify_usb_addr,
+	USB_RETRIES,
+	USB_INTERVAL,
 )
 import sys
 import logging
+from math import ceil
 
 logger = logging.getLogger("snagflash")
 
@@ -79,7 +82,13 @@ def fastboot(args):
 	if usb_addr is None:
 		access_error("USB Fastboot", args.port)
 
-	dev = get_usb(usb_addr, ready_check=fastboot_ready_check)
+	usb_wait_timeout = getattr(args, "usb_wait_timeout", None)
+	if usb_wait_timeout is None:
+		retries = USB_RETRIES
+	else:
+		retries = max(0, ceil(usb_wait_timeout / USB_INTERVAL) - 1)
+
+	dev = get_usb(usb_addr, retries=retries, ready_check=fastboot_ready_check)
 	dev.default_timeout = int(args.timeout)
 
 	fast = fb.Fastboot(dev, timeout=dev.default_timeout)
