@@ -70,6 +70,7 @@ class FastbootTask:
 		fb_addr = self.require_global("fb-buffer-addr")
 		fb_size = self.get_global("fb-buffer-size")
 		self.target_device = self.require_global("target-device")
+		self.usb_wait_timeout = self.get_global("usb-wait-timeout")
 
 		self.cmds = [
 			f"set fb-addr {fb_addr}",
@@ -125,6 +126,7 @@ class FastbootTask:
 			"port": self.port,
 			"fastboot_cmd": [],
 			"interactive_cmds": self.cmds,
+			"usb_wait_timeout": self.usb_wait_timeout,
 		}
 
 		self.args = FastbootArgs(args)
