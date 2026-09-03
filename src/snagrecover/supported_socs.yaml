@@ -58,6 +58,8 @@ tested:
         family: imx
   imx93:
         family: imx
+  imx95:
+        family: imx
   keembay:
         family: keembay
   r8:
