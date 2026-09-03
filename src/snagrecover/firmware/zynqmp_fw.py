@@ -100,6 +100,10 @@ def drop_images(boot_bin: bytearray, keep_images):
 
 	img_table_offset = find_img_table(boot_bin)
 	img_table = ZynqMPImageTable.read(boot_bin, img_table_offset)
+	if img_table.auth_cert != 0:
+		raise ValueError(
+			"Cannot extract FSBL stage from a signed image, provide a custom FSBL image"
+		)
 
 	kept_images = []
 	next_image = 4 * img_table.image_hdr
