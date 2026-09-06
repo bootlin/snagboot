@@ -5,4 +5,4 @@ this would cause an import loop
 """
 
 # Global version string for Snagboot
-__version__ = "3.0"
+__version__ = "3.0.1"
