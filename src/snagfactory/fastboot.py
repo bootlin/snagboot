@@ -70,6 +70,7 @@ class FastbootTask:
 		fb_addr = self.require_global("fb-buffer-addr")
 		fb_size = self.get_global("fb-buffer-size")
 		self.target_device = self.require_global("target-device")
+		self.usb_wait_timeout = self.get_global("usb-wait-timeout")
 
 		self.cmds = [
 			f"set fb-addr {fb_addr}",
@@ -79,7 +80,10 @@ class FastbootTask:
 		if fb_size is not None:
 			self.cmds.append(f"set fb-size {fb_size}")
 
-		if not self.target_device.startswith("mmc"):
+		is_mmc_target = self.target_device.startswith("mmc")
+		is_ufs_target = self.target_device.startswith("ufs")
+
+		if not is_mmc_target and not is_ufs_target:
 			self.eraseblk_size = self.require_global("eraseblk-size")
 			self.cmds.append(f"set eraseblk-size {self.eraseblk_size}")
 
@@ -125,6 +129,7 @@ class FastbootTask:
 			"port": self.port,
 			"fastboot_cmd": [],
 			"interactive_cmds": self.cmds,
+			"usb_wait_timeout": self.usb_wait_timeout,
 		}
 
 		self.args = FastbootArgs(args)
@@ -157,7 +162,10 @@ class FastbootMTDTask(FastbootTask):
 	def __init__(self, config: dict, num: int, globals: dict):
 		super().__init__(config, num, globals)
 
-		if self.target_device.startswith("mmc"):
+		is_mmc_target = self.target_device.startswith("mmc")
+		is_ufs_target = self.target_device.startswith("ufs")
+
+		if is_mmc_target or is_ufs_target:
 			raise SnagFactoryConfigError(
 				f"the '{self.name}' task is only supported on mtd backends"
 			)
@@ -202,7 +210,8 @@ class FastbootMMCTask(FastbootTask):
 
 		if not self.target_device.startswith("mmc"):
 			raise SnagFactoryConfigError(
-				f"the '{self.name}' task is only supported on mmc backends"
+				f"the '{self.name}' task is only supported on mmc backends. "
+				f"For 'ufs' backends, use the 'run' task with raw commands."
 			)
 
 		self.device_num = int(self.target_device[-1])
@@ -239,6 +248,15 @@ class FastbootTaskRun(FastbootTask):
 
 
 class FastbootTaskFlash(FastbootTask):
+	def __init__(self, config: dict, num: int, globals: dict):
+		super().__init__(config, num, globals)
+
+		if self.target_device.startswith("ufs"):
+			raise SnagFactoryConfigError(
+				f"the '{self.name}' task is not supported on 'ufs' backends. "
+				f"Use the 'run' task instead."
+			)
+
 	def get_cmds(self):
 		for entry in self.config:
 			part = entry.get("part", "")
