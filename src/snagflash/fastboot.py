@@ -34,15 +34,6 @@ import logging
 logger = logging.getLogger("snagflash")
 
 from snagflash.fastboot_uboot import SnagflashFastbootUboot
-import warnings
-
-
-def fb_interactive_deprecation():
-	warnings.warn(
-		"Using interactive mode with the '-P fastboot' option is deprecated and will be removed in a future release! Please use the '-P fastboot-uboot' option instead!",
-		FutureWarning,
-		stacklevel=1,
-	)
 
 
 def fastboot_ready_check(dev):
@@ -138,7 +129,9 @@ def fastboot(args):
 
 	if args.interactive_cmdfile is not None:
 		if args.protocol == "fastboot":
-			fb_interactive_deprecation()
+			cli_error(
+				"Using the '-I' option with the 'fastboot' protocol is no longer supported! Please use 'fastboot-uboot'"
+			)
 
 		session = SnagflashFastbootUboot(fast)
 		logger.info(f"running commands from file {args.interactive_cmdfile}")
@@ -149,7 +142,9 @@ def fastboot(args):
 
 	if args.interactive:
 		if args.protocol == "fastboot":
-			fb_interactive_deprecation()
+			cli_error(
+				"Using the '-i' option with the 'fastboot' protocol is no longer supported! Please use 'fastboot-uboot'"
+			)
 
 		if session is None:
 			session = SnagflashFastbootUboot(fast)
