@@ -8,11 +8,6 @@ import importlib.resources
 import packaging.requirements
 import packaging.version
 
-from PySide6.QtGui import QIcon, QGuiApplication
-from PySide6.QtQml import QQmlEngine, QQmlComponent
-from PySide6.QtCore import QObject, Slot, QUrl, QTimer
-from PySide6.QtQml import QmlElement
-from PySide6.QtQuick import QQuickItem
 import signal
 import functools
 
@@ -49,6 +44,12 @@ for req in gui_reqs:
 		)
 		print(f"underlying cause: {dep_error}")
 		sys.exit(1)
+
+from PySide6.QtGui import QIcon, QGuiApplication
+from PySide6.QtQml import QQmlEngine, QQmlComponent
+from PySide6.QtCore import QObject, Slot, QUrl, QTimer
+from PySide6.QtQml import QmlElement
+from PySide6.QtQuick import QQuickItem
 
 import time
 import yaml
