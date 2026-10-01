@@ -31,6 +31,7 @@ def stm32mp_run(port, fw_name: str, fw_blob: bytes):
 	There isn't a lot of complicated logic to handle stm32mp firmware
 	so we can leave it in the common module for now
 	"""
+
 	if fw_name == "tf-a":
 		partprefixes = ["@FSBL"]
 	elif fw_name == "fip":
@@ -83,7 +84,7 @@ def am6x_run(dev, fw_name: str, fw_blob: bytes):
 	partid = dfu.search_partid(dev, partname)
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partname}'")
-	dfu_cmd = dfu.DFU(dev, stm32=False)
+	dfu_cmd = dfu.DFU(dev)
 	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	logger.info("Done")
@@ -106,7 +107,7 @@ def am62lx_run(dev, fw_name: str, fw_blob: bytes):
 	partid = dfu.search_partid(dev, partname)
 	if partid is None:
 		raise Exception(f"No DFU altsetting found with iInterface='{partname}'")
-	dfu_cmd = dfu.DFU(dev, stm32=False)
+	dfu_cmd = dfu.DFU(dev)
 	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, partid, offset=0, size=len(fw_blob))
 	logger.info("Done")
@@ -136,7 +137,7 @@ def rzn1_run(dev, fw_name: str, fw_blob: bytes):
 	There isn't a lot of complicated logic to handle RZ/N1 firmware
 	so we can leave it in the common module for now
 	"""
-	dfu_cmd = dfu.DFU(dev, stm32=False)
+	dfu_cmd = dfu.DFU(dev)
 	logger.info("Downloading file...")
 	dfu_cmd.download_and_run(fw_blob, 0, offset=0, size=len(fw_blob))
 	logger.info("Done")

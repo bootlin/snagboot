@@ -89,9 +89,8 @@ class DFU:
 		0x0F: "errSTALLEDPKT",
 	}
 
-	def __init__(self, dev: usb.core.Device, stm32: bool = True):
+	def __init__(self, dev: usb.core.Device):
 		self.dev = dev
-		self.stm32 = stm32  # set when dfu is used to recover stm32mp boards
 		# try to find wTransferSize
 		bMaxPacketSize0 = dev.bMaxPacketSize0
 		self.transfer_size = bMaxPacketSize0
@@ -138,10 +137,7 @@ class DFU:
 		if state != DFU.state_codes["dfuIDLE"]:
 			raise ValueError(f"Incompatible state {state} detected")
 
-		if self.stm32:
-			block_index = 2  # wValue 0 and 1 seem to be reserved
-		else:
-			block_index = 0
+		block_index = 0
 		# for other commands (erase, set exec address, etc.)
 		bytes_written = 0
 		for chunk in utils.dnload_iter(

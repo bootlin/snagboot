@@ -146,7 +146,7 @@ def drop_images(boot_bin: bytearray, keep_images):
 
 
 def zynqmp_run(dev, fw_name, fw_blob, subfw_name):
-	dfu_cmd = dfu.DFU(dev, stm32=False)
+	dfu_cmd = dfu.DFU(dev)
 
 	if fw_name == "fsbl":
 		partid = 0
