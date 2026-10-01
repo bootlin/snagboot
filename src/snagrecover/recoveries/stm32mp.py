@@ -38,9 +38,10 @@ def main():
 	usb_addr = recovery_config["usb_path"]
 	dev = get_usb(usb_addr)
 
-	# DOWNLOAD TF-A
+	# DOWNLOAD First stage, may be TF-A or SPL
 	dfu_cmd = dfu.DFU(dev)
-	run_firmware(dev, "tf-a")
+	first_stage = recovery_config["firmware"].get("first_stage", "tf-a")
+	run_firmware(dev, first_stage)
 	if soc_model in ["stm32mp13", "stm32mp25"]:
 		logger.info("Sending detach command to SPL...")
 		phase_id = dfu_cmd.stm32_get_phase()
@@ -49,7 +50,7 @@ def main():
 	# DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM
 	# Configuration of the flashing phase is out of scope for
 	# Snagrecover so we only download a dummy flash layout
-	if soc_model == "stm32mp15":
+	if soc_model == "stm32mp15" and first_stage == "tf-a":
 		phase_id = dfu_cmd.stm32_get_phase()
 		part0 = dfu.search_partid(dev, "@Partition0", match_prefix=True)
 		if part0 is None:
@@ -83,9 +84,13 @@ def main():
 	dev = get_usb(usb_addr)
 	dfu_cmd = dfu.DFU(dev)
 
-	run_firmware(dev, "fip")
+	second_stage = {"tf-a" : "fip", "spl" : "u-boot"}[first_stage]
+	run_firmware(dev, second_stage)
 
 	# DETACH DFU DEVICE
 	logger.info("Sending detach command to U-Boot...")
-	phase_id = dfu_cmd.stm32_get_phase()
+	if first_stage == "tfa-a":
+		phase_id = dfu_cmd.stm32_get_phase()
+	else:
+		phase_id = 0
 	dfu_cmd.detach(phase_id)

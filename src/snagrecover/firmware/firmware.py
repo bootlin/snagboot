@@ -32,12 +32,14 @@ def stm32mp_run(port, fw_name: str, fw_blob: bytes):
 	so we can leave it in the common module for now
 	"""
 
-	if fw_name == "tf-a":
+	if fw_name in ("tf-a", "spl"):
 		partprefixes = ["@FSBL"]
 	elif fw_name == "fip":
 		partprefixes = ["@Partition3", "@SSBL", "@FIP"]
 	elif fw_name == "fip-ddr":
 		partprefixes = ["@DDR FIP"]
+	elif fw_name == "u-boot":
+		partprefixes = ["u-boot"]
 	else:
 		cli_error(f"unsupported firmware {fw_name}")
 
