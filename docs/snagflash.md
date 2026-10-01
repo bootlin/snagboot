@@ -166,7 +166,7 @@ snagflash -P ums -s binaries/u-boot.stm32 -d /mnt/u-boot.stm32
 ```
 
 **Note:** If you want a static block device path, you can use the following udev
-rules to create symlinks when a certain VID:PID pair is detected: 
+rules to create symlinks when a certain VID:PID pair is detected:
 - For a parent block device: `SUBSYSTEM=="block", KERNEL!="*[0-9]",
   SUBSYSTEMS=="usb", ATTRS{idVendor}=="...", ATTRS{idProduct}=="...",
   MODE="0660", TAG+="uaccess", SYMLINK+="myblockdev"`
@@ -182,8 +182,9 @@ In DFU mode, snagflash takes additional arguments :
    The USB address of the DFU device exposed by U-Boot
  * `-D --dfu-config  altsetting:path`
    The altsetting and path of a file to download to the board. This should match
-   the value specified in dfu\_alt\_info in U-Boot. This flag can be passed
-   multiple times, to specify multiple files to download.
+   the value specified in dfu\_alt\_info in U-Boot.
+   It may match either the numerical altsetting or the name of the altsetting.
+   This flag can be passed multiple times, to specify multiple files to download.
  * `--dfu-keep`
    An optional argument to avoid detaching DFU mode after download and keep the mode active
  * `--dfu-detach`
@@ -196,6 +197,8 @@ Example:
 # in U-Boot: setenv dfu_alt_info "mmc=uboot part 0 1"
 # in U-Boot: dfu 0 mmc 0
 snagflash -P dfu -p 0483:df11 -D 0:binaries/u-boot.stm32
+or
+snagflash -P dfu -p 0483:df11 -D uboot:binaries/u-boot.stm32
 ```
 
 For instructions on how to setup DFU in U-Boot, please refer to the [U-Boot
