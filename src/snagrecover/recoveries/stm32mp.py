@@ -34,13 +34,44 @@ USB_TIMEOUT = 10
 
 def main():
 	soc_model = recovery_config["soc_model"]
+
+	# Choose first stage, must be TF-A or SPL,  implicit if only one present,
+	# explicit  by "first_stage" config property otherwise
+	fw_config = recovery_config["firmware"]
+	first_stages = ("tf-a", "spl")
+	explicit_first_stage = fw_config.get("first_stage")
+	if explicit_first_stage is None:
+		first_stage = None
+		for fs in first_stages:
+			if fs in fw_config:
+				if first_stage is None:
+					first_stage = fs
+				else:
+					raise Exception(
+						"Multiple first stage binaries specified - need explicit first_stage config"
+					)
+		logger.info("Selected first stage '%s' implicitly", first_stage)
+	else:
+		if explicit_first_stage not in first_stages:
+			raise Exception(
+				f"Explicit first stage '{explicit_first_stage}' is not supported, must be one of '{first_stages}''"
+			)
+
+		if explicit_first_stage not in fw_config:
+			raise Exception(
+				f"No binary configured for explicit first stage '{explicit_first_stage}'"
+			)
+
+		first_stage = explicit_first_stage
+		logger.info("Selected first stage '%s' explicitly", first_stage)
+
 	# USB ENUMERATION
 	usb_addr = recovery_config["usb_path"]
 	dev = get_usb(usb_addr)
 
-	# DOWNLOAD TF-A
+	# DOWNLOAD First stage
 	dfu_cmd = dfu.DFU(dev)
-	run_firmware(dev, "tf-a")
+	run_firmware(dev, first_stage)
 	if soc_model in ["stm32mp13", "stm32mp25"]:
 		logger.info("Sending detach command to SPL...")
 		phase_id = dfu_cmd.stm32_get_phase()
@@ -49,7 +80,7 @@ def main():
 	# DOWNLOAD FLASH LAYOUT TO BEGINNING OF RAM
 	# Configuration of the flashing phase is out of scope for
 	# Snagrecover so we only download a dummy flash layout
-	if soc_model == "stm32mp15":
+	if soc_model == "stm32mp15" and first_stage == "tf-a":
 		phase_id = dfu_cmd.stm32_get_phase()
 		part0 = dfu.search_partid(dev, "@Partition0", match_prefix=True)
 		if part0 is None:
@@ -83,9 +114,13 @@ def main():
 	dev = get_usb(usb_addr)
 	dfu_cmd = dfu.DFU(dev)
 
-	run_firmware(dev, "fip")
+	second_stage = {"tf-a": "fip", "spl": "u-boot"}[first_stage]
+	run_firmware(dev, second_stage)
 
 	# DETACH DFU DEVICE
 	logger.info("Sending detach command to U-Boot...")
-	phase_id = dfu_cmd.stm32_get_phase()
+	if first_stage == "tfa-a":
+		phase_id = dfu_cmd.stm32_get_phase()
+	else:
+		phase_id = 0
 	dfu_cmd.detach(phase_id)
