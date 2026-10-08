@@ -36,7 +36,7 @@ from usb.core import Device
 
 def dfu_detach(dev: Device, altsetting: int = 0):
 	logger.info("Sending DFU detach command...")
-	dfu_cmd = dfu.DFU(dev, stm32=False)
+	dfu_cmd = dfu.DFU(dev)
 	dfu_cmd.get_status()
 	dfu_cmd.detach(altsetting)
 	logger.info("Done")
@@ -48,7 +48,7 @@ def dfu_download(dev: Device, altsetting: int, path: str):
 	size = len(blob)
 	logger.info(f"Downloading {path} to altsetting {altsetting}...")
 	logger.debug(f"DFU config altsetting:{altsetting} size:0x{size:x} path:{path}")
-	dfu_cmd = dfu.DFU(dev, stm32=False)
+	dfu_cmd = dfu.DFU(dev)
 	dfu_cmd.get_status()
 	dfu_cmd.download_and_run(blob, altsetting, 0, size, show_progress=True)
 	dfu_cmd.get_status()

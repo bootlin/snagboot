@@ -248,9 +248,13 @@ when configuring U-Boot.
 
 [example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/stm32mp1-stm32mp157f-dk2.yaml)
 
-TF-A is used as the first stage and U-Boot as the second stage.
+Normally TF-A is used as the first stage and U-Boot as the second stage, as an alternative it is possible
+to use u-boot SPL, wrapped in a ST header as the first stage.
 
-**fip:** Contains at least U-Boot with an stm32 image header. Usually the
+The mode is specified by one of "first_stage: tf-a" or "first_stage: spl" in the configuration file (defaults to tf-a)
+The binaries below are used based on this
+
+**fip:** (TF-A mode only) Contains at least U-Boot with an stm32 image header. Usually the
 raw U-Boot image needs to be generated first, then packaged by a
 trusted-arm-firmware build. If the autoboot feature is enabled, then U-Boot will
 enter DFU mode after recovery.
@@ -258,13 +262,20 @@ enter DFU mode after recovery.
 configuration:
  * path
 
-**tf-a:** Arm-trusted firmware BL2, with an stm32 image header. In typical
+**tf-a:** (TF-A mode only) Arm-trusted firmware BL2, with an stm32 image header. In typical
 build strategies, you have to pass your U-Boot binary to the tf-a build
 process. For the secure firmware, use SP_MIN if available.
 OPTEE can also work.
 
 configuration:
  * path
+
+**spl:** (SPL mode ony) U-Boot SPL, with an stm32 image header. This is usually "u-boot-spl.stm32" from the u-boot build.
+
+configuration:
+ * path
+
+** u-boot:** (SPL mode only) Main U-Boot image, **without** a stm32 image header. This is usually "u-boot.img" from the u-boot build.
 
 #### For STM32MP2 only:
 
