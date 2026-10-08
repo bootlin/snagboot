@@ -83,8 +83,13 @@ def dfu_cli(args):
 	altsetting = 0
 	if args.dfu_config:
 		for dfu_config in args.dfu_config:
-			(altsetting, sep, path) = dfu_config.partition(":")
-			altsetting = int(altsetting)
+			(partname, sep, path) = dfu_config.partition(":")
+			try:
+				altsetting = int(partname)
+			except ValueError:
+				altsetting = dfu.search_partid(dev, partname)
+				if altsetting is None:
+					cli_error(f"u-boot does not support partition '{partname}")
 			dfu_download(dev, altsetting, path)
 	if not args.dfu_keep or args.dfu_detach or args.dfu_reset:
 		dfu_detach(dev, altsetting)
