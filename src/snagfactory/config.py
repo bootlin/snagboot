@@ -161,6 +161,7 @@ globals_rule = {
 	"fb-buffer-size": int_rule,
 	"fb-buffer-addr": int_rule,
 	"eraseblk-size": int_rule,
+	"usb-wait-timeout": int_rule,
 }
 
 tasks_rule = {

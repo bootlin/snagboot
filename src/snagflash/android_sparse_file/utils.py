@@ -23,12 +23,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+import os
 
 from snagflash.android_sparse_file.sparse import (
 	AndroidSparseFile,
 	AndroidChunkHeader,
 	SPARSE_CHUNKHEADER_LEN,
 	SPARSE_FILEHEADER_LEN,
+	DEFAULT_BLOCK_SIZE,
+	MAGIC,
 	CHUNK_TYPE_DONTCARE,
 	CHUNK_TYPE_RAW,
 	CHUNK_TYPE_FILL,
@@ -54,6 +57,46 @@ def chunk_type_name(chunk_type):
 	Return a human-readable name for a chunk type constant, for logging.
 	"""
 	return CHUNK_TYPE_NAMES.get(chunk_type, f"UNKNOWN(0x{chunk_type:04X})")
+
+
+def is_sparse_file(path):
+	"""
+	Check whether the file at 'path' is a valid Android sparse image, by
+	inspecting its magic cookie (first 4 bytes, little-endian).
+	"""
+	with open(path, "rb") as f:
+		magic_bytes = f.read(4)
+	if len(magic_bytes) < 4:
+		return False
+	magic = int.from_bytes(magic_bytes, byteorder="little")
+	return magic == MAGIC
+
+
+class ZeroPaddedReader:
+	"""
+	Wraps a raw binary file object so that read(n) always returns exactly n
+	bytes, zero-padding the final short read at true EOF.
+
+	This lets a raw (non-sparse) file be fed directly into
+	process_raw_chunk(), which normally expects to read exact,
+	block-aligned payloads out of a real Android sparse file. Raw files are
+	usually not a multiple of block_size, so the final block must be
+	zero-padded up to the block boundary. Once EOF has been reached, any
+	further reads return all zero bytes, as a safety net.
+	"""
+
+	def __init__(self, fd):
+		self.fd = fd
+		self.eof = False
+
+	def read(self, n):
+		if self.eof:
+			return b"\x00" * n
+		data = self.fd.read(n)
+		if len(data) < n:
+			self.eof = True
+			data += b"\x00" * (n - len(data))
+		return data
 
 
 class SplitFragmentState:
@@ -446,3 +489,84 @@ def split_streaming(path, dest, bufsize):
 
 	finally:
 		sparse_file.close()
+
+
+def split_streaming_raw(path, dest, bufsize, block_size=DEFAULT_BLOCK_SIZE):
+	"""
+	Generator that yields one split sparse file at a time, built from a raw
+	(non-sparse) binary image, for immediate processing.
+
+	The raw file is treated as a single logical CHUNK_TYPE_RAW region
+	spanning the whole image. This synthetic chunk is split into
+	bufsize-limited sparse fragments by reusing the exact same
+	process_raw_chunk()/flush_fragment() machinery used by split_streaming()
+	for real sparse files, so the resulting fragments have the same
+	guarantees:
+
+	- Every fragment's sparse header reports the full logical block count
+	of the entire raw image (not just the blocks it contains).
+	- Every fragment starts with a DONT_CARE prefix covering blocks already
+	flushed in earlier fragments, and ends with a DONT_CARE suffix
+	covering blocks that will be flushed in later fragments.
+	- Each fragment (header + prefix + RAW payload + suffix) never exceeds
+	bufsize bytes.
+
+	If the raw file size is not a multiple of block_size, the final block
+	is transparently zero-padded up to the block boundary (the padding only
+	exists in the generated sparse payload, the source file is untouched).
+
+	Args:
+		path: Path to input raw binary file
+		dest: Path for temporary output file (will be reused for each split)
+		bufsize: Maximum size for each output file
+		block_size: Sparse image block size in bytes (default: DEFAULT_BLOCK_SIZE)
+
+	Yields:
+		Path to each split file (same path, but content changes each iteration)
+	"""
+	file_size = os.path.getsize(path)
+	total_blks = (file_size + block_size - 1) // block_size  # ceil division
+
+	# Pre-flight validation: ensure bufsize can hold at least one block with all headers
+	min_required = (
+		SPARSE_FILEHEADER_LEN  # 28 bytes: file header
+		+ 2 * SPARSE_CHUNKHEADER_LEN  # 24 bytes: prefix + one data chunk header
+		+ block_size  # At least one block of data
+		+ SPARSE_CHUNKHEADER_LEN  # 12 bytes: suffix reserve
+	)
+	if bufsize <= min_required:
+		raise IOError(
+			f"Buffer size {bufsize} too small. Need at least {min_required} bytes "
+			f"to fit one {block_size}-byte block with headers"
+		)
+
+	blocks_done = 0
+	state = SplitFragmentState()
+
+	logger.debug(
+		f"Starting streaming raw split: total_blocks={total_blks}, block_size={block_size}"
+	)
+
+	# Synthesize a single RAW chunk header covering the entire raw image
+	header = AndroidChunkHeader()
+	header.type = CHUNK_TYPE_RAW
+	header.size = total_blks
+
+	with open(path, "rb") as raw_fd:
+		input_fd = ZeroPaddedReader(raw_fd)
+
+		raw_gen = process_raw_chunk(
+			input_fd, header, state, blocks_done, bufsize, block_size, dest, total_blks
+		)
+		while True:
+			try:
+				flushed_fragment = next(raw_gen)
+				yield flushed_fragment
+			except StopIteration as stop:
+				blocks_done = stop.value
+				break
+
+		# Final flush: emit any remaining staged chunks as the last fragment
+		frag = flush_fragment(state, dest, block_size, total_blks)
+		if frag:
+			yield frag

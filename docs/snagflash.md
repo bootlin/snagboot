@@ -41,6 +41,7 @@ download:<filepath>
 erase:<part>
 flash:<part>
 flash_sparse:<sparsefilepath>:<partition>
+flash_image:<filepath>:<partition>
 boot
 continue
 reboot
@@ -63,6 +64,16 @@ snagflash -P fastboot -p 0483:0afb -f download:boot.img -f flash:0:1 -f boot
 The ``flash_sparse`` command will download and flash a android sparse file with
 fastboot protocol. For details about the file format, see the [sparse file format
 partial documentation](developers/android-sparse-file.md).
+
+The ``flash_image`` command downloads and flashes an image file to a partition,
+transparently handling both raw binary files and android sparse files. It reads
+the ``max-download-size`` Fastboot variable from U-Boot: if the file fits within
+this size, it is downloaded and flashed directly with no splitting. If the file
+is bigger, it is automatically split into several android sparse fragments
+(each bounded by ``max-download-size``, headers included) which are downloaded
+and flashed one after another. This works for both raw binary files (which are
+converted to an equivalent single-region sparse image on the fly, with no
+change to the source file) and existing android sparse files.
 
 For more information on Fastboot commands, see the [fastboot
 specification](https://android.googlesource.com/platform/system/core/+/refs/heads/master/fastboot/README.md)
