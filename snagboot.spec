@@ -3,8 +3,10 @@
 # Snagboot spec file, for PyInstaller
 #
 
-from PyInstaller.utils.hooks import copy_metadata
+from PyInstaller.utils.hooks import copy_metadata, collect_dynamic_libs
+from PyInstaller.compat import is_win
 import packaging.requirements
+import libusb
 import os
 
 with open("MANIFEST.in", "r") as manifest_file:
@@ -65,6 +67,25 @@ snagfactory = Analysis(
 	optimize=0,
 )
 
+# Include libusb-1.0.dll from libusb as it is needed by pyusb on windows
+
+if is_win:
+	libusbDLL = collect_dynamic_libs(
+		"libusb",
+		destdir=".",
+		search_patterns=['*.dll'],
+	)
+	test = Analysis(
+		['src/snagrecover/cli.py'],
+		binaries = libusbDLL,
+	)
+	for src, dst in libusbDLL:
+		snagrecover.binaries.extend([(
+			"libusb-1.0.dll",
+			src,
+			"BINARY"
+		)])
+
 # Refer to snagrecover analysis for common data files
 
 MERGE(
@@ -115,4 +136,3 @@ coll = COLLECT(
 	upx=True,
 	name='snagboot',
 )
-
