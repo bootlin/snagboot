@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+import usb.core
 
 logger = logging.getLogger("snagrecover")
 from snagrecover.protocols import dfu
@@ -145,6 +146,33 @@ def rzn1_run(dev, fw_name: str, fw_blob: bytes):
 	logger.info("Done")
 
 
+def th1520_run(dev, fw_name: str, fw_blob: bytes):
+	"""
+	The TH1520 ROM code exposes a standard Fastboot interface. A single
+	image holding SPL, OpenSBI and U-Boot proper is downloaded to the "ram"
+	pseudo-partition, then started with the "reboot" command.
+
+	The commands are sent exactly as the stock fastboot client sends
+	them, without a trailing NUL byte: whether the ROM code accepts one
+	is unknown.
+	"""
+	fb_cmd = Fastboot(dev)
+	logger.info("Downloading file...")
+	fb_cmd.send(fw_blob)
+	fb_cmd.cmd(b"flash:ram")
+	logger.info("Done")
+
+	logger.info("Starting firmware...")
+	# A failed write must be reported, but the ROM code may jump to SPL
+	# before its OKAY is read.
+	fb_cmd.raw_cmd(b"reboot")
+	try:
+		fb_cmd.cmd()
+	except usb.core.USBError as e:
+		logger.debug(f"No answer to the reboot command: {e}")
+	logger.info("Done")
+
+
 def check_fw_blob(fw_blob: bytes):
 	"""
 	Do a quick sanity check on the firmware contents.  If the file passed
@@ -249,6 +277,8 @@ def run_firmware(port, fw_name: str, subfw_name: str = ""):
 		from snagrecover.firmware.qcom_fw import qcom_run
 
 		qcom_run(port, fw_name, fw_blob)
+	elif soc_family == "th1520":
+		th1520_run(port, fw_name, fw_blob)
 	else:
 		raise Exception(f"Unsupported SoC family {soc_family}")
 	logger.info(f"Done installing firmware {fw_name}")
