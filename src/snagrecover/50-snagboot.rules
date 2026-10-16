@@ -100,3 +100,6 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="045b", ATTRS{idProduct}=="0239", MODE="0660"
 
 # Qualcomm rules
 SUBSYSTEM=="usb", ATTRS{idVendor}=="05c6", ATTRS{idProduct}=="9008", MODE="0660", TAG+="uaccess"
+
+# T-Head rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2345", ATTRS{idProduct}=="7654", MODE="0660", TAG+="uaccess"
