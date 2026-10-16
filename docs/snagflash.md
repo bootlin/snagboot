@@ -6,7 +6,7 @@ retry a few times before failing.
 
 Snagflash always requires the "protocol" argument.
 
- * `-P, --protocol {fastboot,ums,dfu}`
+ * `-P, --protocol {fastboot-uboot,fastboot,ums,dfu}`
    The protocol to use for flashing
 
 When running snagflash right after snagrecover e.g. in an automated procedure,
