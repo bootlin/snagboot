@@ -189,7 +189,7 @@ class Bmap(object):
         self._f_bmap_path = None
 
         self._f_image = image
-        self._image_path = image.name
+        self._image_path = getattr(image, "name", "compressed image")
 
         # The bmap file checksum type and length
         self._cs_type = None
