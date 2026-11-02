@@ -182,6 +182,14 @@ into Emergency Download mode"* in the reference [documentation](https://docs.qua
 
 **Note:** The steps described in the reference documentation above are the same for both EVK and non-EVK boards, except for the DIP switch position. For the exact DIP switch position required to enable EDL mode on the IQ9075 EVK, refer to the board schematic. Other boards using this SoC may use a different method to enter EDL mode; refer to your board vendor's documentation.
 
+### T-Head TH1520
+
+The TH1520 ROM code has a USB download mode that exposes a Fastboot interface,
+which is the one used by snagrecover. To enter it, hold the board's download
+button (the USB button on the BeagleV-Ahead), connect the USB-C port to your
+host PC, then release the button. A "T-HEAD USB download gadget" device
+(`2345:7654`) should appear on your host system.
+
 ## Preparing recovery firmware
 
 Snagrecover requires firmware binaries to successfully recover the board. Each
@@ -643,6 +651,25 @@ configuration:
   * path
 
 **u-boot:** TBD: U-Boot support for Snagboot recovery is currently under upstream review. See the [patch series](https://marc.info/?l=u-boot&m=178577211945398&w=2) for more information.
+
+configuration:
+  * path
+
+### For T-Head TH1520 devices
+
+[example](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/templates/th1520-beaglev-ahead.yaml)
+
+A single image holding U-Boot SPL, the DDR firmware, OpenSBI and U-Boot proper
+is downloaded to internal RAM. SPL initializes the external RAM, then starts
+OpenSBI and U-Boot proper, so no other boot stage is needed.
+
+This is the `u-boot-with-spl.bin` image that U-Boot generates with binman when
+building a TH1520 board with SPL support (it requires the DDR firmware and
+OpenSBI's `fw_dynamic.bin`). Refer to the U-Boot board documentation for
+details. The `u-boot-with-spl.bin` of the vendor BeagleBoard.org images is
+also accepted.
+
+**u-boot:** `u-boot-with-spl.bin`.
 
 configuration:
   * path

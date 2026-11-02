@@ -32,6 +32,7 @@ Snagboot currently supports the following families of System-On-Chips (SoCs):
  * [AMLogic](https://www.amlogic.com/#Products) series: G12A (eg S905D2), G12B (eg A311D), SM1 (eg S905D3) and series: GXL (eg S905D), GXM (eg S912), GXBB (eg S905), AXG (eg A113D)
  * [Renesas](https://www.renesas.com/en/products/microcontrollers-microprocessors/rz-mpus) RZ/N1 series
  * [Qualcomm](https://www.qualcomm.com/) [IQ9075](https://www.qualcomm.com/internet-of-things/products/iq9-series/iq-9075)
+ * [T-Head](https://www.t-head.cn/) TH1520, tested on [BeagleV-Ahead](https://www.beagleboard.org/boards/beaglev-ahead)
 
 Please check [supported_socs.yaml](https://github.com/bootlin/snagboot/blob/main/src/snagrecover/supported_socs.yaml)
 or run `snagrecover --list-socs` for a more precise list of supported SoCs.
