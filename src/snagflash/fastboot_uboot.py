@@ -6,6 +6,7 @@ import random
 import os
 import sys
 from math import ceil
+import shlex
 
 logger = logging.getLogger("snagflash")
 
@@ -235,20 +236,18 @@ paths-relative-to: controls how relative image paths in flash commands are resol
 
 		self.get_fb_size()
 
-		path, sep, rest = args.partition(" ")
-		path = path.strip('"').strip('"')
-		rest = rest.strip(" ")
+		token_args = shlex.split(args)
 
+		path = token_args[0]
 		path = self.resolve_path(path)
 
-		if " " in rest:
-			offset, sep, part = rest.partition(" ")
-			part = part.strip(" ")
-		else:
-			offset = rest
-			part = None
-
+		offset = token_args[1]
 		offset = int(offset, 0)
+
+		if len(token_args) > 2:
+			part = shlex.join(token_args[2:])
+		else:
+			part = None
 
 		logger.info(f"Flashing file {path}")
 
@@ -423,7 +422,7 @@ paths-relative-to: controls how relative image paths in flash commands are resol
 			fast.oem_run(f"mmc dev {device_num}")
 			part_start = 0
 		elif "hwpart" in part:
-			hwpart, sep, hwpart_num = part.partition(" ")
+			hwpart, hwpart_num = shlex.split(part)
 			hwpart_num = int(hwpart_num.strip(" "))
 			logger.debug(f"setting MMC device to {device_num} {hwpart_num}")
 			fast.oem_run(f"mmc dev {device_num} {hwpart_num}")
