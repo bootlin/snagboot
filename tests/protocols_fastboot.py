@@ -79,6 +79,11 @@ class TestFastboot(unittest.TestCase):
 		self.assert_device_write(DUMMY_CMD)
 		self.assertEqual(result, DUMMY_DATA)
 
+	def test_raw_cmd_does_not_read(self) -> None:
+		self.fastboot.raw_cmd(DUMMY_CMD)
+		self.assert_device_write(DUMMY_CMD)
+		self.mock_device.read.assert_not_called()
+
 	def test_cmd_fail(self) -> None:
 		self.expect_device_response(ResponseType.FAIL, DUMMY_DATA)
 		with self.assertRaises(FastbootError):

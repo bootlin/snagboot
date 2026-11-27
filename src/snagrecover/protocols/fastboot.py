@@ -103,11 +103,19 @@ class Fastboot:
 				return False
 		return True
 
+	def raw_cmd(self, packet: bytes):
+		"""
+		Send a command without reading its answer, for a command after which
+		the device may be gone before answering. Read the answer, if any,
+		with cmd().
+		"""
+		self.dev.write(self.ep_out, packet, timeout=self.timeout)
+
 	def cmd(
 		self, packet: Optional[bytes] = None, loglevel=logging.DEBUG
 	) -> Union[bytes, int]:
 		if packet is not None:
-			self.dev.write(self.ep_out, packet, timeout=self.timeout)
+			self.raw_cmd(packet)
 		t0 = time.time()
 		while time.time() - t0 < 10 * self.timeout:
 			ret = self.dev.read(self.ep_in, 256, timeout=self.timeout)
