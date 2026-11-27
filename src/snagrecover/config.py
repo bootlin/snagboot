@@ -100,6 +100,7 @@ default_usb_ids = {
 	"amlogic": "1b8e:c003",
 	"rzn1": "045b:0239",
 	"qcom": "05c6:9008",
+	"th1520": "2345:7654",
 }
 
 recovery_config = {}  # Global immutable config to be initialized with CLI args

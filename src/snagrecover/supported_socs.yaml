@@ -92,6 +92,8 @@ tested:
         family: amlogic
   iq9075:
         family: qcom
+  th1520:
+        family: th1520
 untested:
   a10:
         family: sunxi
