@@ -70,27 +70,28 @@ def bmap_copy(filepath: str, dev, src_size: int):
 			gen_bmap = True
 		else:
 			mapfileb.seek(0)
-	if gen_bmap:
-		logger.info("Generating bmap...")
-		try:
-			mapfile = tempfile.NamedTemporaryFile("w+")
-		except IOError as err:
-			raise Exception("Could not create temporary file for bmap") from err
-		mapfile.flush()
-		mapfile.seek(0)
-		creator = BmapCreate.BmapCreate(filepath, mapfile, "sha256")
-		creator.generate(True)
-		mapfileb = open(mapfile.name, "rb")
 
-	try:
-		with open_compressed_file(filepath, "rb") as src_file:
+	with open_compressed_file(filepath, "rb") as src_file:
+		if gen_bmap:
+			logger.info("Generating bmap...")
+			try:
+				mapfile = tempfile.NamedTemporaryFile("w+")
+			except IOError as err:
+				raise Exception("Could not create temporary file for bmap") from err
+			mapfile.flush()
+			mapfile.seek(0)
+			creator = BmapCreate.BmapCreate(src_file, mapfile, "sha256")
+			creator.generate(True)
+			mapfileb = open(mapfile.name, "rb")
+
+		try:
 			writer = BmapCopy.BmapBdevCopy(src_file, dev, mapfileb, src_size)
 			writer.copy(False, True)
-	finally:
-		if mapfileb is not None:
-			mapfileb.close()
-		if mapfile is not None:
-			mapfile.close()
+		finally:
+			if mapfileb is not None:
+				mapfileb.close()
+			if mapfile is not None:
+				mapfile.close()
 
 
 def write_raw(args):

@@ -100,7 +100,9 @@ class _FilemapBase(object):
             self._open_image_file()
 
         try:
-            self.image_size = os.fstat(self._f_image.fileno()).st_size
+            image.seek(0, os.SEEK_END)
+            self.image_size = image.tell()
+            image.seek(0, os.SEEK_SET)
         except IOError as err:
             raise Error(
                 "cannot get information about file '%s': %s" % (self._f_image.name, err)
